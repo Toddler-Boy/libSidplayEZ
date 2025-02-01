@@ -69,9 +69,6 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
 	if ( ! info )
 		return false;
 
-	// Initialize SID engine(s)
-	config.playback = info->sidChips () == 1 ? SidConfig::playback_t::MONO : SidConfig::playback_t::STEREO;
-
 	if ( ! engine.setConfig ( config ) )
 		return false;
 

@@ -54,8 +54,6 @@ public:
 
 	const unsigned int	m_maxsids = libsidplayfp::Mixer::MAX_SIDS;
 
-	unsigned int m_channels = 1;
-
 	uint16_t m_driverAddr = 0;
 	uint16_t m_driverLength = 0;
 
@@ -76,8 +74,6 @@ public:
 	[[ nodiscard ]] const char* getCredits ( unsigned int i ) const override { return i < (unsigned int)m_credits.size () ? m_credits[ i ].c_str () : ""; }
 
 	[[ nodiscard ]] unsigned int getMaxsids () const override { return m_maxsids; }
-
-	[[ nodiscard ]] unsigned int getChannels () const override { return m_channels; }
 
 	[[ nodiscard ]] uint16_t getDriverAddr () const override { return m_driverAddr; }
 	[[ nodiscard ]] uint16_t getDriverLength () const override { return m_driverLength; }

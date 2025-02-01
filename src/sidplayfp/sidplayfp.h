@@ -91,18 +91,6 @@ public:
 	uint32_t play ( int16_t* buffer, uint32_t count ) {	return sidplayer.play ( buffer, count );	}
 
 	/**
-	 * Check if the engine is playing or stopped.
-	 *
-	 * @return true if playing, false otherwise.
-	 */
-	[[ nodiscard ]] bool isPlaying () const { return sidplayer.isPlaying (); }
-
-	/**
-	 * Stop the engine.
-	 */
-	void stop () { 	sidplayer.stop ();	}
-
-	/**
 	 * Get the current playing time.
 	 *
 	 * @return the current playing time measured in seconds.

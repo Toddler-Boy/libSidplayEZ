@@ -44,9 +44,6 @@ public:
 	/// Number of SIDs supported by this library
 	[[ nodiscard ]] unsigned int maxsids () const { return getMaxsids (); }
 
-	/// Number of output channels (1-mono, 2-stereo)
-	[[ nodiscard ]] unsigned int channels () const { return getChannels (); }
-
 	/// Address of the driver
 	[[ nodiscard ]] uint16_t driverAddr () const { return getDriverAddr (); }
 
@@ -75,8 +72,6 @@ private:
 	[[ nodiscard ]] virtual const char* getCredits ( unsigned int i ) const = 0;
 
 	[[ nodiscard ]] virtual unsigned int getMaxsids () const = 0;
-
-	[[ nodiscard ]] virtual unsigned int getChannels () const = 0;
 
 	[[ nodiscard ]] virtual uint16_t getDriverAddr () const = 0;
 

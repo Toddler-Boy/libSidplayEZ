@@ -52,50 +52,30 @@ void Mixer::doMix ()
 	// clock() may update bufferpos
 	// NB: if more than one chip exists, their bufferpos is identical to first chip's
 	const auto	sampleCount = m_chips.front ()->bufferpos ();
+	const auto	toCopy = std::min ( sampleCount, int ( m_sampleCount - m_sampleIndex ) );
 
-	auto	i = 0;
+	constexpr auto smp16ToFloat = [] ( int16_t input ) { return input * ( 1.0f / 32768.0f ); };
 
-	// Specialization for one chip, mono out
-	if ( m_buffers.size () == 1 && m_stereo == false )
+	for ( auto i = 0; i < toCopy; i++ )
+		outputBuffer[ i ] = smp16ToFloat ( m_buffers[ 0 ][ i ] );
+
+	if ( m_buffers.size () > 1u )
 	{
-		const auto	toCopy = std::min ( sampleCount, int ( m_sampleCount - m_sampleIndex ) );
+		for ( auto i = 0; i < toCopy; i++ )
+			outputBuffer[ i ] += smp16ToFloat ( m_buffers[ 1 ][ i ] );
 
-		std::copy_n ( m_buffers[ 0 ], toCopy, outputBuffer );
-
-		m_sampleIndex += toCopy;
-		i = toCopy;
+		if ( m_buffers.size () > 2u )
+			for ( auto i = 0; i < toCopy; i++ )
+				outputBuffer[ i ] += smp16ToFloat ( m_buffers[ 2 ][ i ] );
 	}
-	else
-	{
-		const auto	channels = m_stereo ? 2u : 1u;
 
-		while (
-			   ( i < sampleCount )
-			&& ( m_sampleIndex < m_sampleCount )	// Handle whatever output the sid has generated so far
-			&& ( ( i + 1 ) < sampleCount )			// Are there enough samples to generate the next one?
-			)
-		{
-			m_iSamples[ 0 ] = m_buffers[ 0 ][ i ];
-
-			for ( auto k = 1; k < int ( m_buffers.size () ); k++ )
-				m_iSamples[ k ] = m_buffers[ k ][ i ];
-
-			// increment i to mark we ate some samples
-			i++;
-
-			*outputBuffer++ = int16_t ( ( this->*( m_mix[ 0 ] ) ) () );
-			if ( channels == 2 )
-				*outputBuffer++ = int16_t ( ( this->*( m_mix[ 1 ] ) ) () );
-
-			m_sampleIndex += channels;
-		}
-	}
+	m_sampleIndex += toCopy;
 
 	// move the unhandled data to start of buffer, if any
-	const auto	samplesLeft = sampleCount - i;
+	const auto	samplesLeft = sampleCount - toCopy;
 
 	for ( auto bfr : m_buffers )
-		std::memmove ( bfr, bfr + i, samplesLeft * sizeof ( int16_t ) );
+		std::memmove ( bfr, bfr + toCopy, samplesLeft * sizeof ( int16_t ) );
 
 	for ( auto chp : m_chips )
 		chp->bufferpos ( samplesLeft );
@@ -104,41 +84,16 @@ void Mixer::doMix ()
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::begin ( int16_t* buffer, uint32_t count )
+void Mixer::begin ( float* buffer, uint32_t count )
 {
-	// don't allow odd counts for stereo playback
-	assert ( m_stereo == false || ( count & 1 ) == 0 );
-
 	// we need a minimum buffer-size, otherwise a crash might occur
-	assert ( count > ( ( m_stereo + 1 ) * 100 ) );
+	assert ( count > * 100 );
 
 	m_sampleIndex = 0;
 	m_sampleCount = count;
 	m_sampleBuffer = buffer;
 
 	m_wait = false;
-}
-//-----------------------------------------------------------------------------
-
-void Mixer::updateParams ()
-{
-	switch ( m_buffers.size () )
-	{
-		case 1:
-			m_mix[ 0 ] = m_stereo ? &Mixer::stereo_OneChip : &Mixer::mono1;
-			m_mix[ 1 ] = &Mixer::stereo_OneChip;
-			break;
-
-		case 2:
-			m_mix[ 0 ] = m_stereo ? &Mixer::stereo_ch1_TwoChips : &Mixer::mono2;
-			m_mix[ 1 ] = &Mixer::stereo_ch2_TwoChips;
-			break;
-
-		case 3:
-			m_mix[ 0 ] = m_stereo ? &Mixer::stereo_ch1_ThreeChips : &Mixer::mono3;
-			m_mix[ 1 ] = &Mixer::stereo_ch2_ThreeChips;
-			break;
-	}
 }
 //-----------------------------------------------------------------------------
 
@@ -156,19 +111,6 @@ void Mixer::addSid ( sidemu* chip )
 
 	m_chips.push_back ( chip );
 	m_buffers.push_back ( chip->buffer () );
-
-	updateParams ();
-}
-//-----------------------------------------------------------------------------
-
-void Mixer::setStereo ( bool stereo )
-{
-	if ( m_stereo == stereo )
-		return;
-
-	m_stereo = stereo;
-
-	updateParams ();
 }
 //-----------------------------------------------------------------------------
 

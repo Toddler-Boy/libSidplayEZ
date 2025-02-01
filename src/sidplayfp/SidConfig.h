@@ -31,13 +31,6 @@
  */
 struct SidConfig final
 {
-	// Playback mode
-	typedef enum
-	{
-		MONO = 1,      ///< One channel mono playback
-		STEREO         ///< Two channels stereo playback
-	} playback_t;
-
 	// SID chip model
 	typedef enum
 	{
@@ -97,11 +90,6 @@ struct SidConfig final
 	cia_model_t ciaModel = MOS6526;
 
 	/**
-	 * Playbak mode.
-	 */
-	playback_t playback = MONO;
-
-	/**
 	 * Sampling frequency.
 	 */
 	uint32_t frequency = DEFAULT_SAMPLING_FREQ;
@@ -126,7 +114,6 @@ struct SidConfig final
 				||	defaultSidModel != config.defaultSidModel
 				||	forceSidModel != config.forceSidModel
 				||	ciaModel != config.ciaModel
-				||	playback != config.playback
 				||	frequency != config.frequency
 				||	secondSidAddress != config.secondSidAddress
 				||	thirdSidAddress != config.thirdSidAddress;

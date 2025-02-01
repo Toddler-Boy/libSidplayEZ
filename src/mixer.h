@@ -37,74 +37,22 @@ class sidemu;
 class Mixer
 {
 public:
-	class badBufferSize {};
-
 	// Maximum number of supported SIDs
 	static constexpr unsigned int MAX_SIDS = 3;
-
-	static constexpr int32_t SCALE_FACTOR = 1 << 16;
-	static constexpr double SQRT_0_5 = 0.70710678118654746;
-	static constexpr auto C1 = static_cast<int32_t>( 1.0 / ( 1.0 + SQRT_0_5 ) * SCALE_FACTOR );
-	static constexpr auto C2 = static_cast<int32_t>( SQRT_0_5 / ( 1.0 + SQRT_0_5 ) * SCALE_FACTOR );
 
 private:
 	std::vector<sidemu*>			m_chips;
 	std::vector<int16_t*>			m_buffers;
 	int32_t							m_iSamples[ MAX_SIDS ] = {};
 
-	// Mono mixing
-	int32_t mono1 () const { return m_iSamples[ 0 ]; }
-	int32_t mono2 () const { return ( m_iSamples[ 0 ] + m_iSamples[ 1 ] ) / 2; }
-	int32_t mono3 () const { return ( m_iSamples[ 0 ] + m_iSamples[ 1 ] + m_iSamples[ 2 ] ) / 3; }
-
-	// Stereo mixing
-	int32_t stereo_OneChip () const { return m_iSamples[ 0 ]; }
-
-	int32_t stereo_ch1_TwoChips () const { return m_iSamples[ 0 ]; }
-	int32_t stereo_ch2_TwoChips () const { return m_iSamples[ 1 ]; }
-
-	int32_t stereo_ch1_ThreeChips () const { return ( C1 * m_iSamples[ 0 ] + C2 * m_iSamples[ 1 ] ) / SCALE_FACTOR; }
-	int32_t stereo_ch2_ThreeChips () const { return ( C2 * m_iSamples[ 1 ] + C1 * m_iSamples[ 2 ] ) / SCALE_FACTOR; }
-
-	using mixer_func_t = int32_t ( Mixer::* )( ) const;
-	mixer_func_t	m_mix[ 2 ] = { &Mixer::mono1, nullptr };
-
-	using scale_func_t = int ( Mixer::* )( unsigned int );
-
-	static constexpr int32_t	VOLUME_MAX = 1024;
-
 	// Mixer settings
-	int16_t*	m_sampleBuffer = nullptr;
+	float*		m_sampleBuffer = nullptr;
 	uint32_t	m_sampleCount = 0;
 	uint32_t	m_sampleIndex = 0;
 
 	uint32_t	m_sampleRate = 0;
 
-	bool	m_stereo = false;
 	bool	m_wait = false;
-
-	void updateParams ();
-
-	/*
-	* Channel matrix
-	*
-	*   C1
-	* L 1.0
-	* R 1.0
-	*
-	*   C1   C2
-	* L 1.0  0.0
-	* R 0.0  1.0
-	*
-	*   C1       C2           C3
-	* L 1/1.707  0.707/1.707  0.0
-	* R 0.0      0.707/1.707  1/1.707
-	*
-	* FIXME
-	* it seems that scaling down the summed signals is not the correct way of mixing, see:
-	* http://dsp.stackexchange.com/questions/3581/algorithms-to-mix-audio-signals-without-clipping
-	* maybe we should consider some form of soft/hard clipping instead to avoid possible overflows
-	*/
 
 public:
 	void doMix ();
@@ -125,7 +73,7 @@ public:
 	* @param buffer output buffer
 	* @param count size of the buffer in samples
 	*/
-	void begin ( int16_t* buffer, uint32_t count );
+	void begin ( float* buffer, uint32_t count );
 
 	/**
 	* Remove all SIDs from the mixer
@@ -146,13 +94,6 @@ public:
 	* @return a pointer to the requested sid emu or 0 if not found
 	*/
 	[[ nodiscard ]] sidinline sidemu* getSid ( int i ) const { return ( i < int ( m_chips.size () ) ) ? m_chips[ i ] : nullptr; }
-
-	/**
-	* Set mixing mode.
-	*
-	* @param stereo true for stereo mode, false for mono
-	*/
-	void setStereo ( bool stereo );
 
 	/**
 	* Set sample rate.

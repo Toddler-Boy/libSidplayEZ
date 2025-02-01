@@ -1,7 +1,8 @@
 /*
 * This file is part of libsidplayfp, a SID player engine.
 *
-* Copyright 2011-2023 Leandro Nini <drfiemost@users.sourceforge.net>
+* Copyright 2025-2025 Michael Hartmann
+* Copyright 2011-2025 Leandro Nini <drfiemost@users.sourceforge.net>
 * Copyright 2007-2010 Antti Lankila
 * Copyright 2000-2001 Simon White
 *
@@ -31,20 +32,6 @@
 
 namespace libsidplayfp
 {
-
-/**
-* Configuration error exception.
-*/
-class configError
-{
-private:
-	const char* m_msg;
-
-public:
-	configError ( const char* msg ) : m_msg ( msg ) {}
-	const char* message () const { return m_msg; }
-};
-//-----------------------------------------------------------------------------
 
 Player::Player ()
 {
@@ -96,15 +83,12 @@ void Player::setChargen ( const uint8_t* rom )
 
 void Player::initialise ()
 {
-	m_isPlaying = state_t::STOPPED;
-
 	m_c64.reset ();
 
 	const auto	tuneInfo = m_tune->getInfo ();
 
-	const auto	size = uint32_t ( tuneInfo->loadAddr () ) + tuneInfo->c64dataLen () - 1;
-	if ( size > 0xffff )
-		throw configError ( "SIDPLAYER ERROR: Size of music data exceeds C64 memory." );
+	[[ maybe_unused ]] const auto	size = uint32_t ( tuneInfo->loadAddr () ) + tuneInfo->c64dataLen () - 1;
+	assert ( size <= 0xffff && "File is larger than C64 memory (64k)" );
 
 	auto warmup = [ this ] ( int iterations )
 	{
@@ -123,8 +107,8 @@ void Player::initialise ()
 	warmup ( powerOnDelay );
 
 	auto	driver = psiddrv ( m_tune->getInfo () );
-	if ( ! driver.drvReloc () )
-		throw configError ( driver.errorString () );
+	[[ maybe_unused ]] const auto	drvRelocSuccess = driver.drvReloc ();
+	assert ( drvRelocSuccess && "Couldn't install C64 driver" );
 
 	m_info.m_driverAddr = driver.driverAddr ();
 	m_info.m_driverLength = driver.driverLength ();
@@ -133,8 +117,8 @@ void Player::initialise ()
 	auto&	mem = m_c64.getMemInterface ();
 	driver.install ( mem, videoSwitch );
 
-	if ( ! m_tune->placeSidTuneInC64mem ( mem ) )
-		throw configError ( m_tune->statusString () );
+	[[ maybe_unused ]] const auto	tunePlacementSuccess = m_tune->placeSidTuneInC64mem ( mem );
+	assert ( tunePlacementSuccess && "No tune loaded" );
 
 	m_c64.resetCpu ();
 
@@ -150,8 +134,6 @@ void Player::initialise ()
 
 		// Set the handshake to continue
 		mem.writeMemByte ( handshakeAddr, 2 );
-
-//		warmup ( 5 );
 	}
 
 	m_startTime = m_c64.getTimeMs ();
@@ -162,7 +144,7 @@ bool Player::loadTune ( SidTune* tune )
 {
 	if ( m_tune = tune; tune )
 	{
-		// Must re-configure on fly for stereo support!
+		// Must re-configure on fly!
 		if ( ! setConfig ( m_cfg, true ) )
 		{
 			// Failed configuration with new tune, reject it
@@ -175,77 +157,29 @@ bool Player::loadTune ( SidTune* tune )
 }
 //-----------------------------------------------------------------------------
 
-uint32_t Player::play ( int16_t* buffer, uint32_t count )
+uint32_t Player::play ( float* buffer, uint32_t count )
 {
-	constexpr auto	CYCLES = 3000u;
-
-	// Make sure a tune is loaded
-	if ( ! m_tune )
-		return 0;
+	// Make sure we can actually play
+	assert ( m_tune && "No tune loaded" );
+	assert ( buffer && count "You need to to provide a buffer to render into" );
+	assert ( m_mixer.getSid ( 0 ) && "No SID chip is configured" );
 
 	// Start the player loop
-	if ( m_isPlaying == state_t::STOPPED )
-		m_isPlaying = state_t::PLAYING;
+	m_mixer.begin ( buffer, count );
 
-	if ( m_isPlaying == state_t::PLAYING )
+	constexpr auto	CYCLES = 3000u;
+
+	// Clock chips and mix into output buffer
+	while ( m_mixer.notFinished () )
 	{
-		m_mixer.begin ( buffer, count );
+		if ( ! m_mixer.wait () )
+			run ( CYCLES );
 
-		if ( m_mixer.getSid ( 0 ) )
-		{
-			if ( count && buffer )
-			{
-				// Clock chips and mix into output buffer
-				while ( m_mixer.notFinished () )
-				{
-					if ( ! m_mixer.wait () )
-						run ( CYCLES );
-
-					m_mixer.clockChips ();
-					m_mixer.doMix ();
-				}
-				count = m_mixer.samplesGenerated ();
-			}
-			else
-			{
-				// Clock chips and discard buffers
-				auto	size = int ( m_c64.getMainCpuSpeed () / m_cfg.frequency );
-				while ( --size )
-				{
-					run ( CYCLES );
-
-					m_mixer.clockChips ();
-					m_mixer.resetBufs ();
-				}
-			}
-		}
-		else
-		{
-			// Clock the machine
-			auto	size = int ( m_c64.getMainCpuSpeed () / m_cfg.frequency );
-			while ( --size )
-				run ( CYCLES );
-		}
+		m_mixer.clockChips ();
+		m_mixer.doMix ();
 	}
 
-	if ( m_isPlaying == state_t::STOPPING )
-	{
-		try
-		{
-			initialise ();
-		}
-		catch ( configError const& ) {}
-		m_isPlaying = state_t::STOPPED;
-	}
-
-	return count;
-}
-//-----------------------------------------------------------------------------
-
-void Player::stop ()
-{
-	if ( m_tune && m_isPlaying == state_t::PLAYING )
-		m_isPlaying = state_t::STOPPING;
+	return m_mixer.samplesGenerated ();
 }
 //-----------------------------------------------------------------------------
 
@@ -267,64 +201,48 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 	{
 		const auto	tuneInfo = m_tune->getInfo ();
 
-		try
+		sidRelease ();
+
+		std::vector<uint16_t>	addresses = { 0xD400 };	// First SID chip is always at $D400
+
+		auto addSid = [ &addresses, tuneInfo ] ( const auto sidIndex, uint16_t fallbackAddr )
 		{
-			sidRelease ();
-
-			std::vector<uint16_t>	addresses = { 0xD400 };	// First SID chip is always at $D400
-
-			auto addSid = [ &addresses, tuneInfo ] ( const auto sidIndex, uint16_t fallbackAddr )
+			if ( auto newSidAddress = tuneInfo->sidChipBase ( sidIndex ) )
 			{
-				if ( auto newSidAddress = tuneInfo->sidChipBase ( sidIndex ) )
-				{
-					addresses.push_back ( newSidAddress );
-					return;
-				}
+				addresses.push_back ( newSidAddress );
+				return;
+			}
 
-				if ( fallbackAddr )
-					addresses.push_back ( fallbackAddr );
-			};
+			if ( fallbackAddr )
+				addresses.push_back ( fallbackAddr );
+		};
 
-			addSid ( 1, cfg.secondSidAddress );
-			addSid ( 2, cfg.thirdSidAddress );
+		addSid ( 1, cfg.secondSidAddress );
+		addSid ( 2, cfg.thirdSidAddress );
 
-			// SID emulation setup (must be performed before the environment setup call)
-			sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses );
+		// SID emulation setup (must be performed before the environment setup call)
+		sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses );
 
-			m_c64.setModel ( c64model ( cfg.defaultC64Model, cfg.forceC64Model ) );
+		m_c64.setModel ( c64model ( cfg.defaultC64Model, cfg.forceC64Model ) );
 
-			auto getCiaModel = [] ( SidConfig::cia_model_t model )
-			{
-				switch ( model )
-				{
-					default:
-					case SidConfig::MOS6526:		return c64::OLD;
-					case SidConfig::MOS8521:		return c64::NEW;
-					case SidConfig::MOS6526W4485:	return c64::OLD_4485;
-				}
-			};
-			m_c64.setCiaModel ( getCiaModel ( cfg.ciaModel ) );
-
-			sidParams ( m_c64.getMainCpuSpeed (), cfg.frequency );
-
-			// Configure, setup and install C64 environment/events
-			initialise ();
-		}
-		catch ( configError const& e )
+		auto getCiaModel = [] ( SidConfig::cia_model_t model )
 		{
-			m_errorString = e.message ();
+			switch ( model )
+			{
+				default:
+				case SidConfig::MOS6526:		return c64::OLD;
+				case SidConfig::MOS8521:		return c64::NEW;
+				case SidConfig::MOS6526W4485:	return c64::OLD_4485;
+			}
+		};
+		m_c64.setCiaModel ( getCiaModel ( cfg.ciaModel ) );
 
-			if ( &m_cfg != &cfg )
-				setConfig ( m_cfg );
+		sidParams ( m_c64.getMainCpuSpeed (), cfg.frequency );
 
-			return false;
-		}
+		// Configure, setup and install C64 environment/events
+		initialise ();
 	}
 
-	const auto	isStereo = cfg.playback == SidConfig::STEREO;
-	m_info.m_channels = isStereo ? 2 : 1;
-
-	m_mixer.setStereo ( isStereo );
 	m_mixer.setSamplerate ( cfg.frequency );
 
 	// Update Configuration
@@ -452,9 +370,14 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 		s->model ( defaultModel );
 
 		if ( i++ == 0 )
+		{
 			m_c64.setBaseSid ( s );
-		else if ( ! m_c64.addExtraSid ( s, extraAddr ) )
-			throw configError ( "SIDPLAYER ERROR: Unsupported SID address." );
+		}
+		else
+		{
+			[[ maybe_unused ]] const auto extraSuccess = m_c64.addExtraSid ( s, extraAddr );
+			assert ( extraSuccess == true );
+		}
 
 		m_mixer.addSid ( s );
 	}
