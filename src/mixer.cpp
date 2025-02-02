@@ -53,23 +53,18 @@ void Mixer::doMix ()
 	// NB: if more than one chip exists, their bufferpos is identical to first chip's
 	const auto	sampleCount = m_chips.front ()->bufferpos ();
 	const auto	toCopy = std::min ( sampleCount, int ( m_sampleCount - m_sampleIndex ) );
+	m_sampleIndex += toCopy;
 
 	constexpr auto smp16ToFloat = [] ( int16_t input ) { return input * ( 1.0f / 32768.0f ); };
 
+	// First chip
 	for ( auto i = 0; i < toCopy; i++ )
 		outputBuffer[ i ] = smp16ToFloat ( m_buffers[ 0 ][ i ] );
 
-	if ( m_buffers.size () > 1u )
-	{
-		for ( auto i = 0; i < toCopy; i++ )
-			outputBuffer[ i ] += smp16ToFloat ( m_buffers[ 1 ][ i ] );
-
-		if ( m_buffers.size () > 2u )
-			for ( auto i = 0; i < toCopy; i++ )
-				outputBuffer[ i ] += smp16ToFloat ( m_buffers[ 2 ][ i ] );
-	}
-
-	m_sampleIndex += toCopy;
+	// Other chips
+	for ( auto i = 1; i < int ( m_buffers.size () ); ++i )
+		for ( auto j = 0; j < toCopy; j++ )
+			outputBuffer[ j ] += smp16ToFloat ( m_buffers[ i ][ j ] );
 
 	// move the unhandled data to start of buffer, if any
 	const auto	samplesLeft = sampleCount - toCopy;
