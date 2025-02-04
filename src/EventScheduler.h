@@ -43,7 +43,7 @@ using event_phase_t = enum
 
 /**
 * Fast EventScheduler, which maintains a linked list of Events.
-* This scheduler takes neglible time even when it is used to
+* This scheduler takes negligible time even when it is used to
 * schedule events for nearly every clock.
 *
 * Events occur on an internal clock which is 2x the visible clock.
