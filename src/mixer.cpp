@@ -82,7 +82,7 @@ void Mixer::doMix ()
 void Mixer::begin ( float* buffer, uint32_t count )
 {
 	// we need a minimum buffer-size, otherwise a crash might occur
-	assert ( count > * 100 );
+	assert ( count > 100 );
 
 	m_sampleIndex = 0;
 	m_sampleCount = count;
