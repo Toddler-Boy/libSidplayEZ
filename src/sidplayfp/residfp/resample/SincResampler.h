@@ -70,7 +70,49 @@ private:
 
 	int32_t	sample[ RINGSIZE * 2 ];
 
-	int fir ( int subcycle );
+	/**
+	* Calculate convolution with sample and sinc
+	*
+	* @param a sample buffer input
+	* @param b sinc buffer
+	* @param bLength length of the sinc buffer
+	* @return convolved result
+	*/
+	//-----------------------------------------------------------------------------
+	sidinline int fir ( int subcycle )
+	{
+		auto convolve = [] ( const int32_t* const __restrict__ a, const int16_t* const __restrict__ b, const int bLength )
+		{
+			auto    out = 0;
+
+			[[ assume ( bLength > 0 ) ]];
+			for ( auto i = 0; i < bLength; ++i )
+				out += a[ i ] * b[ i ];
+
+			return ( out + ( 1 << 14 ) ) >> 15;
+		};
+
+		// Find the first of the nearest fir tables close to the phase
+		auto		firTableFirst = subcycle * firRES >> 10;
+		const auto	firTableOffset = ( subcycle * firRES ) & 0x3FF;
+
+		// Find firN most recent samples, plus one extra in case the FIR wraps
+		auto	sampleStart = sampleIndex - firN + RINGSIZE - 1;
+
+		const auto	v1 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
+
+		// Use next FIR table, wrap around to first FIR table using previous sample
+		if ( ++firTableFirst == firRES ) [[ unlikely ]]
+		{
+			firTableFirst = 0;
+			++sampleStart;
+		}
+
+		const auto	v2 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
+
+		// Linear interpolation between the sinc tables yields good approximation for the exact value
+		return v1 + ( firTableOffset * ( v2 - v1 ) >> 10 );
+	}
 
 public:
 	/**
@@ -97,7 +139,7 @@ public:
 		sample[ sampleIndex ] = sample[ sampleIndex + RINGSIZE ] = input;
 		sampleIndex = ( sampleIndex + 1 ) & ( RINGSIZE - 1 );
 
-		if ( sampleOffset < 1024 )
+		if ( sampleOffset < 1024 ) [[ likely ]]
 		{
 			outputValue = fir ( sampleOffset );
 			ready = true;

@@ -146,7 +146,7 @@ public:
 			// Newton-Raphson step: xk1 = xk - f(xk)/f'(xk)
 			x -= f / df;
 
-			if ( std::fabs ( x - xk ) < EPSILON )
+			if ( std::fabs ( x - xk ) < EPSILON ) [[ unlikely ]]
 				return opamp->evaluate ( x ).x;
 
 			// Narrow down root bracket
@@ -156,7 +156,7 @@ public:
  				ak = xk;
 
 			// Bisection step (ala Dekker's method)
-			if ( x <= ak || x >= bk )
+			if ( x <= ak || x >= bk ) [[ unlikely ]]
 				x = ( ak + bk ) * 0.5;
 		}
 	}

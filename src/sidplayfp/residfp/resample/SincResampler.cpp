@@ -31,57 +31,10 @@
 #if ! defined __APPLE__
 constexpr auto	M_PI = 3.14159265358979323846;
 #endif
+//-----------------------------------------------------------------------------
 
 namespace reSIDfp
 {
-/**
-* Calculate convolution with sample and sinc
-*
-* @param a sample buffer input
-* @param b sinc buffer
-* @param bLength length of the sinc buffer
-* @return convolved result
-*/
-//-----------------------------------------------------------------------------
-
-int SincResampler::fir ( int subcycle )
-{
-	auto convolve = [] ( const int32_t* const __restrict__ a, const int16_t* const __restrict__ b, const int bLength )
-	{
-		auto    out = 0;
-
-		#if __has_cpp_attribute( assume )
-			[[ assume ( bLength > 0 ) ]];
-		#endif
-
-		for ( auto i = 0; i < bLength; ++i )
-  			out += a[ i ] * b[ i ];
- 
-		return ( out + ( 1 << 14 ) ) >> 15;
-	};
-
-	// Find the first of the nearest fir tables close to the phase
-	auto		firTableFirst = subcycle * firRES >> 10;
-	const auto	firTableOffset = ( subcycle * firRES ) & 0x3FF;
-
-	// Find firN most recent samples, plus one extra in case the FIR wraps
-	auto	sampleStart = sampleIndex - firN + RINGSIZE - 1;
-
-	const auto	v1 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
-
-	// Use next FIR table, wrap around to first FIR table using previous sample
-	if ( ++firTableFirst == firRES )
-	{
-		firTableFirst = 0;
-		++sampleStart;
-	}
-
-	const auto	v2 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
-
-	// Linear interpolation between the sinc tables yields good approximation for the exact value
-	return v1 + ( firTableOffset * ( v2 - v1 ) >> 10 );
-}
-//-----------------------------------------------------------------------------
 
 void SincResampler::setup ( double clockFrequency, double samplingFrequency, double highestAccurateFrequency )
 {

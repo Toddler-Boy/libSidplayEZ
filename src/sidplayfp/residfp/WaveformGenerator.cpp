@@ -253,7 +253,7 @@ void WaveformGenerator::shift_phase2 ( unsigned int waveform_old, unsigned int w
 
 void WaveformGenerator::write_shift_register ()
 {
-	if ( waveform > 0x8 )
+	if ( waveform > 0x8 ) [[ unlikely ]]
 	{
 		#if 0
 		// FIXME this breaks SID/wf12nsr/wf12nsr
@@ -268,7 +268,7 @@ void WaveformGenerator::write_shift_register ()
 
 		// Write changes to the shift register output caused by combined waveforms
 		// back into the shift register.
-		if ( shift_pipeline != 1 && !test )
+		if ( shift_pipeline != 1 && ! test ) [[ likely ]]
 		{
 			// the output pulls down the SR bits
 			shift_register = shift_register & ( shift_mask | get_noise_writeback ( waveform_output ) );
@@ -318,7 +318,7 @@ void WaveformGenerator::synchronize ( WaveformGenerator& syncDest, WaveformGener
 	// A special case occurs when a sync source is synced itself on the same
 	// cycle as when its MSB is set high. In this case the destination will
 	// not be synced. This has been verified by sampling OSC3.
-	if ( msb_rising && syncDest.sync && ! ( sync && syncSource.msb_rising ) )
+	if ( msb_rising && syncDest.sync && ! ( sync && syncSource.msb_rising ) ) [[ unlikely ]]
 		syncDest.accumulator = 0;
 }
 //-----------------------------------------------------------------------------

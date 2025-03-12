@@ -2,7 +2,7 @@
 /*
 * This file is part of libsidplayfp, a SID player engine.
 *
-* Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
+* Copyright 2011-2025 Leandro Nini <drfiemost@users.sourceforge.net>
 * Copyright 2007-2010 Antti Lankila
 * Copyright 2004 Dag Lem <resid@nimrod.no>
 *
@@ -79,7 +79,7 @@ public:
 	*/
 	[[ nodiscard ]] sidinline int clock ( int input )
 	{
-		const auto	Vi = ( input << 11 ) - ( 1 << ( 11 + 15 ) );
+		const auto	Vi = input << 11;
 		const auto	dVlp = ( w0lp_1_s7 * ( Vi - Vlp ) ) >> 7;
 		const auto	dVhp = ( w0hp_1_s17 * ( Vlp - Vhp ) ) >> 17;
 		Vlp += dVlp;

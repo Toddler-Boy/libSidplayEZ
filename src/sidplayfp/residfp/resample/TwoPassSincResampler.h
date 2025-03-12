@@ -74,7 +74,7 @@ public:
 			constexpr auto	max16 = float ( std::numeric_limits<int16_t>::max () );
 			constexpr auto	threshold = int ( max16 * 0.85454f );
 			const auto	abs_x = std::abs ( x );
-			if ( abs_x < threshold )
+			if ( abs_x < threshold ) [[ likely ]]
 				return int16_t ( x );
 
 			constexpr auto	t = threshold / max16;

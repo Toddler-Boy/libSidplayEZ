@@ -199,18 +199,18 @@ sidinline void EnvelopeGenerator::clock ()
 {
 	env3 = envelope_counter;
 
-	if ( new_exponential_counter_period > 0 )
+	if ( new_exponential_counter_period > 0 ) [[ unlikely ]]
 	{
 		exponential_counter_period = new_exponential_counter_period;
 		new_exponential_counter_period = 0;
 	}
 
-	if ( state_pipeline )
+	if ( state_pipeline ) [[ unlikely ]]
 		state_change ();
 
-	if ( envelope_pipeline != 0 && --envelope_pipeline == 0 )
+	if ( envelope_pipeline != 0 && --envelope_pipeline == 0 ) [[ unlikely ]]
 	{
-		if ( counter_enabled )
+		if ( counter_enabled ) [[ likely ]]
 		{
 			if ( state == State::ATTACK )
 			{
@@ -229,7 +229,7 @@ sidinline void EnvelopeGenerator::clock ()
 			set_exponential_counter ();
 		}
 	}
-	else if ( exponential_pipeline != 0 && --exponential_pipeline == 0 )
+	else if ( exponential_pipeline != 0 && --exponential_pipeline == 0 ) [[ unlikely ]]
 	{
 		exponential_counter = 0;
 
@@ -243,7 +243,7 @@ sidinline void EnvelopeGenerator::clock ()
 			envelope_pipeline = 1;
 		}
 	}
-	else if ( resetLfsr )
+	else if ( resetLfsr ) [[ unlikely ]]
 	{
 		lfsr = 0x7fff;
 		resetLfsr = false;
@@ -275,7 +275,7 @@ sidinline void EnvelopeGenerator::clock ()
 	// This has been verified by sampling ENV3.
 
 	// check to see if LFSR matches table value
-	if ( lfsr != rate )
+	if ( lfsr != rate ) [[ likely ]]
 	{
 		// it wasn't a match, clock the LFSR once
 		// by performing XOR on last 2 bits

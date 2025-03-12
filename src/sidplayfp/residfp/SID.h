@@ -117,7 +117,7 @@ private:
 	sidinline void voiceSync ( const bool sync )
 	{
 		// Synchronize the 3 waveform generators
-		if ( sync )
+		if ( sync ) [[ unlikely ]]
 		{
 			voice[ 0 ].waveformGenerator.synchronize ( voice[ 1 ].waveformGenerator, voice[ 2 ].waveformGenerator );
 			voice[ 1 ].waveformGenerator.synchronize ( voice[ 2 ].waveformGenerator, voice[ 0 ].waveformGenerator );
@@ -132,7 +132,7 @@ private:
 			auto&		wave = voice[ i ].waveformGenerator;
 			const auto	freq = wave.readFreq ();
 
-			if ( wave.readTest () || freq == 0 || ! voice[ ( i + 1 ) % 3 ].waveformGenerator.readSync () )
+			if ( wave.readTest () || freq == 0 || ! voice[ ( i + 1 ) % 3 ].waveformGenerator.readSync () ) [[ likely ]]
 				continue;
 
 			const auto	accumulator = wave.readAccumulator ();
@@ -246,9 +246,9 @@ public:
 	sidinline int clock ( unsigned int cycles, int16_t* buf )
 	{
 		// ageBusValue
-		if ( busValueTtl )
+		if ( busValueTtl ) [[ likely ]]
 		{
-			if ( busValueTtl -= cycles; busValueTtl <= 0 )
+			if ( busValueTtl -= cycles; busValueTtl <= 0 ) [[ unlikely ]]
 			{
 				busValue = 0;
 				busValueTtl = 0;
@@ -261,10 +261,10 @@ public:
 			const auto	o2 = voice[ 1 ].output ( voice[ 0 ].waveformGenerator );
 			const auto	o3 = voice[ 2 ].output ( voice[ 1 ].waveformGenerator );
 
-			if ( model == MOS8580 )
+			if ( model == MOS8580 ) [[ likely ]]
 			{
 				const auto	input = int ( filter8580.clock ( o1, o2, o3 ) );
-				return externalFilter.clock ( input );
+				return externalFilter.clock ( input + INT16_MIN );
 			}
 
 			const auto	env1 = voice[ 0 ].envelopeGenerator.output ();
@@ -272,13 +272,13 @@ public:
 			const auto	env3 = voice[ 2 ].envelopeGenerator.output ();
 
 			const auto	input = int ( filter6581.clock ( o1, o2, o3, env1, env2, env3 ) );
-			return externalFilter.clock ( input );
+			return externalFilter.clock ( input + INT16_MIN );
 		};
 
 		auto    s = 0;
 		while ( cycles )
 		{
-			if ( auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 )
+			if ( auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 ) [[ likely ]]
 			{
 				for ( auto i = 0u; i < delta_t; i++ )
 				{
@@ -292,7 +292,7 @@ public:
 					voice[ 1 ].envelopeGenerator.clock ();
 					voice[ 2 ].envelopeGenerator.clock ();
 
-					if ( resampler.input ( output () ) )
+					if ( resampler.input ( output () ) ) [[ unlikely ]]
 						buf[ s++ ] = int16_t ( resampler.output ( scaleFactor ) );
 				}
 
@@ -300,7 +300,7 @@ public:
 				nextVoiceSync -= delta_t;
 			}
 
-			if ( ! nextVoiceSync )
+			if ( ! nextVoiceSync ) [[ unlikely ]]
 				voiceSync ( true );
 		}
 

@@ -172,9 +172,9 @@ public:
 	*/
 	sidinline void clock ()
 	{
-		if ( test )
+		if ( test ) [[ unlikely ]]
 		{
-			if ( shift_register_reset && ( --shift_register_reset == 0 ) )
+			if ( shift_register_reset && ( --shift_register_reset == 0 ) ) [[ unlikely ]]
 			{
 				shiftregBitfade ();
 				shift_latch = shift_register;
@@ -203,7 +203,7 @@ public:
 
 			// Shift noise register once for each time accumulator bit 19 is set high.
 			// The shift is delayed 2 cycles.
-			if ( accumulator_bits_set & 0x080000 )
+			if ( accumulator_bits_set & 0x080000 ) [[ unlikely ]]
 			{
 				// Pipeline: Detect rising bit, shift phase 1, shift phase 2.
 				shift_pipeline = 2;
@@ -285,7 +285,7 @@ public:
 	sidinline unsigned int output ( const WaveformGenerator& ringModulator )
 	{
 		// Set output value.
-		if ( waveform )
+		if ( waveform ) [[ likely ]]
 		{
 			const auto	ix = ( accumulator ^ ( ~ringModulator.accumulator & ring_msb_mask ) ) >> 12;
 
@@ -323,7 +323,7 @@ public:
 		else
 		{
 			// Age floating DAC input.
-			if ( floating_output_ttl && ( --floating_output_ttl == 0 ) )
+			if ( floating_output_ttl && ( --floating_output_ttl == 0 ) ) [[ unlikely ]]
 			{
 				constexpr auto	FLOATING_OUTPUT_FADE_6581R3 = 1400u;
 				constexpr auto	FLOATING_OUTPUT_FADE_8580R5 = 50000u;
