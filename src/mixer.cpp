@@ -55,25 +55,26 @@ void Mixer::doMix ()
 	const auto	toCopy = std::min ( sampleCount, int ( m_sampleCount - m_sampleIndex ) );
 	m_sampleIndex += toCopy;
 
-	constexpr auto smp16ToFloat = [] ( int16_t input ) { return input * ( 1.0f / 32768.0f ); };
-
-	// First chip
-	for ( auto i = 0; i < toCopy; i++ )
-		outputBuffer[ i ] = smp16ToFloat ( m_buffers[ 0 ][ i ] );
-
-	// Other chips
-	for ( auto i = 1; i < int ( m_buffers.size () ); ++i )
-		for ( auto j = 0; j < toCopy; j++ )
-			outputBuffer[ j ] += smp16ToFloat ( m_buffers[ i ][ j ] );
-
-	// move the unhandled data to start of buffer, if any
 	const auto	samplesLeft = sampleCount - toCopy;
 
-	for ( auto bfr : m_buffers )
-		std::memmove ( bfr, bfr + toCopy, samplesLeft * sizeof ( int16_t ) );
-
+	// Render chips
 	for ( auto chp : m_chips )
+	{
+		const auto	buf = chp->buffer ();
+
+		constexpr auto smp16ToFloat = [] ( int16_t input ) { constexpr auto inv = 1.0f / ( INT16_MAX + 1 ); return input * inv; };
+
+		if ( chp == m_chips[ 0 ] )
+			for ( auto i = 0; i < toCopy; i++ )
+				outputBuffer[ i ] = smp16ToFloat ( buf[ i ] );
+		else
+			for ( auto i = 0; i < toCopy; i++ )
+				outputBuffer[ i ] += smp16ToFloat ( buf[ i ] );
+
+		// move the unhandled data to start of buffer, if any
+		std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 		chp->bufferpos ( samplesLeft );
+	}
 
 	m_wait = uint32_t ( samplesLeft ) > m_sampleCount;
 }
@@ -95,7 +96,6 @@ void Mixer::begin ( float* buffer, uint32_t count )
 void Mixer::clearSids ()
 {
 	m_chips.clear ();
-	m_buffers.clear ();
 }
 //-----------------------------------------------------------------------------
 
@@ -105,7 +105,6 @@ void Mixer::addSid ( sidemu* chip )
 		return;
 
 	m_chips.push_back ( chip );
-	m_buffers.push_back ( chip->buffer () );
 }
 //-----------------------------------------------------------------------------
 

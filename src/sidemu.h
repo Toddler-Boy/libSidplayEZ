@@ -140,7 +140,7 @@ public:
 	/**
 	* Get the buffer.
 	*/
-	[[ nodiscard ]] int16_t* buffer () { return &m_buffer[ 0 ]; }
+	[[ nodiscard ]] sidinline int16_t* buffer () { return &m_buffer[ 0 ]; }
 };
 
 }

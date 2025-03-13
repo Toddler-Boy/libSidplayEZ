@@ -190,7 +190,7 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 		return true;
 
 	// Check for base sampling frequency
-	if ( cfg.frequency < 8000 )
+	if ( cfg.frequency < 11'025 || cfg.frequency > 192'000)
 	{
 		m_errorString = "SIDPLAYER ERROR: Unsupported sampling frequency.";
 		return false;

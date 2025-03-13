@@ -41,9 +41,8 @@ public:
 	static constexpr unsigned int MAX_SIDS = 3;
 
 private:
-	std::vector<sidemu*>			m_chips;
-	std::vector<int16_t*>			m_buffers;
-	int32_t							m_iSamples[ MAX_SIDS ] = {};
+	std::vector<sidemu*>	m_chips;
+	int32_t					m_iSamples[ MAX_SIDS ] = {};
 
 	// Mixer settings
 	float*		m_sampleBuffer = nullptr;
