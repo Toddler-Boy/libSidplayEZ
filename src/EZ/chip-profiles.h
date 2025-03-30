@@ -27,7 +27,7 @@
 { "Jason C. Brooke",					{	.folder = "/MUSICIANS/B/Brooke_Jason/",				.fltCox = 0.1,	.flt0Dac = 0.8 } },
 { "Jason Page",							{	.folder = "/MUSICIANS/P/Page_Jason/",				.fltCox = 0.35	} },
 { "Jeroen Tel",							{	.folder = "/MUSICIANS/T/Tel_Jeroen/",				.fltCox = 0.35,	.fltGain = 0.85,	.exceptions = { { "Outrun_Europa", "Jeroen Tel (Outrun Europa)" } } } },
-{ "Jeroen Tel (Outrun Europa)",			{	.folder = "/MUSICIANS/T/Tel_Jeroen_2/",				.fltCox = 0.35,	.fltGain = 0.85,	.digi = 0.55 } },
+{ "Jeroen Tel (Outrun Europa)",			{	.folder = "/MUSICIANS/T/Tel_Jeroen_2/",				.fltCox = 0.35,	.fltGain = 0.85,	.digi = 0.5 } },
 { "Johannes Bjerregaard",				{	.folder = "/MUSICIANS/B/Bjerregaard_Johannes/",		.fltCox = 0.35, .exceptions = { { "Stormlord", "Jeroen Tel"	} } } },
 { "Jonathan Dunn",						{	.folder = "/MUSICIANS/D/Dunn_Jonathan/",			.fltCox = 0.4,	.fltGain = 0.8	} },
 { "Jori Olkkonen (Yip)",				{	.folder = "/MUSICIANS/Y/Yip/",						.fltCox = 0.35,	.flt0Dac = 0.6	} },
