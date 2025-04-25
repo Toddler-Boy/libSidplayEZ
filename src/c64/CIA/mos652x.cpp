@@ -24,6 +24,7 @@
 #include "mos652x.h"
 
 #include <cstring>
+#include <algorithm>
 
 #include "../../sidendian.h"
 

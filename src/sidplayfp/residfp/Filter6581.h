@@ -22,7 +22,7 @@
 */
 
 #include <memory>
-#include <smmintrin.h>
+//#include <smmintrin.h>
 
 #include "Filter.h"
 #include "Integrator6581.h"

@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <cstring>
+#include <algorithm>
 
 #include "Bank.h"
 

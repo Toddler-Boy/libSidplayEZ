@@ -27,6 +27,7 @@
 #include <cmath>
 #include <numeric>
 #include <execution>
+#include <algorithm>
 
 #if ! defined __APPLE__
 constexpr auto	M_PI = 3.14159265358979323846;
