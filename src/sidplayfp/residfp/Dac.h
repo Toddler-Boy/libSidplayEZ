@@ -108,7 +108,7 @@ public:
 	* @param input the digital input
 	* @return the analog output value
 	*/
-	[[ nodiscard ]] double getOutput ( unsigned int input ) const;
+	[[ nodiscard ]] double getOutput ( unsigned int input, const bool saturation = false ) const;
 };
 //-----------------------------------------------------------------------------
 

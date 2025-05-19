@@ -61,20 +61,7 @@ void Mixer::doMix ()
 	{
 		constexpr auto inv = 1.0f / ( INT16_MAX + 1 );
 
-		#if 1
-			return input * inv;
-		#else
-			// Apply mild asymmetrical distortion (only positive values are shaped)
-			const auto	_in = input * inv;
-
-			if ( input <= 0 )
-				return _in;
-
-			constexpr auto	e = 0.0001f;
-			constexpr auto	_s = 1.3f;	// 1.0 = linear, 2.5 = extreme curve
-
-			return ( _in - 1.0f ) / ( 1.0f - _in - _s * ( -_in ) + e ) + 1.0f;
-		#endif
+		return input * inv;
 	};
 
 	// Render chips

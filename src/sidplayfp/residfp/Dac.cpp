@@ -34,7 +34,7 @@ Dac::Dac ( unsigned int bits, const double _leakage )
 }
 //-----------------------------------------------------------------------------
 
-double Dac::getOutput ( unsigned int input ) const
+double Dac::getOutput ( unsigned int input, const bool saturation ) const
 {
 	auto    dacValue = 0.0;
 
@@ -42,6 +42,14 @@ double Dac::getOutput ( unsigned int input ) const
 	{
 		const auto	transistor_on = ( input & ( 1 << i ) ) != 0;
 		dacValue += transistor_on ? dac[ i ] : dac[ i ] * leakage;
+	}
+
+	if ( saturation )
+	{
+		constexpr auto	GAIN = 1.1;
+		constexpr auto	SAT = 1.1;
+
+		dacValue = GAIN * dacValue + ( 1.0 - GAIN ) * SAT * dacValue * dacValue * dacValue;
 	}
 
 	return dacValue;

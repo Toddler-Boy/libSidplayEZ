@@ -30,8 +30,8 @@ public:
 		double		digi = 1.0;
 
 		// Combined waveform strength
-		int			cwsLevel = strong;
-		double		cwsThreshold = 0.8;
+		int			cwsLevel = average;
+		double		cwsThreshold = 1.0;
 
 		std::unordered_map<std::string, std::string>	exceptions;
 	};
