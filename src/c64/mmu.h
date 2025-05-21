@@ -32,6 +32,7 @@
 #include "Banks/ZeroRAMBank.h"
 
 #include <string.h>
+#include <algorithm>
 
 namespace libsidplayfp
 {

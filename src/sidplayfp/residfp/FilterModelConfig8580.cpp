@@ -156,10 +156,10 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 		buildResonanceTable ( opampModel, resGain );
 	};
 
-	auto    thdSummer = std::jthread ( clBuildSummerTable );
-	auto    thdMixer = std::jthread ( clBuildMixerTable );
-	auto    thdVolume = std::jthread ( clBuildVolumeTable );
-	auto    thdResonance = std::jthread ( clBuildResonanceTable );
+	auto    thdSummer = jthread ( clBuildSummerTable );
+	auto    thdMixer = jthread ( clBuildMixerTable );
+	auto    thdVolume = jthread ( clBuildVolumeTable );
+	auto    thdResonance = jthread ( clBuildResonanceTable );
 }
 //-----------------------------------------------------------------------------
 

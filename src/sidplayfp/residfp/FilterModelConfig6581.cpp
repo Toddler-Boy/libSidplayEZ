@@ -209,12 +209,12 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 		}
 	};
 
-	auto	thdSummer = std::jthread ( clBuildSummerTable );
-	auto	thdMixer = std::jthread ( clBuildMixerTable );
-	auto	thdVolume = std::jthread ( clBuildVolumeTable );
-	auto	thdResonance = std::jthread ( clBuildResonanceTable );
-	auto	thdFilterVcrVg = std::jthread ( clFilterVcrVg );
-	auto	thdFilterVcrIds = std::jthread ( clFilterVcrIds );
+	auto	thdSummer = jthread ( clBuildSummerTable );
+	auto	thdMixer = jthread ( clBuildMixerTable );
+	auto	thdVolume = jthread ( clBuildVolumeTable );
+	auto	thdResonance = jthread ( clBuildResonanceTable );
+	auto	thdFilterVcrVg = jthread ( clFilterVcrVg );
+	auto	thdFilterVcrIds = jthread ( clFilterVcrIds );
 }
 //-----------------------------------------------------------------------------
 
