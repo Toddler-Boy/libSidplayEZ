@@ -158,34 +158,4 @@ public:
 	}
 };
 
-class jthread {
-public:
-	jthread() = default;
-
-	template <typename Callable, typename... Args>
-	explicit jthread(Callable&& f, Args&&... args)
-		: t_(std::forward<Callable>(f), std::forward<Args>(args)...) {}
-
-	~jthread() {
-		if (t_.joinable())
-			t_.join();
-	}
-
-	jthread(const jthread&) = delete;
-	jthread& operator=(const jthread&) = delete;
-
-	jthread(jthread&&) noexcept = default;
-	jthread& operator=(jthread&&) noexcept = default;
-
-	std::thread::id get_id() const noexcept { return t_.get_id(); }
-	bool joinable() const noexcept { return t_.joinable(); }
-	void join() { t_.join(); }
-	void detach() { t_.detach(); }
-	std::thread& get() { return t_; }
-	const std::thread& get() const { return t_; }
-
-private:
-	std::thread t_;
-};
-
 } // namespace reSIDfp
