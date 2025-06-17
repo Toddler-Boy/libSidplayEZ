@@ -22,6 +22,7 @@
 { "Figge Wasberger (Fegolhuzz)",		{	.folder = "/MUSICIANS/F/Fegolhuzz/",				.fltCox = 0.25	} },
 { "Fred Gray",							{	.folder = "/MUSICIANS/G/Gray_Fred/",				.fltCox = 0.8,	.flt0Dac = 1.5, .fltGain = 1.5	} },
 { "Geir Tjelta",						{	.folder = "/MUSICIANS/T/Tjelta_Geir/",				.fltCox = 0.5	} },
+{ "Georg Brandt",						{	.folder = "/MUSICIANS/B/Brandt_Georg/",				.fltCox = 0.1,	.fltGain = 1.0,	.digi = 1.1 } },
 { "Georg Feil",							{	.folder = "/MUSICIANS/F/Feil_Georg/",				.fltCox = 0.2	} },
 { "Glenn Gallefoos",					{	.folder = "/MUSICIANS/B/Blues_Muz/Gallefoss_Glenn/",.fltCox = 1.3,	.flt0Dac = 0.5,	.fltGain = 0.85	} },
 { "Jason C. Brooke",					{	.folder = "/MUSICIANS/B/Brooke_Jason/",				.fltCox = 0.1,	.flt0Dac = 0.8 } },
