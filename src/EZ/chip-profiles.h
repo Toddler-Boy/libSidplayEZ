@@ -42,7 +42,7 @@
 { "Markus Müller",						{	.folder = "/MUSICIANS/M/Mueller_Markus/",			.fltCox = 0.5,	.flt0Dac = 0.3	} },
 { "Martin Galway",						{	.folder = "/MUSICIANS/G/Galway_Martin/",			.fltCox = 0.5,	.flt0Dac = 0.5,	.fltGain = 1.0,	.digi = 1.1 } },
 { "Martin Walker",						{	.folder = "/MUSICIANS/W/Walker_Martin/",			.fltCox = 0.15	} },
-{ "Matt Gray",							{	.folder = "/MUSICIANS/G/Gray_Matt/",				.fltCox = 0.3,	.fltGain = 1.0,	.digi = 0.8	} },
+{ "Matt Gray",							{	.folder = "/MUSICIANS/G/Gray_Matt/",				.fltCox = 0.3,	.flt0Dac = 0.3,	.fltGain = 0.8,	.digi = 0.8	} },
 { "Michael Hendriks",					{	.folder = "/MUSICIANS/F/FAME/Hendriks_Michael/",	.fltCox = 0.35,	.flt0Dac = 0.7,	.digi = 0.3		} },
 { "Michael Nilsson-Vonderburgh (Mitch)",{	.folder = "/MUSICIANS/M/Mitch_and_Dane/Mitch/",		.fltCox = 0.3,	.flt0Dac = 0.2	} },
 { "Mitch & Dane",						{	.folder = "/MUSICIANS/M/Mitch_and_Dane/",			.fltCox = 0.85,	.flt0Dac = 0.3,	.cwsThreshold = 0.5	} },
