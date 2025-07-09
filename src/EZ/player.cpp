@@ -127,7 +127,7 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
 			};
 
 			static const std::vector<std::string>	editorsUsingEmulation = {
-				"CheeseCutter_1", "GoatTracker_V", "SidWizard_", "Hermit/SidWizard_V", "SidFactory_II/",
+				"CheeseCutter_", "GoatTracker_V", "SidWizard_", "Hermit/SidWizard_V", "SidFactory_II/",
 			};
 
 			for ( const auto& id : editorsUsingEmulation )
