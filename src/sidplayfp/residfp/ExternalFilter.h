@@ -73,7 +73,7 @@ private:
 
 public:
 	/**
-	* SID clocking.
+	* SID clocking
 	*
 	* @param input
 	*/
@@ -96,12 +96,14 @@ public:
 	}
 
 	/**
-	* Setup of the external filter sampling parameters.
+	* Setup of the external filter sampling parameters
 	*
 	* @param frequency the main system clock frequency
 	*/
 	void setClockFrequency ( double frequency )
 	{
+		reset ();
+
 		const auto	dt = 1.0 / frequency;
 
 		// Low-pass:  R = 10kOhm, C = 1000pF; w0l = dt/(dt+RC) = 1e-6/(1e-6+1e4*1e-9) = 0.091
@@ -114,13 +116,12 @@ public:
 	}
 
 	/**
-	* SID reset.
+	* SID reset
 	*/
 	void reset ()
 	{
-		// State of filter.
-		Vlp = 0; //1 << (15 + 11);
-		Vhp = 0;
+ 		// Simulate that the filter has run until it settled
+		Vlp = Vhp = -( 1 << ( 15 + 11 ) );
 	}
 };
 

@@ -125,9 +125,9 @@ void Player::initialise ()
 	// Run for some cycles until the initialization routine is done
 	if ( const auto	handshakeAddr = driver.getHandshakeAddr (); mem.readMemByte ( handshakeAddr ) == 0 )
 	{
- 		// Wait for the handshake to be acknowledged
- 		while ( mem.readMemByte ( handshakeAddr ) == 0 )
- 			warmup ( 1000 );
+		// Wait for the handshake to be acknowledged
+		while ( mem.readMemByte ( handshakeAddr ) == 0 )
+			warmup ( 1000 );
 
 		// Wait a bit until volume clicks are gone
 		warmup ( 1000 );
