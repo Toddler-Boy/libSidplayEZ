@@ -154,6 +154,8 @@ setregs     lda flags
             pha
             lda playnum
             plp
+            ldx #0
+            ldy #0
             jsr init
 
             ; wait for handshake
