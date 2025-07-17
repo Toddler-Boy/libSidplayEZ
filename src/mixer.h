@@ -45,13 +45,12 @@ private:
 	int32_t					m_iSamples[ MAX_SIDS ] = {};
 
 	// Mixer settings
-	float*		m_sampleBuffer = nullptr;
+	float*		m_sampleBuffer[ 2 ] = { nullptr, nullptr };
 	uint32_t	m_sampleCount = 0;
 	uint32_t	m_sampleIndex = 0;
 
 	uint32_t	m_sampleRate = 0;
-
-	bool	m_wait = false;
+	bool		m_wait = false;
 
 public:
 	void doMix ();
@@ -72,7 +71,7 @@ public:
 	* @param buffer output buffer
 	* @param count size of the buffer in samples
 	*/
-	void begin ( float* buffer, uint32_t count );
+	void begin ( float* bufferL, float* bufferR, uint32_t count );
 
 	/**
 	* Remove all SIDs from the mixer
@@ -112,7 +111,7 @@ public:
 	[[ nodiscard ]] sidinline uint32_t samplesGenerated () const { return m_sampleIndex; }
 
 	/*
-	 * Wait till we consume the buffer.
+	 * Wait till we consume the buffer
 	 */
 	[[ nodiscard ]] sidinline bool wait () const { return m_wait; }
 

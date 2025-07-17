@@ -23,7 +23,7 @@ public:
 
 	bool loadSidFile ( const char* filename );
 	bool setTuneNumber (const unsigned int songNo = 0 );
-	uint32_t runEmulation ( float* dst, uint32_t lengthWanted )		{	return engine.play ( dst, lengthWanted );		}
+	uint32_t runEmulation ( float* dstL, float* dstR, uint32_t lengthWanted )	{	return engine.play ( dstL, dstR, lengthWanted );		}
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] )			{	return engine.getSidStatus ( sidNum, regs );	}
 	uint16_t getInterruptCycles () const							{	return engine.getInterruptCycles ();			}
 
