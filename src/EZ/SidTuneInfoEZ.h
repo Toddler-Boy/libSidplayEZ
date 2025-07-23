@@ -52,6 +52,10 @@ struct SidTuneInfoEZ
 	// e.g. "Martin Galway", "Rob Hubbard", "GoatTracker", etc.
 	std::string		chipProfile;
 
+	// Stereo data
+	int				stereoWidth = 0;	// in percent, from 0 to 100
+	float			bassAdjust = 0.0f;	// in dB, usually negative values to push them down, as the defaults tend to be high
+
 	// Technical data
 	unsigned int	currentSong = 0;
 	unsigned int	numSongs = 0;

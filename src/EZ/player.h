@@ -3,6 +3,7 @@
 #include "../player.h"
 #include "sidid.h"
 #include "chip-selector.h"
+#include "stereo-selector.h"
 #include "SidTuneInfoEZ.h"
 
 namespace libsidplayEZ
@@ -15,6 +16,7 @@ class Player final
 public:
 	bool loadSidIDConfig ( const char* filename ) { return sidID.loadSidIDConfig ( filename ); }
 	void setChipProfileMap ( const ChipSelector::profileMap& map ) { chipSelector.setProfiles ( map ); }
+	void setStereoProfileMap ( const StereoSelector::profileMap& map ) { stereoSelector.setProfiles ( map ); }
 
 	void setRoms ( const void* kernal, const void* basic, const void* character );
 
@@ -41,6 +43,7 @@ private:
 	bool	readyToPlay = false;
 
 	ChipSelector	chipSelector;
+	StereoSelector	stereoSelector;
 
 	libsidplayfp::Player	engine;
 
