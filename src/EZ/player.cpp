@@ -144,7 +144,7 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
 		const auto stereoProfile = stereoSelector.getStereoProfile ( info->path (), info->dataFileName () );
 
 		stiEZ.stereoWidth = stereoProfile.width;
-		stiEZ.bassAdjust = float ( stereoProfile.bassAdjust );
+		stiEZ.bassAdjust = float ( stereoProfile.bass );
 	}
 
 	return readyToPlay;

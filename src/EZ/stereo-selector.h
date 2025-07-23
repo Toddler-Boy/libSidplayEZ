@@ -23,7 +23,7 @@ public:
 		int		width = mono;
 
 		// Bass adjustment (usually negative values to push them down, as it's usually boosted by 6-9dB)
-		double	bassAdjust = 0.0;
+		double	bass = 0.0;
 	};
 
 	using profileMap = std::unordered_map<std::string, settings>;

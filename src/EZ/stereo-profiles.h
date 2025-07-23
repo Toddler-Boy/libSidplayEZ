@@ -8,8 +8,8 @@
 //
 
 // 2SID
-{ "/MUSICIANS/H/Hannula_Antti/Dead_Lock_2SID.sid", { mono, -3.0 } },
+{ "/MUSICIANS/H/Hannula_Antti/Dead_Lock_2SID.sid", { .width = mono, .bass = -3.0 } },
 
 // 3SID
-{ "/MUSICIANS/S/Shogoon/Cheezzy_Top_3SID.sid", { narrow, -3.0 } },
-{ "/MUSICIANS/S/Shogoon/Cheezzy_Top_Fixed_3SID.sid", { narrow, -3.0 } },
+{ "/MUSICIANS/S/Shogoon/Cheezzy_Top_3SID.sid", { .width = narrow, .bass = -3.0 } },
+{ "/MUSICIANS/S/Shogoon/Cheezzy_Top_Fixed_3SID.sid", { .width = narrow, .bass = -3.0 } },
