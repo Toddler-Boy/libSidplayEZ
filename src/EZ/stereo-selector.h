@@ -14,6 +14,9 @@ public:
 	{
 		mono = 0,
 		narrow = 20,
+		mid = 40,
+		wide = 60,
+		wider = 80,
 		full = 100,
 	};
 
