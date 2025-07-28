@@ -162,7 +162,7 @@ std::vector<int16_t> WaveformCalculator::buildWaveTable ()
 	std::vector<int16_t>	waveTable ( 4 * 4096 );
 
 	// Calculate triangle waveform
-	auto triXor = [] ( int val )
+	auto triXor = [] ( unsigned int val ) -> unsigned int
 	{
 		return ( ( ( val & 0x800 ) == 0 ) ? val : ( val ^ 0xfff ) ) << 1;
 	};
@@ -198,7 +198,7 @@ static int16_t calculatePulldown ( float distancetable[], float topbit, float pu
 	for ( auto i = 0u; i < 12; i++ )
 		bit[ i ] = ( accumulator & ( 1 << i ) ) ? 1.0f : 0.0f;
 
-	bit[ 11 ] = uint8_t ( bit[ 11 ] * topbit );
+	bit[ 11 ] *= topbit;
 
 	float   pulldown[ 12 ];
 
