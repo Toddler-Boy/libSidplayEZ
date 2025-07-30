@@ -23,9 +23,21 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 
 	path = path.substr ( pos );
 
-	const auto& it = stereoProfiles.find ( path );
-	if ( it != stereoProfiles.end () )
-		return it->second;
+	// Try to find direct match
+	{
+		const auto&	it = stereoProfiles.find ( path );
+		if ( it != stereoProfiles.end () )
+			return it->second;
+	}
+
+	// Try to find wildcard match
+	{
+		const auto	wildcard = path.substr ( 0, path.find_last_of ( '/' ) + 1 ) + "*" + path.substr ( path.find_last_of ( '_' ) );
+
+		const auto&	it = stereoProfiles.find ( wildcard );
+		if ( it != stereoProfiles.end () )
+			return it->second;
+	}
 
 	return {};
 }
