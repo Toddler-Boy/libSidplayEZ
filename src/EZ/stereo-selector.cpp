@@ -32,6 +32,9 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 
 	// Try to find wildcard match
 	{
+		if ( ! path.ends_with ( "_2SID.sid" ) && ! path.ends_with ( "_3SID.sid" ) )
+			return {};
+
 		const auto	wildcard = path.substr ( 0, path.find_last_of ( '/' ) + 1 ) + "*" + path.substr ( path.find_last_of ( '_' ) );
 
 		const auto&	it = stereoProfiles.find ( wildcard );
