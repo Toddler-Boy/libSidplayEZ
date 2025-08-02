@@ -1,10 +1,23 @@
 #include "stereo-selector.h"
 
+#include "tinyCSV.h"
+#include "../stringutils.h"
+
 #include <algorithm>
 
 namespace libsidplayEZ
 {
 
+//-----------------------------------------------------------------------------
+
+constexpr char defaultProfiles[] = {
+#embed "stereo-profiles.csv"
+};
+
+StereoSelector::StereoSelector ()
+{
+	setProfiles ( defaultProfiles );
+}
 //-----------------------------------------------------------------------------
 
 StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, const char* _filename )
@@ -32,10 +45,13 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 
 	// Try to find wildcard match
 	{
-		if ( ! path.ends_with ( "_2SID.sid" ) && ! path.ends_with ( "_3SID.sid" ) )
+		const auto	underscore = path.find_last_of ( '_' );
+		const auto	slash = path.find_last_of ( '/' );
+
+		if ( slash > underscore || underscore == std::string::npos )
 			return {};
 
-		const auto	wildcard = path.substr ( 0, path.find_last_of ( '/' ) + 1 ) + "*" + path.substr ( path.find_last_of ( '_' ) );
+		const auto	wildcard = path.substr ( 0, slash + 1 ) + "*" + path.substr ( underscore );
 
 		const auto&	it = stereoProfiles.find ( wildcard );
 		if ( it != stereoProfiles.end () )
@@ -46,9 +62,22 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 }
 //-----------------------------------------------------------------------------
 
-void StereoSelector::setProfiles ( const profileMap& map )
+void StereoSelector::setProfiles ( const std::string& csvStr )
 {
-	stereoProfiles = map;
+	auto	csv = TinyCSV ();
+
+	const auto	rows = csv.parseCSV ( csvStr );
+	for ( auto i = 0; i < rows; ++i )
+	{
+		const auto	name = csv.getString ( i, "tune" );
+
+		settings	setting;
+
+		setting.width = csv.getInt ( i, "width", 0 );
+		setting.bass = csv.getDouble ( i, "bass", setting.bass );
+
+		stereoProfiles[ name ] = setting;
+	}
 }
 //-----------------------------------------------------------------------------
 

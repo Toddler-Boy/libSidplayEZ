@@ -10,20 +10,12 @@ namespace libsidplayEZ
 class StereoSelector final
 {
 public:
-	enum
-	{
-		mono = 0,
-		narrow = 20,
-		mid = 40,
-		wide = 60,
-		wider = 80,
-		full = 100,
-	};
+	StereoSelector ();
 
 	struct settings final
 	{
 		// Stereo width (in percent)
-		int		width = mono;
+		int		width = 0;
 
 		// Bass adjustment (usually negative values to push them down, as it's usually boosted by 6-9dB)
 		double	bass = 0.0;
@@ -32,12 +24,10 @@ public:
 	using profileMap = std::unordered_map<std::string, settings>;
 
 	settings getStereoProfile ( const char* path, const char* filename );
-	void setProfiles ( const profileMap& map );
+	void setProfiles ( const std::string& csvStr );
 
 private:
-	profileMap	stereoProfiles = {
-		#include "stereo-profiles.h"
-	};
+	profileMap	stereoProfiles;
 };
 //-----------------------------------------------------------------------------
 

@@ -1,10 +1,23 @@
 #include "chip-selector.h"
 
+#include "tinyCSV.h"
+#include "../stringutils.h"
+
 #include <algorithm>
 
 namespace libsidplayEZ
 {
 
+//-----------------------------------------------------------------------------
+
+constexpr char defaultProfiles[] = {
+#embed "chip-profiles.csv"
+};
+
+ChipSelector::ChipSelector ()
+{
+	setProfiles ( defaultProfiles );
+}
 //-----------------------------------------------------------------------------
 
 std::pair<std::string, ChipSelector::settings> ChipSelector::getChipProfile ( const char* _path, const char* _filename )
@@ -63,9 +76,43 @@ std::pair<std::string, ChipSelector::settings> ChipSelector::getChipProfile ( co
 }
 //-----------------------------------------------------------------------------
 
-void ChipSelector::setProfiles ( const profileMap& map )
+void ChipSelector::setProfiles ( const std::string& csvStr )
 {
-	chipProfiles = map;
+	auto	csv = TinyCSV ();
+
+	const auto	rows = csv.parseCSV ( csvStr );
+	for ( auto i = 0; i < rows; ++i )
+	{
+		const auto	name = csv.getString ( i, "name" );
+
+		settings	setting;
+
+		setting.folder = csv.getString ( i, "folder" );
+		setting.fltCox = csv.getDouble ( i, "fltCox", setting.fltCox );
+		setting.flt0Dac = csv.getDouble ( i, "flt0Dac", setting.flt0Dac );
+		setting.fltGain = csv.getDouble ( i, "fltGain", setting.fltGain );
+		setting.digi = csv.getDouble ( i, "digi", setting.digi );
+
+		static const std::unordered_map<std::string, int> cwsLevels = {
+			{ "weak", ChipSelector::weak },
+			{ "average", ChipSelector::average },
+			{ "strong", ChipSelector::strong }
+		};
+
+		setting.cwsLevel = cwsLevels.at ( stringutils::toLower ( csv.getString ( i, "cwsLevel", "average" ) ) );
+		setting.cwsThreshold = csv.getDouble ( i, "cwsThreshold", setting.cwsThreshold );
+
+		const auto	exceptions = csv.getString ( i, "exceptions" );
+		if ( !exceptions.empty () )
+		{
+			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );
+			for ( const auto& exception : exceptionList )
+				if ( auto pair = stringutils::arrayFromTokens ( exception, '=' ); pair.size () == 2 )
+					setting.exceptions[ pair[ 0 ] ] = pair[ 1 ];
+		}
+
+		chipProfiles[ name ] = setting;
+	}
 }
 //-----------------------------------------------------------------------------
 

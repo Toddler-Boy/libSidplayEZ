@@ -15,8 +15,8 @@ class Player final
 {
 public:
 	bool loadSidIDConfig ( const char* filename ) { return sidID.loadSidIDConfig ( filename ); }
-	void setChipProfileMap ( const ChipSelector::profileMap& map ) { chipSelector.setProfiles ( map ); }
-	void setStereoProfileMap ( const StereoSelector::profileMap& map ) { stereoSelector.setProfiles ( map ); }
+	void setChipProfileMap ( const std::string& csvStr ) { chipSelector.setProfiles ( csvStr ); }
+	void setStereoProfileMap ( const std::string& cvsStr ) { stereoSelector.setProfiles ( cvsStr ); }
 
 	void setRoms ( const void* kernal, const void* basic, const void* character );
 
