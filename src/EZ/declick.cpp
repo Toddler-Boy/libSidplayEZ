@@ -84,8 +84,8 @@ void libsidplayEZ::declick ( std::span<float> _source, const int _sampleRate )
 			auto	density = 0.0f;
 			for ( auto bin = 1; bin < binCount; bin++ )
 			{
-				const auto	real = spectrum[ bin + 1 ];
-				const auto	imag = spectrum[ ( windowSize - 1 ) - bin ];
+				const auto	real = spectrum[ bin ];
+				const auto	imag = spectrum[ windowSize - bin ];
 
 				if ( std::abs ( real ) < 0.00001f && std::abs ( imag ) < 0.00001f )
 					continue;
@@ -111,12 +111,12 @@ void libsidplayEZ::declick ( std::span<float> _source, const int _sampleRate )
 
 		// Find start of song
 		{
-			const auto	t = 0.01f * maxDensity;
+			const auto	threshold = 0.04f * maxDensity;
 
 			// look for 3 consecutive high density blocks that mark the start of the song - 2 or 1 are considered clicks
 			for ( auto hop = 0; hop < int ( densities.size () - 2 ); hop++ )
 			{
-				if ( densities[ hop ] > t && densities[ hop + 1 ] > t && densities[ hop + 2 ] > t )
+				if ( densities[ hop ] > threshold && densities[ hop + 1 ] > threshold && densities[ hop + 2 ] > threshold )
 				{
 					songStart = hop * hopSize;
 					break;
@@ -127,15 +127,15 @@ void libsidplayEZ::declick ( std::span<float> _source, const int _sampleRate )
 		if ( ! songStart )
 			return;
 
-		// fade in (5ms)
-		const auto	fadeInStart = std::max ( 0, songStart - int ( _sampleRate * 0.005f ) );
+ 		// fade in (5ms)
+ 		const auto	fadeInStart = std::max ( 0, songStart - int ( _sampleRate * 0.005f ) );
+ 
+ 		if ( fadeInStart )
+ 			std::fill_n ( _source.begin (), fadeInStart, 0.0f );
 
-		if ( fadeInStart )
-			std::fill_n ( _source.begin (), fadeInStart, 0.0f );
-
-		const auto	fadeLength = songStart - fadeInStart;
-		for ( auto pos = 0; pos < fadeLength; pos++ )
-			_source[ fadeInStart + pos ] *= float ( pos ) / float ( fadeLength );
+ 		const auto	fadeLength = songStart - fadeInStart;
+ 		for ( auto pos = 0; pos < fadeLength; pos++ )
+ 			_source[ fadeInStart + pos ] *= float ( pos ) / float ( fadeLength );
 	}
 }
 //-----------------------------------------------------------------------------

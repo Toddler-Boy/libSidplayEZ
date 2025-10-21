@@ -297,7 +297,7 @@ public:
 
 			// Triangle/Sawtooth output is delayed half cycle on 8580
 			// This will appear as a one cycle delay on OSC3 as it is latched in the first phase of the clock
-			if ( ( waveform & 3 ) && !is6581 )
+			if ( ( waveform & 3 ) && ! is6581 )
 			{
 				osc3 = tri_saw_pipeline & ( no_pulse | pulse_output ) & no_noise_or_noise_output;
 				if ( pulldown )

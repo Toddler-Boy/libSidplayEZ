@@ -301,12 +301,10 @@ public:
 
 		// Mix the voices according to the filter mode
 		{
-			const auto	fltMd = filterModeRouting & 0xF;
-
-			Vsum[ fltMd & 1 ]			 = fmc8580.getNormalizedVoice ( voice1 );
-			Vsum[ ( fltMd >> 1 ) & 1 ]	+= fmc8580.getNormalizedVoice ( voice2 );
-			Vsum[ ( fltMd >> 2 ) & 1 ]	+= fmc8580.getNormalizedVoice ( voice3 ) & voice3Mask;
-			Vsum[ fltMd >> 3 ]			+= Ve;
+			Vsum[	filterModeRouting		 & 1 ]	= fmc8580.getNormalizedVoice ( voice1 );
+			Vsum[ ( filterModeRouting >> 1 ) & 1 ] += fmc8580.getNormalizedVoice ( voice2 );
+			Vsum[ ( filterModeRouting >> 2 ) & 1 ] += fmc8580.getNormalizedVoice ( voice3 ) & voice3Mask;
+			Vsum[ ( filterModeRouting >> 3 ) & 1 ] += Ve;
 		}
 
 		// Apply filter
@@ -318,11 +316,11 @@ public:
 
 		// Mix filter outputs
 		{
-			const auto	fltMd = ( ( filterModeRouting >> 4 ) & 7 ) ^ 7;
+			const auto	fltMd = ( filterModeRouting >> 4 ) ^ 0x07;
 
-			Vsum[ fltMd & 1 ]			+= Vlp;
-			Vsum[ ( fltMd >> 1 ) & 1 ]	+= Vbp;
-			Vsum[ fltMd >> 2 ]			+= Vhp;
+			Vsum[	fltMd		 & 1 ] += Vlp;
+			Vsum[ ( fltMd >> 1 ) & 1 ] += Vbp;
+			Vsum[ ( fltMd >> 2 ) & 1 ] += Vhp;
 		}
 
 		return currentVolume[ currentMixer[ Vsum[ 0 ] ] ];

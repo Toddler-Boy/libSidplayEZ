@@ -466,4 +466,12 @@ bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 }
 //-----------------------------------------------------------------------------
 
+bool Player::wasFilterUsed () const
+{
+	return		m_sidEmu[ 0 ].wasFilterUsed ()
+			|| ( getNumChips () > 1 && m_sidEmu[ 1 ].wasFilterUsed () )
+			|| ( getNumChips () > 2 && m_sidEmu[ 2 ].wasFilterUsed () );
+}
+//-----------------------------------------------------------------------------
+
 }

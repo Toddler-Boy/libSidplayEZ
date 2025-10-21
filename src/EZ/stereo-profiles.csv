@@ -1,13 +1,4 @@
-#
-# This file contains stereo-profiles which allow us to adjust
-# stereo settings for specific 2SID and 3SID tunes.
-#
-# By default all 2SID and 3SID tunes will be mixed to mono.
-# This list provides exceptions for tunes that should be played in stereo
-# or with specific stereo settings.
-#
 tune,width,bass
-# 2SID
 /MUSICIANS/A/A-Man/Phat_Frog_2SID.sid,80
 /MUSICIANS/B/Booker/Icu_2SID.sid,,-6.0
 /MUSICIANS/B/Booker/Stereo_Pendejo_2SID.sid,40
@@ -23,7 +14,6 @@ tune,width,bass
 /MUSICIANS/E/Et1999cc/Talking_in_Your_Sleep_2SID.sid,,-3.0
 /MUSICIANS/G/GI-Joe/Miomodo_2SID.sid,100
 /MUSICIANS/G/GI-Joe/Small_House_Beat_2SID.sid,100
-/MUSICIANS/H/Hannula_Antti/Dead_Lock_2SID.sid,,+3.0
 /MUSICIANS/H/Hannula_Antti/Electric_City_2SID.sid,20,-2.0
 /MUSICIANS/H/Hannula_Antti/Onward_Ride_C64_remix_2SID.sid,100,-2.0
 /MUSICIANS/H/Hannula_Antti/Sad_Song_2SID.sid,,+3.0
@@ -112,7 +102,6 @@ tune,width,bass
 /MUSICIANS/T/TSM/Fiki_Fiki_2SID.sid,40
 /MUSICIANS/U/Uctumi/Souls_Lost_to_Poseidon_2SID.sid,40,-6.0
 
-# 3SID
 /MUSICIANS/D/Demosic/Strangehold_3SID.sid,80
 /MUSICIANS/H/Hermit/3SID_Tracker_Demo_1_3SID.sid,100
 /MUSICIANS/H/Hermit/Tree_Angel_3SID.sid,100,+3.0

@@ -33,8 +33,8 @@ public:
 
 		// Combined waveform strength
 		int			cwsLevel = average;
-		double		cwsThreshold = 1.0;
 
+		// Exceptions (selects another authors chip, usually for collaborations)
 		std::unordered_map<std::string, std::string>	exceptions;
 	};
 

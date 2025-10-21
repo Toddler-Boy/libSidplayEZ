@@ -22,7 +22,6 @@
 */
 
 #include <memory>
-//#include <smmintrin.h>
 
 #include "Filter.h"
 #include "Integrator6581.h"
@@ -305,7 +304,7 @@ namespace reSIDfp
 * Notes:
 *
 * The external resistor Rext is needed to complete the NMOS voltage follower,
-* this resistor has a recommended value of 1kOhm.
+* this resistor has a recommended value of 1kOhm7.
 *
 * Die photographs show that actually, two NMOS transistors are used in the
 * voltage follower. However the two transistors are coupled in parallel (all
@@ -319,10 +318,11 @@ private:
 
 	const uint16_t* f0_dac = nullptr;
 
-	Integrator6581	hpIntegrator;	// VCR + associated capacitor connected to highpass output.
-	Integrator6581	bpIntegrator;	// VCR + associated capacitor connected to bandpass output.
+	Integrator6581	hpIntegrator;	// VCR + associated capacitor connected to highpass output
+	Integrator6581	bpIntegrator;	// VCR + associated capacitor connected to bandpass output
 
-	int	filterGain = int ( 0.92 * ( 1 << 12 ) );	// Filter gain
+	int	filterGain = int ( 0.92 * ( 1 << 12 ) );				// Filter gain
+	int	filterOffset = 32767 * ( ( 1 << 12 ) - filterGain );	// Filter offset, used to adjust the filter output to the correct level
 
 protected:
 	/**
@@ -346,36 +346,37 @@ public:
 
 	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3, uint8_t env1, uint8_t env2, uint8_t env3 )
 	{
-		// index 0 = unfiltered, index 1 = filtered
-		int	Vsum[ 2 ] = { 0, 0 };
-
-		// Mix the voices according to the filter mode
+ 		// index 0 = unfiltered, index 1 = filtered
+ 		int	Vsum[ 2 ] = { 0, 0 };
+ 
+ 		// Mix the voices according to the filter mode
+ 		{
+ 			Vsum[	filterModeRouting		 & 1 ]	= fmc6581.getNormalizedVoice ( voice1, env1 );
+ 			Vsum[ ( filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
+ 			Vsum[ ( filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & voice3Mask;
+ 			Vsum[ ( filterModeRouting >> 3 ) & 1 ] += Ve;
+ 		}
+ 
+ 		// Apply filter
 		{
-			const auto	fltMd = filterModeRouting & 0xF;
-
-			Vsum[ fltMd & 1 ]			 = fmc6581.getNormalizedVoice ( voice1, env1 );
-			Vsum[ ( fltMd >> 1 ) & 1 ]	+= fmc6581.getNormalizedVoice ( voice2, env2 );
-			Vsum[ ( fltMd >> 2 ) & 1 ]	+= fmc6581.getNormalizedVoice ( voice3, env3 ) & voice3Mask;
-			Vsum[ fltMd >> 3 ]			+= Ve;
-		}
-
-		// Apply filter
-		{
-			Vhp = currentSummer[ currentResonance[ Vbp ] + Vlp + Vsum[ 1 ] ];
-			Vbp = hpIntegrator.solve ( Vhp );
-			Vlp = bpIntegrator.solve ( Vbp );
-		}
-
-		// Mix filter outputs
-		{
-			const auto		fltMd = ( ( filterModeRouting >> 4 ) & 7 ) ^ 7;
-
- 			Vsum[ fltMd & 1 ]			+= ( Vlp * filterGain ) >> 12;
- 			Vsum[ ( fltMd >> 1 ) & 1 ]	+= ( Vbp * filterGain ) >> 12;
-			Vsum[ fltMd >> 2 ]			+= ( Vhp * filterGain ) >> 12;
-		}
-
-		return currentVolume[ currentMixer[ Vsum[ 0 ] ] ];
+ 			Vhp = currentSummer[ currentResonance[ Vbp ] + Vlp + Vsum[ 1 ] ];
+ 			Vbp = hpIntegrator.solve ( Vhp );
+ 			Vlp = bpIntegrator.solve ( Vbp );
+ 		}
+ 
+ 		// Mix filter outputs
+ 		{
+ 			int	VfltSum[ 2 ] = { 0, 0 };
+ 
+ 			VfltSum[ ( filterModeRouting >> 4 ) & 1 ]  = Vlp;
+ 			VfltSum[ ( filterModeRouting >> 5 ) & 1 ] += Vbp;
+ 			VfltSum[ ( filterModeRouting >> 6 ) & 1 ] += Vhp;
+ 
+ 			Vsum[ 0 ] += ( VfltSum[ 1 ] * filterGain + filterOffset ) >> 12;
+ 		}
+ 
+ 		return currentVolume[ currentMixer[ Vsum[ 0 ] ] ];
+ 
 	}
 
 	/**

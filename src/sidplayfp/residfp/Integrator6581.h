@@ -148,7 +148,7 @@ namespace reSIDfp
 *     vi -----o------+   +-------- vo
 *
 *
-* In order to calculalate the current through the VCR, its gate voltage
+* In order to calculate the current through the VCR, its gate voltage
 * must be determined.
 *
 * Assuming triode mode and applying Kirchoff's current law, we get the

@@ -67,7 +67,7 @@ Filter8580::Filter8580 ()
 
 	updatedCenterFrequency ();
 
-	input ( 8192 );	// extremely low digi output, helps with preventing clicks/pops
+	input ( 0 );	// extremely low digi output, helps with preventing clicks/pops
 }
 //-----------------------------------------------------------------------------
 

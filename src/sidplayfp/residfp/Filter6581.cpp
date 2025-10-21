@@ -58,6 +58,7 @@ void Filter6581::setFilterRange ( double adjustment )
 void Filter6581::setFilterGain ( double adjustment )
 {
 	filterGain = int ( adjustment * ( 1 << 12 ) );
+	filterOffset = 32767 * ( ( 1 << 12 ) - filterGain );
 }
 //-----------------------------------------------------------------------------
 

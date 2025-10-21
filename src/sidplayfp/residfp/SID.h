@@ -53,10 +53,10 @@ private:
 	Filter*		filter;
 
 	// Filter used, if model is set to 6581
-	Filter6581	filter6581;
+	Filter6581		filter6581;
 
 	// Filter used, if model is set to 8580
-	Filter8580	filter8580;
+	Filter8580		filter8580;
 
 	// External filter that provides high-pass and low-pass filtering to adjust sound tone slightly
 	ExternalFilter	externalFilter;
@@ -76,11 +76,14 @@ private:
 	// Used to amplify the output by x/2 to get an adequate playback volume
 	int	scaleFactor;
 
+	// Used to determine if the filter ever gets used during playback
+	uint8_t	filterUsage;
+
 	// Time to live for the last written value
 	int	busValueTtl;
 
 	// Current chip model's bus value TTL
-	int modelTTL;
+	int	modelTTL;
 
 	// Time until #voiceSync must be run.
 	unsigned int nextVoiceSync;
@@ -261,11 +264,11 @@ public:
 			const auto	o2 = voice[ 1 ].output ( voice[ 0 ].waveformGenerator );
 			const auto	o3 = voice[ 2 ].output ( voice[ 1 ].waveformGenerator );
 
-			if ( model == MOS8580 ) [[ likely ]]
-			{
-				const auto	input = int ( filter8580.clock ( o1, o2, o3 ) );
-				return externalFilter.clock ( input + INT16_MIN );
-			}
+ 			if ( model == MOS8580 ) [[ likely ]]
+ 			{
+ 				const auto	input = int ( filter8580.clock ( o1, o2, o3 ) );
+ 				return externalFilter.clock ( input + INT16_MIN );
+ 			}
 
 			const auto	env1 = voice[ 0 ].envelopeGenerator.output ();
 			const auto	env2 = voice[ 1 ].envelopeGenerator.output ();
@@ -343,6 +346,7 @@ public:
 	void setFilter8580Curve ( double filterCurve )	{	filter8580.setFilterCurve ( filterCurve );	}
 
 	float getEnvLevel ( int voiceNo ) const		{	return voice[ voiceNo ].getEnvLevel (); }
+	bool wasFilterUsed () const					{	return filterUsage & 0x0F;		}
 };
 //-----------------------------------------------------------------------------
 

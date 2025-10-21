@@ -66,8 +66,8 @@ public:
 	*/
 	sidinline float output ( WaveformGenerator& ringModulator )
 	{
-		auto	wav = waveformGenerator.output ( ringModulator );
-		auto	env = envelopeGenerator.output ();
+		const auto	wav = waveformGenerator.output ( ringModulator );
+		const auto	env = envelopeGenerator.output ();
 
 		// DAC imperfections are emulated by using the digital output
 		// as an index into a DAC lookup table.

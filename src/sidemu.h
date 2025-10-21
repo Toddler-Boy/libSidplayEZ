@@ -125,7 +125,8 @@ public:
 
 	void setDacLeakage ( const double leakage )			{	m_sid.setDacLeakage ( leakage );	}
 
-	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const		{	return m_sid.getEnvLevel ( voiceNo );		}
+	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const		{	return m_sid.getEnvLevel ( voiceNo );	}
+	[[ nodiscard ]] bool wasFilterUsed () const							{	return m_sid.wasFilterUsed ();			}
 
 	/**
 	* Get the current position in buffer.

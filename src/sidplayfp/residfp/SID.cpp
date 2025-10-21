@@ -142,13 +142,13 @@ void SID::setChipModel ( ChipModel _model )
 
 	if ( model == MOS6581 )
 	{
-		filter = &filter6581;
+ 		filter = &filter6581;
 		scaleFactor = 3;
 		modelTTL = BUS_TTL_6581;
 	}
 	else
 	{
-		filter = &filter8580;
+ 		filter = &filter8580;
 		scaleFactor = 5;
 		modelTTL = BUS_TTL_8580;
 	}
@@ -232,6 +232,7 @@ void SID::reset ()
 
 	resampler.reset ();
 
+	filterUsage = 0;
 	busValue = 0;
 	busValueTtl = 0;
 	voiceSync ( false );
@@ -303,7 +304,12 @@ void SID::write ( int offset, uint8_t value )
 		case 0x14:	voice[ 2 ].envelopeGenerator.writeSUSTAIN_RELEASE ( value );	break;	// Voice #3 Sustain volume and Release length
 		case 0x15:	filter->writeFC_LO ( value ); 									break;	// Filter cut off frequency (bits #0-#2)
 		case 0x16:	filter->writeFC_HI ( value ); 									break;	// Filter cut off frequency (bits #3-#10)
-		case 0x17:	filter->writeRES_FILT ( value );								break;	// Filter control
+		case 0x17:																			// Filter control
+			{
+				filter->writeRES_FILT ( value );
+				filterUsage |= value;
+			}
+			break;
 		case 0x18:	filter->writeMODE_VOL ( value );								break;	// Volume and filter modes
 
 		default:

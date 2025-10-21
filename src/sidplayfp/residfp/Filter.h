@@ -52,14 +52,10 @@ protected:
 	// Filter resonance value.
 	uint16_t*	currentResonance = nullptr;
 
-	// Filter highpass state
-	int Vhp = 0;
-
-	// Filter bandpass state
-	int Vbp = 0;
-
-	// Filter lowpass state
-	int Vlp = 0;
+	// Filter states (LP, BP, HP)
+	int	Vlp = 0;
+	int	Vbp = 0;
+	int	Vhp = 0;
 
 	// Filter external input
 	int Ve = 0;

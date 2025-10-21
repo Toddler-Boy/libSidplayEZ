@@ -100,10 +100,9 @@ void ChipSelector::setProfiles ( const std::string& csvStr )
 		};
 
 		setting.cwsLevel = cwsLevels.at ( stringutils::toLower ( csv.getString ( i, "cwsLevel", "average" ) ) );
-		setting.cwsThreshold = csv.getDouble ( i, "cwsThreshold", setting.cwsThreshold );
 
 		const auto	exceptions = csv.getString ( i, "exceptions" );
-		if ( !exceptions.empty () )
+		if ( ! exceptions.empty () )
 		{
 			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );
 			for ( const auto& exception : exceptionList )

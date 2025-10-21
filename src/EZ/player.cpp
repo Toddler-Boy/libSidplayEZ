@@ -108,7 +108,7 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
 
 		engine.set6581DigiVolume ( chipProfile.digi );
 
-		engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms ( chipProfile.cwsLevel ), float ( chipProfile.cwsThreshold ) );
+		engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms ( chipProfile.cwsLevel ), 1.0f );
 	}
 
 	// Override chip-profile for Emulation based SID editors (Cheesecutter, GoatTracker, SidWizard etc.)
