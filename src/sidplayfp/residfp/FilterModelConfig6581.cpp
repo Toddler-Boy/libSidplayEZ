@@ -1,5 +1,3 @@
-#include <JuceHeader.h>
-
 /*
 * This file is part of libsidplayfp, a SID player engine.
 *

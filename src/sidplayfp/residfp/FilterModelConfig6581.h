@@ -29,8 +29,6 @@
 namespace reSIDfp
 {
 
-class Integrator6581;
-
 /**
 * Calculate parameters for 6581 filter emulation.
 */

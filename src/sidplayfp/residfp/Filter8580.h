@@ -269,7 +269,8 @@ namespace reSIDfp
 *        |   clk/8   |      working as temperature sensor
 *        +-----------+
 */
-class Filter8580 final : public Filter
+template< bool useFilter = true >
+class Filter8580 final : public Filter<useFilter>
 {
 private:
 	FilterModelConfig8580&	fmc8580;
@@ -285,45 +286,101 @@ protected:
 	*/
 	sidinline void updatedCenterFrequency () override
 	{
-		const auto	wl = fltDac[ fc ];
+		if constexpr ( useFilter )
+		{
+			const auto	wl = fltDac[ this->fc ];
 
-		hpIntegrator.setFc ( wl );
-		bpIntegrator.setFc ( wl );
+			hpIntegrator.setFc ( wl );
+			bpIntegrator.setFc ( wl );
+		}
 	}
 
 public:
-	Filter8580 ();
+	Filter8580 ()
+		: Filter<useFilter> ( *FilterModelConfig8580::getInstance () )
+		, fmc8580 ( *FilterModelConfig8580::getInstance () )
+		, hpIntegrator ( fmc8580 )
+		, bpIntegrator ( fmc8580 )
+	{
+		/**
+		* W/L ratio of frequency DAC bit 0, other bits are proportional.
+		* When no bits are selected a resistance with half W/L ratio is selected.
+		*/
+		constexpr auto	DAC_WL0 = 0.00615;
+
+		// Pre-calculate all possible filter DAC values
+		for ( auto fc = 0; fc < 2048; ++fc )
+		{
+			auto	wl = 0.0;
+			auto	dacWL = DAC_WL0;
+
+			if ( fc )
+			{
+				for ( auto i = 0u; i < 11; i++ )
+				{
+					if ( fc & ( 1 << i ) )
+						wl += dacWL;
+
+					dacWL *= 2.0;
+				}
+			}
+			else
+			{
+				wl = dacWL / 2.0;
+			}
+
+			fltDac[ fc ] = wl;
+		}
+		setFilterCurve ( 0.5 );
+
+		updatedCenterFrequency ();
+
+		input ( 0 );	// extremely low digi output, helps with preventing clicks/pops
+	}
 
 	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3 )
 	{
-		// index 0 = unfiltered, index 1 = filtered
-		int	Vsum[ 2 ] = { 0, 0 };
-
-		// Mix the voices according to the filter mode
+		if constexpr ( ! useFilter )
 		{
-			Vsum[	filterModeRouting		 & 1 ]	= fmc8580.getNormalizedVoice ( voice1 );
-			Vsum[ ( filterModeRouting >> 1 ) & 1 ] += fmc8580.getNormalizedVoice ( voice2 );
-			Vsum[ ( filterModeRouting >> 2 ) & 1 ] += fmc8580.getNormalizedVoice ( voice3 ) & voice3Mask;
-			Vsum[ ( filterModeRouting >> 3 ) & 1 ] += Ve;
-		}
+ 			// Mixer only
+			const auto	Vsum  = fmc8580.getNormalizedVoice ( voice1 )
+ 							  + fmc8580.getNormalizedVoice ( voice2 )
+ 							  + ( fmc8580.getNormalizedVoice ( voice3 ) & this->voice3Mask )
+							  + this->Ve;
 
-		// Apply filter
+			return this->currentVolume[ this->currentMixer[ Vsum ] ];
+		}
+		else
 		{
-			Vhp = currentSummer[ currentResonance[ Vbp ] + Vlp + Vsum[ 1 ] ];
-			Vbp = hpIntegrator.solve ( Vhp );
-			Vlp = bpIntegrator.solve ( Vbp );
+			// index 0 = unfiltered, index 1 = filtered
+			int	Vsum[ 2 ] = { 0, 0 };
+
+			// Mix the voices according to the filter mode
+			{
+				Vsum[	this->filterModeRouting		   & 1 ]  = fmc8580.getNormalizedVoice ( voice1 );
+				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc8580.getNormalizedVoice ( voice2 );
+				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc8580.getNormalizedVoice ( voice3 ) & this->voice3Mask;
+				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
+			}
+
+			// Apply filter
+			{
+				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
+				this->Vbp = hpIntegrator.solve ( this->Vhp );
+				this->Vlp = bpIntegrator.solve ( this->Vbp );
+			}
+
+			// Mix filter outputs
+			{
+				const auto	fltMd = ( this->filterModeRouting >> 4 ) ^ 0x07;
+
+				Vsum[	fltMd		 & 1 ] += this->Vlp;
+				Vsum[ ( fltMd >> 1 ) & 1 ] += this->Vbp;
+				Vsum[ ( fltMd >> 2 ) & 1 ] += this->Vhp;
+			}
+
+			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
 		}
-
-		// Mix filter outputs
-		{
-			const auto	fltMd = ( filterModeRouting >> 4 ) ^ 0x07;
-
-			Vsum[	fltMd		 & 1 ] += Vlp;
-			Vsum[ ( fltMd >> 1 ) & 1 ] += Vbp;
-			Vsum[ ( fltMd >> 2 ) & 1 ] += Vhp;
-		}
-
-		return currentVolume[ currentMixer[ Vsum[ 0 ] ] ];
 	}
 
 	/**
@@ -331,14 +388,21 @@ public:
 	*
 	* @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
 	*/
-	void setFilterCurve ( double curvePosition );
+	void setFilterCurve ( double curvePosition )
+	{
+		// Adjust curvePosition (1.2 <= curvePosition <= 1.8)
+		curvePosition = 1.2 + curvePosition * 0.6;
+
+		hpIntegrator.setV ( curvePosition );
+		bpIntegrator.setV ( curvePosition );
+	}
 
 	/**
 	* Apply a signal to EXT-IN
 	*
 	* @param input a signed 16 bit sample
 	*/
-	void input ( int16_t _input ) { Ve = fmc8580.getNormalizedVoice ( _input / 32768.0f ); }
+	void input ( int16_t _input ) { this->Ve = fmc8580.getNormalizedVoice ( _input / 32768.0f ); }
 };
 
 } // namespace reSIDfp

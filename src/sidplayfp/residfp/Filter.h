@@ -30,10 +30,11 @@ namespace reSIDfp
 /**
 * SID filter base class
 */
+template<bool useFilter>
 class Filter
 {
 protected:
-	FilterModelConfig&	fmc;
+	FilterModelConfig& fmc;
 
 	uint16_t**	mixer = nullptr;
 	uint16_t**	summer = nullptr;
@@ -84,46 +85,114 @@ protected:
 
 		const auto	Nsum_Nmix = sumFltResults[ filterModeRouting ];
 
-		currentSummer = summer[ Nsum_Nmix >> 4 ];
 		currentMixer = mixer[ Nsum_Nmix & 0xF ];
+
+		if constexpr ( useFilter )
+			currentSummer = summer[ Nsum_Nmix >> 4 ];
 	}
 
 public:
-	Filter ( FilterModelConfig& fmc );
+	Filter ( FilterModelConfig& _fmc )
+		: fmc ( _fmc )
+	{
+		// Pre-calculate all possible summer/mixer combinations
+		for ( auto i = 0u; i < std::size ( sumFltResults ); ++i )
+		{
+			auto	Nsum = 0;
+			auto	Nmix = 0;
+
+			if ( i & 1 )	{ Nsum += 0x10; } else { Nmix++; }
+	 		if ( i & 2 )	{ Nsum += 0x10; } else { Nmix++; }
+	 		if ( i & 4 )	{ Nsum += 0x10; } else if ( ! ( i & 0x80 ) )	{ Nmix++; }
+	 		if ( i & 8 )	{ Nsum += 0x10; } else { Nmix++; }
+
+			if ( i & 0x10 )	Nmix++;
+			if ( i & 0x20 )	Nmix++;
+			if ( i & 0x40 )	Nmix++;
+
+			sumFltResults[ i ] = uint8_t ( Nsum | Nmix );
+		}
+
+		mixer = fmc.getMixer ();
+		summer = fmc.getSummer ();
+		volume = fmc.getVolume ();
+		resonance = fmc.getResonance ();
+	}
 	virtual ~Filter () = default;
 
 	/**
 	* SID reset.
 	*/
-	void reset ();
+	void reset ()
+	{
+		writeFC_LO ( 0 );
+		writeFC_HI ( 0 );
+		writeMODE_VOL ( 15 );
+		writeRES_FILT ( 0 );
+	}
 
 	/**
 	* Write Frequency Cutoff Low register.
 	*
 	* @param fc_lo Frequency Cutoff Low-Byte
 	*/
-	void writeFC_LO ( uint8_t fc_lo );
+	void writeFC_LO ( uint8_t fc_lo )
+	{
+		if constexpr ( useFilter )
+		{
+			fc = ( fc & 0x7F8 ) | ( fc_lo & 7 );
+
+			updatedCenterFrequency ();
+		}
+	}
 
 	/**
 	* Write Frequency Cutoff High register.
 	*
 	* @param fc_hi Frequency Cutoff High-Byte
 	*/
-	void writeFC_HI ( uint8_t fc_hi );
+	void writeFC_HI ( uint8_t fc_hi )
+	{
+		if constexpr ( useFilter )
+		{
+			fc = ( ( fc_hi << 3 ) & 0x7F8 ) | ( fc & 7 );
+
+			updatedCenterFrequency ();
+		}
+	}
 
 	/**
 	* Write Resonance/Filter register.
 	*
 	* @param res_filt Resonance/Filter
 	*/
-	void writeRES_FILT ( uint8_t res_filt );
+	void writeRES_FILT ( uint8_t res_filt )
+	{
+		constexpr auto	mask = useFilter ? 0x0F : 0x00;
+
+		filterModeRouting = ( filterModeRouting & 0xF0 ) | ( res_filt & mask );
+
+		if constexpr ( useFilter )
+			currentResonance = resonance + ( ( res_filt >> 4 ) << 16 );
+
+		updateMixing ();
+	}
 
 	/**
 	* Write filter Mode/Volume register.
 	*
 	* @param mode_vol Filter Mode/Volume
 	*/
-	void writeMODE_VOL ( uint8_t mode_vol );
+	void writeMODE_VOL ( uint8_t mode_vol )
+	{
+		constexpr auto	mask = useFilter ? 0xF0 : 0x80;
+
+		filterModeRouting = ( filterModeRouting & 0x0F ) | ( mode_vol & mask );
+
+		currentVolume = volume + ( ( mode_vol & 0x0F ) << 16 );
+
+		updateMixing ();
+	}
 };
 //-----------------------------------------------------------------------------
 

@@ -311,7 +311,8 @@ namespace reSIDfp
 * terminals are pairwise common), which implies that we can model the two
 * transistors as one.
 */
-class Filter6581 final : public Filter
+template< bool useFilter = true >
+class Filter6581 final : public Filter<useFilter>
 {
 private:
 	FilterModelConfig6581&	fmc6581;
@@ -330,14 +331,27 @@ protected:
 	*/
 	sidinline void updatedCenterFrequency () override
 	{
-		const auto	Vw = f0_dac[ fc ];
+		if constexpr ( useFilter )
+		{
+			const auto	Vw = f0_dac[ this->fc ];
 
-		hpIntegrator.setVw ( Vw );
-		bpIntegrator.setVw ( Vw );
+			hpIntegrator.setVw ( Vw );
+			bpIntegrator.setVw ( Vw );
+		}
 	}
 
 public:
-	Filter6581 ();
+	Filter6581 ()
+		: Filter<useFilter> ( *FilterModelConfig6581::getInstance () )
+		, fmc6581 ( *FilterModelConfig6581::getInstance () )
+		, f0_dac ( fmc6581.getDAC ( 0.5 ) )
+		, hpIntegrator ( fmc6581 )
+		, bpIntegrator ( fmc6581 )
+	{
+		updatedCenterFrequency ();
+
+		input ( 0 );
+	}
 
 	~Filter6581 () override
 	{
@@ -346,37 +360,49 @@ public:
 
 	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3, uint8_t env1, uint8_t env2, uint8_t env3 )
 	{
- 		// index 0 = unfiltered, index 1 = filtered
- 		int	Vsum[ 2 ] = { 0, 0 };
- 
- 		// Mix the voices according to the filter mode
- 		{
- 			Vsum[	filterModeRouting		 & 1 ]	= fmc6581.getNormalizedVoice ( voice1, env1 );
- 			Vsum[ ( filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
- 			Vsum[ ( filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & voice3Mask;
- 			Vsum[ ( filterModeRouting >> 3 ) & 1 ] += Ve;
- 		}
- 
- 		// Apply filter
+		if constexpr ( ! useFilter )
 		{
- 			Vhp = currentSummer[ currentResonance[ Vbp ] + Vlp + Vsum[ 1 ] ];
- 			Vbp = hpIntegrator.solve ( Vhp );
- 			Vlp = bpIntegrator.solve ( Vbp );
- 		}
+			// Mixer only
+			const auto	Vsum  = fmc6581.getNormalizedVoice ( voice1, env1 )
+							  + fmc6581.getNormalizedVoice ( voice2, env2 )
+							  + ( fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask )
+							  + this->Ve;
+
+			return this->currentVolume[ this->currentMixer[ Vsum ] ];
+		}
+		else
+		{
+			// index 0 = unfiltered, index 1 = filtered
+ 			int	Vsum[ 2 ] = { 0, 0 };
  
- 		// Mix filter outputs
- 		{
- 			int	VfltSum[ 2 ] = { 0, 0 };
+ 			// Mix the voices according to the filter mode
+ 			{
+ 				Vsum[	this->filterModeRouting		   & 1 ]  = fmc6581.getNormalizedVoice ( voice1, env1 );
+ 				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
+ 				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask;
+ 				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
+ 			}
  
- 			VfltSum[ ( filterModeRouting >> 4 ) & 1 ]  = Vlp;
- 			VfltSum[ ( filterModeRouting >> 5 ) & 1 ] += Vbp;
- 			VfltSum[ ( filterModeRouting >> 6 ) & 1 ] += Vhp;
+ 			// Apply filter
+			{
+				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
+				this->Vbp = hpIntegrator.solve ( this->Vhp );
+				this->Vlp = bpIntegrator.solve ( this->Vbp );
+ 			}
  
- 			Vsum[ 0 ] += ( VfltSum[ 1 ] * filterGain + filterOffset ) >> 12;
- 		}
+ 			// Mix filter outputs
+ 			{
+ 				int	VfltSum[ 2 ] = { 0, 0 };
  
- 		return currentVolume[ currentMixer[ Vsum[ 0 ] ] ];
+ 				VfltSum[ ( this->filterModeRouting >> 4 ) & 1 ]  = this->Vlp;
+ 				VfltSum[ ( this->filterModeRouting >> 5 ) & 1 ] += this->Vbp;
+ 				VfltSum[ ( this->filterModeRouting >> 6 ) & 1 ] += this->Vhp;
  
+ 				Vsum[ 0 ] += ( VfltSum[ 1 ] * this->filterGain + this->filterOffset ) >> 12;
+ 			}
+ 
+ 			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
+		}
 	}
 
 	/**
@@ -384,42 +410,60 @@ public:
 	*
 	* @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
 	*/
-	void setFilterCurve ( double curvePosition );
+	void setFilterCurve ( double curvePosition )
+	{
+		delete[] f0_dac;
+		f0_dac = fmc6581.getDAC ( curvePosition );
+		updatedCenterFrequency ();
+	}
 
 	/**
 	* Set filter range
 	*
 	* @param adjustment 0 .. 2, where 0 sets center frequency low, 1 is default, 2 is bright. This also affects the range
 	*/
-	void setFilterRange ( double adjustment );
+	void setFilterRange ( double adjustment )
+	{
+		fmc6581.setFilterRange ( adjustment );
+	}
 
 	/**
 	* Set filter gain
 	*
 	* @param adjustment 0 .. 2
 	*/
-	void setFilterGain ( double adjustment );
+	void setFilterGain ( double adjustment )
+	{
+		filterGain = int ( adjustment * ( 1 << 12 ) );
+		filterOffset = 32767 * ( ( 1 << 12 ) - filterGain );
+	}
 
 	/**
 	* Set DC offset for external filter input which affects the digi volume
 	*
 	* @param adjustment 0 .. 1
 	*/
-	void setDigiVolume ( double adjustment );
+	void setDigiVolume ( double adjustment )
+	{
+		this->Ve = int16_t ( adjustment * fmc6581.getNormalizedVoice ( 0.0f, 0 ) );
+	}
 
 	/**
 	* Set Voice DC drift
 	*
 	* @param adjustment 0 .. 1, where 0 has no drift at all and 1 is with full drift
 	*/
-	void setVoiceDCDrift ( double adjustment );
+	void setVoiceDCDrift ( double adjustment )
+	{
+		fmc6581.setVoiceDCDrift ( adjustment );
+	}
 
 	/**
 	* Apply a signal to EXT-IN
 	*
 	* @param input a signed 16 bit sample
 	*/
-	void input ( int16_t _input ) { Ve = fmc6581.getNormalizedVoice ( _input / 32768.0f, 0 ); }
+	void input ( int16_t _input ) { this->Ve = fmc6581.getNormalizedVoice ( _input / 32768.0f, 0 ); }
 };
 
 

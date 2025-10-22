@@ -28,8 +28,6 @@
 namespace reSIDfp
 {
 
-class Integrator8580;
-
 /**
 * Calculate parameters for 8580 filter emulation.
 */
@@ -56,7 +54,7 @@ public:
 
 	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value ) const
 	{
-		const auto	tmp = N16 * ( ( value * voice_voltage_range + Vref * VOLTAGE_SKEW ) - vmin );
+		const auto	tmp = N16 * ( ( value * voice_voltage_range + getVref () ) - vmin );
 
 		assert ( tmp >= 0.0 && tmp < 65536.0 );
 		return int ( tmp );

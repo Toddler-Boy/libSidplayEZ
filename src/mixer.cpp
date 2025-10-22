@@ -163,10 +163,8 @@ void Mixer::clearSids ()
 
 void Mixer::addSid ( sidemu* chip )
 {
-	if ( ! chip )
-		return;
-
-	m_chips.push_back ( chip );
+	if ( chip )
+		m_chips.push_back ( chip );
 }
 //-----------------------------------------------------------------------------
 
