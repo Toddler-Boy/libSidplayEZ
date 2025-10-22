@@ -177,8 +177,8 @@ public:
 			case 0:			return m_sid6581.read ( addr );
 			case 1:			return m_sid6581_noFilter.read ( addr );
 			case 2:			return m_sid8580.read ( addr );
-			case 3:			return m_sid8580_noFilter.read ( addr );
 		}
+		return m_sid8580_noFilter.read ( addr );
 	}
 
 	sidinline void write ( uint8_t addr, uint8_t data )
@@ -249,8 +249,8 @@ public:
 			case 0:			return m_sid6581.getEnvLevel ( voiceNo );
 			case 1:			return m_sid6581_noFilter.getEnvLevel ( voiceNo );
 			case 2:			return m_sid8580.getEnvLevel ( voiceNo );
-			case 3:			return m_sid8580_noFilter.getEnvLevel ( voiceNo );
 		}
+		return m_sid8580_noFilter.getEnvLevel ( voiceNo );
 	}
 
 	[[ nodiscard ]] bool wasFilterUsed () const
@@ -260,8 +260,8 @@ public:
 			case 0:			return m_sid6581.wasFilterUsed ();
 			case 1:			return m_sid6581_noFilter.wasFilterUsed ();
 			case 2:			return m_sid8580.wasFilterUsed ();
-			case 3:			return m_sid8580_noFilter.wasFilterUsed ();
 		}
+		return m_sid8580_noFilter.wasFilterUsed ();
 	}
 
 	/**
