@@ -4,6 +4,7 @@
 #include "../stringutils.h"
 
 #include <algorithm>
+#include <numbers>
 
 namespace libsidplayEZ
 {
@@ -81,4 +82,46 @@ void StereoSelector::setProfiles ( const std::string& csvStr )
 }
 //-----------------------------------------------------------------------------
 
+void StereoSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
+{
+	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> *width );
+	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> *width );
+
+	constexpr auto isEqual = [] ( const float a, const float b )
+	{
+		return std::abs ( a - b ) < 1e-6f;
+	};
+
+	// Pure stereo, no down mixing required
+	if ( isEqual ( midGain, 0.0f ) && isEqual ( sideGain, 1.0f ) )
+		return;
+
+	// Pure mono
+	if ( isEqual ( midGain, 1.0f ) && isEqual ( sideGain, 0.0f ) )
+	{
+		for ( auto i = 0; i < numSamples; i++ )
+		{
+			const auto	mid = srcDstL[ i ] + srcDstR[ i ];
+
+			srcDstL[ i ] = mid;
+			srcDstR[ i ] = mid;
+		}
+		return;
+	}
+
+	// Down mix
+	for ( auto i = 0; i < numSamples; i++ )
+	{
+		const auto	left = srcDstL[ i ];
+		const auto	right = srcDstR[ i ];
+
+		const auto	mid = ( left + right ) * midGain;
+		const auto	side = ( left - right ) * sideGain;
+
+		srcDstL[ i ] = mid + side;
+		srcDstR[ i ] = mid - side;
+	}
 }
+
+}
+
