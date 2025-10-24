@@ -102,6 +102,8 @@ struct SidConfig final
 	uint16_t thirdSidAddress = 0;
 	//@}
 
+	bool useFilter = true;
+
 	/**
 	 * Compare two config objects.
 	 *
@@ -116,6 +118,7 @@ struct SidConfig final
 				||	ciaModel != config.ciaModel
 				||	frequency != config.frequency
 				||	secondSidAddress != config.secondSidAddress
-				||	thirdSidAddress != config.thirdSidAddress;
+				||	thirdSidAddress != config.thirdSidAddress
+				||	useFilter != config.useFilter;
 	}
 };

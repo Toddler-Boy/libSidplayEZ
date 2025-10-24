@@ -69,7 +69,7 @@ private:
 	void initialise ();
 
 	void sidRelease ();
-	void sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses );
+	void sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses, const bool useFilter );
 
 	void sidParams ( double cpuFreq, int frequency );
 

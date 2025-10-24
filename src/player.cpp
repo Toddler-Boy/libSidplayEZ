@@ -221,7 +221,7 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 		addSid ( 2, cfg.thirdSidAddress );
 
 		// SID emulation setup (must be performed before the environment setup call)
-		sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses );
+		sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses, cfg.useFilter );
 
 		m_c64.setModel ( c64model ( cfg.defaultC64Model, cfg.forceC64Model ) );
 
@@ -349,7 +349,7 @@ void Player::sidRelease ()
 }
 //-----------------------------------------------------------------------------
 
-void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses )
+void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses, const bool useFilter )
 {
 	const auto  tuneInfo = m_tune->getInfo ();
 
@@ -367,7 +367,7 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 		defaultModel = getSidModel ( tuneInfo->sidModel ( i ), defaultModel, forced );
 
 		auto	s = &m_sidEmu[ i ];
-		s->model ( defaultModel );
+		s->model ( defaultModel, useFilter );
 
 		if ( i++ == 0 )
 		{

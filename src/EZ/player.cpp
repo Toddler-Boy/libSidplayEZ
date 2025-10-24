@@ -58,7 +58,7 @@ bool Player::loadSidFile ( const char* filename )
 }
 //-----------------------------------------------------------------------------
 
-bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
+bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo, const bool useFilter )
 {
 	readyToPlay = false;
 
@@ -69,6 +69,7 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo )
 	if ( ! info )
 		return false;
 
+	config.useFilter = useFilter;
 	if ( ! engine.setConfig ( config ) )
 		return false;
 
