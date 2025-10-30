@@ -110,17 +110,6 @@ constexpr Spline::Point opamp_voltage_8580[ OPAMP_SIZE_8580 ] =
 };
 //-----------------------------------------------------------------------------
 
-static thread_local std::unique_ptr<FilterModelConfig8580>	instance;
-
-FilterModelConfig8580* FilterModelConfig8580::getInstance ()
-{
-	if ( ! instance.get () )
-		instance.reset ( new FilterModelConfig8580 () );
-
-	return instance.get ();
-}
-//-----------------------------------------------------------------------------
-
 FilterModelConfig8580::FilterModelConfig8580 () :
 	FilterModelConfig (
 		0.24,				// voice voltage range FIXME should theoretically be ~0,474V
@@ -132,8 +121,6 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 		OPAMP_SIZE_8580
 	)
 {
-	std::fill ( std::begin ( voiceDC ), std::end ( voiceDC ), getVref () );
-
 	// Create lookup tables for gains / summers.
 	auto clBuildSummerTable = [ this ]
 	{

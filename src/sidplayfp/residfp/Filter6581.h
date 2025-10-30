@@ -315,7 +315,7 @@ template< bool useFilter = true >
 class Filter6581 final : public Filter<useFilter>
 {
 private:
-	FilterModelConfig6581&	fmc6581;
+	FilterModelConfig6581	fmc6581;
 
 	const uint16_t* f0_dac = nullptr;
 
@@ -342,8 +342,7 @@ protected:
 
 public:
 	Filter6581 ()
-		: Filter<useFilter> ( *FilterModelConfig6581::getInstance () )
-		, fmc6581 ( *FilterModelConfig6581::getInstance () )
+		: Filter<useFilter> ( fmc6581 )
 		, f0_dac ( fmc6581.getDAC ( 0.5 ) )
 		, hpIntegrator ( fmc6581 )
 		, bpIntegrator ( fmc6581 )

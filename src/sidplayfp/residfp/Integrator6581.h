@@ -235,8 +235,8 @@ public:
 		assert ( ( kVgt_Vd >= 0 ) && ( kVgt_Vd < ( 1 << 16 ) ) );
 
 		// VCR current, scaled by m*2^15*2^15 = m*2^30
-		const unsigned int If = static_cast<unsigned int>( fmc.getVcr_n_Ids_term ( kVgt_Vs ) ) << 15;
-		const unsigned int Ir = static_cast<unsigned int>( fmc.getVcr_n_Ids_term ( kVgt_Vd ) ) << 15;
+		const auto	If = fmc.getVcr_n_Ids_term ( kVgt_Vs ) << 15;
+		const auto	Ir = fmc.getVcr_n_Ids_term ( kVgt_Vd ) << 15;
 
 		#ifdef SLOPE_FACTOR
 			const double iVcr = static_cast<double>( If - Ir );

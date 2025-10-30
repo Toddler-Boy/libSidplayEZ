@@ -97,9 +97,6 @@ private:
 	FilterModelConfig& operator= ( const FilterModelConfig& ) = delete;
 
 protected:
-	// Voice DC offset LUT
-	double	voiceDC[ 256 ];
-
 	/**
 	* @param vvr voice voltage range
 	* @param vdv voice DC voltage

@@ -47,8 +47,6 @@ private:
 public:
 	FilterModelConfig8580 ();
 
-	[[ nodiscard ]] static FilterModelConfig8580* getInstance ();
-
 public:
 	[[ nodiscard ]] sidinline constexpr double getVref () const { return Vref * VOLTAGE_SKEW; }
 

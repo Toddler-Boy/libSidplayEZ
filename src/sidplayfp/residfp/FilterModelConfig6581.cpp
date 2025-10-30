@@ -78,17 +78,6 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 };
 //-----------------------------------------------------------------------------
 
-static thread_local std::unique_ptr<FilterModelConfig6581>	instance;
-
-FilterModelConfig6581* FilterModelConfig6581::getInstance ()
-{
-	if ( ! instance.get () )
-		instance.reset ( new FilterModelConfig6581 () );
-
-	return instance.get ();
-}
-//-----------------------------------------------------------------------------
-
 void FilterModelConfig6581::setFilterRange ( double adjustment )
 {
 	adjustment = std::clamp ( adjustment, 0.0, 1.0 );
@@ -101,6 +90,8 @@ void FilterModelConfig6581::setFilterRange ( double adjustment )
 		return;
 
 	setUCox ( new_uCox );
+
+	clFilterVcrIds ();
 }
 //-----------------------------------------------------------------------------
 
@@ -178,41 +169,13 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 			vcr_nVg[ i ] = uint16_t ( tmp + 0.5 );
 		}
 	};
-	auto clFilterVcrIds = [ this ]
-	{
-		//  EKV model:
-		//
-		//  Ids = Is * (if - ir)
-		//  Is = (2 * u*Cox * Ut^2)/k * W/L
-		//  if = ln^2(1 + e^((k*(Vg - Vt) - Vs)/(2*Ut))
-		//  ir = ln^2(1 + e^((k*(Vg - Vt) - Vd)/(2*Ut))
-
-		// moderate inversion characteristic current
-		const auto  Is = ( 2.0 * Ut * Ut ) * WL_vcr;
-
-		// Normalized current factor for 1 cycle at 1MHz
-		const auto  N15 = norm * ( ( 1 << 15 ) - 1 );
-		const auto  n_Is = N15 * 1.0e-6 / C * Is;
-
-		// kVgt_Vx = k*(Vg - Vt) - Vx
-		// I.e. if k != 1.0, Vg must be scaled accordingly
-		const auto	r_N16_2Ut = 1.0 / ( N16 * 2.0 * Ut );
-
-		for ( auto i = 0; i < ( 1 << 16 ); i++ )
-		{
-			const auto	kVgt_Vx = i - ( 1 << 15 );
-			const auto	log_term = std::log1p ( std::exp ( kVgt_Vx * r_N16_2Ut ) );
-			// Scaled by m*2^15
-			vcr_n_Ids_term[ i ] = n_Is * log_term * log_term;
-		}
-	};
 
 	auto	thdSummer = std::thread ( clBuildSummerTable );
 	auto	thdMixer = std::thread ( clBuildMixerTable );
 	auto	thdVolume = std::thread ( clBuildVolumeTable );
 	auto	thdResonance = std::thread ( clBuildResonanceTable );
 	auto	thdFilterVcrVg = std::thread ( clFilterVcrVg );
-	auto	thdFilterVcrIds = std::thread ( clFilterVcrIds );
+	auto	thdFilterVcrIds = std::thread ( [ this ] { clFilterVcrIds (); } );
 
 	thdSummer.join ();
 	thdMixer.join ();
@@ -220,6 +183,37 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 	thdResonance.join ();
 	thdFilterVcrVg.join ();
 	thdFilterVcrIds.join ();
+}
+//-----------------------------------------------------------------------------
+
+void FilterModelConfig6581::clFilterVcrIds ()
+{
+	//  EKV model:
+	//
+	//  Ids = Is * (if - ir)
+	//  Is = (2 * u*Cox * Ut^2)/k * W/L
+	//  if = ln^2(1 + e^((k*(Vg - Vt) - Vs)/(2*Ut))
+	//  ir = ln^2(1 + e^((k*(Vg - Vt) - Vd)/(2*Ut))
+
+	// moderate inversion characteristic current
+	const auto  Is = ( 2.0 * Ut * Ut ) * WL_vcr;
+
+	// Normalized current factor for 1 cycle at 1MHz
+	const auto  N15 = norm * ( ( 1 << 15 ) - 1 );
+	const auto  n_Is = N15 * 1.0e-6 / C * Is;
+
+	// kVgt_Vx = k*(Vg - Vt) - Vx
+	// I.e. if k != 1.0, Vg must be scaled accordingly
+	const auto	r_N16_2Ut = 1.0 / ( N16 * 2.0 * Ut );
+
+	for ( auto i = 0; i < ( 1 << 16 ); i++ )
+	{
+		const auto	kVgt_Vx = i - ( 1 << 15 );
+		const auto	log_term = std::log1p ( std::exp ( kVgt_Vx * r_N16_2Ut ) );
+
+		// Scaled by m*2^15
+		vcr_n_Ids_term[ i ] = uint16_t ( n_Is * log_term * log_term * uCox );
+	}
 }
 //-----------------------------------------------------------------------------
 

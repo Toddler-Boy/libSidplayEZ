@@ -273,7 +273,7 @@ template< bool useFilter = true >
 class Filter8580 final : public Filter<useFilter>
 {
 private:
-	FilterModelConfig8580&	fmc8580;
+	FilterModelConfig8580	fmc8580;
 
 	Integrator8580	hpIntegrator;	// VCR + associated capacitor connected to highpass output.
 	Integrator8580	bpIntegrator;	// VCR + associated capacitor connected to bandpass output.
@@ -297,8 +297,7 @@ protected:
 
 public:
 	Filter8580 ()
-		: Filter<useFilter> ( *FilterModelConfig8580::getInstance () )
-		, fmc8580 ( *FilterModelConfig8580::getInstance () )
+		: Filter<useFilter> ( fmc8580 )
 		, hpIntegrator ( fmc8580 )
 		, bpIntegrator ( fmc8580 )
 	{
