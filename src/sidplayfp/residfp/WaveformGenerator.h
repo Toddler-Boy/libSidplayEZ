@@ -28,7 +28,7 @@
 namespace reSIDfp
 {
 
-	/*
+/*
 * This is what happens when the lfsr is clocked:
 *
 * cycle 0: bit 19 of the accumulator goes from low to high, the noise register acts normally,
@@ -250,71 +250,6 @@ private:
 	bool msb_rising = false;
 
 private:
-	sidinline bool do_writeback ( unsigned int waveform_old, unsigned int waveform_new )
-	{
-		// no writeback without combined waveforms (fixes SID/noisewriteback/noise_writeback_test2-{old,new})
-		if ( waveform_old <= 8 )
-			return false;
-
-		if ( waveform_new < 8 )
-			return false;
-
-		if ( ( waveform_new == 8 )
-			 // breaks noise_writeback_check_F_to_8_old
-			 // but fixes simple and scan
-			 && ( waveform_old != 0xf ) )
-		{
-			// fixes
-			// noise_writeback_check_9_to_8_old
-			// noise_writeback_check_A_to_8_old
-			// noise_writeback_check_B_to_8_old
-			// noise_writeback_check_D_to_8_old
-			// noise_writeback_check_E_to_8_old
-			// noise_writeback_check_F_to_8_old
-			// noise_writeback_check_9_to_8_new
-			// noise_writeback_check_A_to_8_new
-			// noise_writeback_check_D_to_8_new
-			// noise_writeback_check_E_to_8_new
-			// noise_writeback_test1-{old,new}
-			return false;
-		}
-
-		// What's happening here?
-		if constexpr ( is6581 )
-		{
-			if (	( ( ( waveform_old & 0x3 ) == 0x1 ) && ( ( waveform_new & 0x3 ) == 0x2 ) )
-				 ||	( ( ( waveform_old & 0x3 ) == 0x2 ) && ( ( waveform_new & 0x3 ) == 0x1 ) ) )
-			{
-				// fixes
-				// noise_writeback_check_9_to_A_old
-				// noise_writeback_check_9_to_E_old
-				// noise_writeback_check_A_to_9_old
-				// noise_writeback_check_A_to_D_old
-				// noise_writeback_check_D_to_A_old
-				// noise_writeback_check_E_to_9_old
-				return false;
-			}
-		}
-
-		if ( waveform_old == 0xc )
-		{
-			// fixes
-			// noise_writeback_check_C_to_A_new
-			return false;
-		}
-
-		if ( waveform_new == 0xc )
-		{
-			// fixes
-			// noise_writeback_check_9_to_C_old
-			// noise_writeback_check_A_to_C_old
-			return false;
-		}
-
-		// ok do the writeback
-		return true;
-	}
-
 	static constexpr unsigned int	shift_mask =
 		~(
 			( 1u << 2 ) |  // Bit 20
@@ -332,13 +267,76 @@ private:
 	* The XORing for bit0 is done in this cycle using the test bit latched during
 	* the previous phi2 cycle.
 	*/
-	void shift_phase2 ( unsigned int waveform_old, unsigned int waveform_new )
+	sidinline void shift_phase2 ( const unsigned int waveform_old, const unsigned int waveform_new )
 	{
-		if ( do_writeback ( waveform_old, waveform_new ) )
+		auto do_writeback = [ = ] () -> bool
 		{
-			// if noise is combined with another waveform the output drives the SR bits
+			// no writeback without combined waveforms (fixes SID/noisewriteback/noise_writeback_test2-{old,new})
+			if ( waveform_old <= 8 )
+				return false;
+
+			if ( waveform_new < 8 )
+				return false;
+
+			if ( ( waveform_new == 8 )
+				 // breaks noise_writeback_check_F_to_8_old
+				 // but fixes simple and scan
+				 && ( waveform_old != 0xf ) )
+			{
+				// fixes
+				// noise_writeback_check_9_to_8_old
+				// noise_writeback_check_A_to_8_old
+				// noise_writeback_check_B_to_8_old
+				// noise_writeback_check_D_to_8_old
+				// noise_writeback_check_E_to_8_old
+				// noise_writeback_check_F_to_8_old
+				// noise_writeback_check_9_to_8_new
+				// noise_writeback_check_A_to_8_new
+				// noise_writeback_check_D_to_8_new
+				// noise_writeback_check_E_to_8_new
+				// noise_writeback_test1-{old,new}
+				return false;
+			}
+
+			// What's happening here?
+			if constexpr ( is6581 )
+			{
+				if (	( ( ( waveform_old & 0x3 ) == 0x1 ) && ( ( waveform_new & 0x3 ) == 0x2 ) )
+					 || ( ( ( waveform_old & 0x3 ) == 0x2 ) && ( ( waveform_new & 0x3 ) == 0x1 ) ) )
+				{
+					// fixes
+					// noise_writeback_check_9_to_A_old
+					// noise_writeback_check_9_to_E_old
+					// noise_writeback_check_A_to_9_old
+					// noise_writeback_check_A_to_D_old
+					// noise_writeback_check_D_to_A_old
+					// noise_writeback_check_E_to_9_old
+					return false;
+				}
+			}
+
+			if ( waveform_old == 0xc )
+			{
+				// fixes
+				// noise_writeback_check_C_to_A_new
+				return false;
+			}
+
+			if ( waveform_new == 0xc )
+			{
+				// fixes
+				// noise_writeback_check_9_to_C_old
+				// noise_writeback_check_A_to_C_old
+				return false;
+			}
+
+			// ok do the writeback
+			return true;
+		};
+
+		// if noise is combined with another waveform the output drives the SR bits
+		if ( do_writeback () )
 			shift_latch = ( shift_register & shift_mask ) | get_noise_writeback ( waveform_output );
-		}
 
 		// bit0 = (bit22 | test | reset) ^ bit17 = 1 ^ bit17 = ~bit17
 		const unsigned int bit22 = ( ( test_or_reset ? 1 : 0 ) | shift_latch ) << 22;
@@ -349,7 +347,7 @@ private:
 	}
 	//-----------------------------------------------------------------------------
 
-	void write_shift_register ()
+	sidinline void write_shift_register ()
 	{
 		if ( waveform > 0x8 ) [[ unlikely ]]
 		{
@@ -382,7 +380,7 @@ private:
 		}
 	}
 
-	void set_noise_output ()
+	sidinline void set_noise_output ()
 	{
 		noise_output =
 			( ( shift_register & ( 1u << 2 ) ) << 9 ) |  // Bit 20 -> bit 11
@@ -397,12 +395,12 @@ private:
 		set_no_noise_or_noise_output ();
 	}
 
-	void set_no_noise_or_noise_output ()
+	sidinline void set_no_noise_or_noise_output ()
 	{
 		no_noise_or_noise_output = no_noise | noise_output;
 	}
 
-	void shiftregBitfade ()
+	sidinline void shiftregBitfade ()
 	{
 		shift_register |= shift_register >> 1;
 		shift_register |= 0x400000;
@@ -485,7 +483,7 @@ public:
 	* @param syncDest The oscillator that will be synced
 	* @param syncSource The sync source oscillator
 	*/
-	void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource )
+	sidinline void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource )
 	{
 		// A special case occurs when a sync source is synced itself on the same
 		// cycle as when its MSB is set high. In this case the destination will
