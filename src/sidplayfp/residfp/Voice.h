@@ -32,11 +32,12 @@ namespace reSIDfp
 /**
 * Representation of SID voice block.
 */
+template < bool is6581 >
 class Voice final
 {
 public:
-	WaveformGenerator   waveformGenerator;
-	EnvelopeGenerator   envelopeGenerator;
+	WaveformGenerator<is6581>	waveformGenerator;
+	EnvelopeGenerator			envelopeGenerator;
 
 private:
 	/// The DAC LUT for analog waveform output
@@ -64,7 +65,7 @@ public:
 	* @param ringModulator Ring-modulator for waveform
 	* @return the voice analog output
 	*/
-	sidinline float output ( WaveformGenerator& ringModulator )
+	sidinline float output ( WaveformGenerator<is6581>& ringModulator )
 	{
 		const auto	wav = waveformGenerator.output ( ringModulator );
 		const auto	env = envelopeGenerator.output ();

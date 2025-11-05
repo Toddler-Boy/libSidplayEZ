@@ -31,6 +31,7 @@ namespace reSIDfp
 /**
 * Compose a more efficient SINC from chaining two other SINCs
 */
+template <int scaleFactor>
 class TwoPassSincResampler final
 {
 public:
@@ -60,7 +61,7 @@ public:
 		return s1.input ( sample ) && s2.input ( s1.output () );
 	}
 
-	[[ nodiscard ]] sidinline int16_t output ( const int scaleFactor ) const
+	[[ nodiscard ]] sidinline int16_t output () const
 	{
 		/*
 		* Clip the input as it may overflow the 16 bit range.

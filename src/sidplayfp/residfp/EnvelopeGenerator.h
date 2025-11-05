@@ -358,7 +358,7 @@ sidinline void EnvelopeGenerator::state_change ()
 			break;
 
 		case State::RELEASE:
-			if (	( state == State::ATTACK			&&	state_pipeline == 0 )
+			if (	( state == State::ATTACK		&&	state_pipeline == 0 )
 				||	( state == State::DECAY_SUSTAIN	&&	state_pipeline == 1 ) )
 			{
 				state = State::RELEASE;

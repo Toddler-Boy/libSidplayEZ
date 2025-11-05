@@ -140,6 +140,8 @@ template <typename FLT>
 class SID final
 {
 private:
+	static constexpr bool is6581 = std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>>;
+
 	FLT		filter;
 
 	// External filter that provides high-pass and low-pass filtering to adjust sound tone slightly
@@ -150,15 +152,12 @@ private:
 	std::vector<int16_t>	pulldownTable;
 
 	// Resampler used by audio generation code
-	TwoPassSincResampler	resampler;
+	TwoPassSincResampler<is6581 ? 3 : 5>	resampler;
 
 	static constexpr int	numVoices = 3;
 
 	// SID voices
-	Voice	voice[ numVoices ];
-
-	// Used to amplify the output by x/2 to get an adequate playback volume
-	int	scaleFactor;
+	Voice<is6581>	voice[ numVoices ];
 
 	// Used to determine if the filter ever gets used during playback
 	uint8_t	filterUsage;
@@ -167,7 +166,10 @@ private:
 	int	busValueTtl;
 
 	// Current chip model's bus value TTL
-	int	modelTTL;
+	static constexpr auto	BUS_TTL_6581 = 0x01D00;
+	static constexpr auto	BUS_TTL_8580 = 0xA2000;
+
+	static constexpr int	modelTTL = is6581 ? BUS_TTL_6581 : BUS_TTL_8580;
 
 	// Time until #voiceSync must be run.
 	unsigned int nextVoiceSync;
@@ -238,12 +240,12 @@ private:
 		constexpr auto	MOSFET_LEAKAGE_6581 = 0.0075;
 		constexpr auto	MOSFET_LEAKAGE_8580 = 0.0035;
 
-		const auto	dacLeakFactor = ( model == MOS6581 ? MOSFET_LEAKAGE_6581 : MOSFET_LEAKAGE_8580 ) * dacLeakage;
+		const auto	dacLeakFactor = ( is6581 ? MOSFET_LEAKAGE_6581 : MOSFET_LEAKAGE_8580 ) * dacLeakage;
 
 		// calculate envelope DAC table
 		{
 			Dac	dacBuilder ( ENV_DAC_BITS, dacLeakFactor );
-			dacBuilder.kinkedDac ( model == MOS6581 );
+			dacBuilder.kinkedDac ( is6581 );
 
 			for ( auto i = 0u; i < ( 1 << ENV_DAC_BITS ); i++ )
 				envDAC[ i ] = float ( dacBuilder.getOutput ( i ) );
@@ -252,9 +254,9 @@ private:
 		// calculate oscillator DAC table
 		{
 			Dac	dacBuilder ( OSC_DAC_BITS, dacLeakFactor );
-			dacBuilder.kinkedDac ( model == MOS6581 );
+			dacBuilder.kinkedDac ( is6581 );
 
-			const auto	offset = dacBuilder.getOutput ( 0x7ff, model == MOS6581 );// model == MOS6581 ? OFFSET_6581 : OFFSET_8580 );
+			const auto	offset = dacBuilder.getOutput ( 0x7ff, is6581 );// model == MOS6581 ? OFFSET_6581 : OFFSET_8580 );
 
 			for ( auto i = 0u; i < ( 1 << OSC_DAC_BITS ); i++ )
 				oscDAC[ i ] = float ( dacBuilder.getOutput ( i ) - offset );
@@ -267,7 +269,7 @@ public:
 		waveTable = WaveformCalculator::buildWaveTable ();
 
 		reset ();
-		setChipModel ( MOS8580 );
+//		setChipModel ( MOS8580 );
 	}
 
 	/**
@@ -277,21 +279,7 @@ public:
 	*/
 	void setChipModel ( ChipModel _model )
 	{
-		constexpr auto	BUS_TTL_6581 = 0x01D00;
-		constexpr auto	BUS_TTL_8580 = 0xA2000;
-
 		model = _model;
-
-		if constexpr ( std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>> )
-		{
-			scaleFactor = 3;
-			modelTTL = BUS_TTL_6581;
-		}
-		else if constexpr ( std::is_same_v<FLT, Filter8580<true>> || std::is_same_v<FLT, Filter8580<false>> )
-		{
-			scaleFactor = 5;
-			modelTTL = BUS_TTL_8580;
-		}
 
 		recalculateDACs ();
 
@@ -300,7 +288,7 @@ public:
 		{
 			vce.setEnvDAC ( envDAC );
 			vce.setWavDAC ( oscDAC );
-			vce.waveformGenerator.setModel ( model == MOS6581 );
+//			vce.waveformGenerator.setModel ( is6581 );
 			vce.waveformGenerator.setWaveformModels ( waveTable );
 		}
 
@@ -317,7 +305,7 @@ public:
 	*/
 	void setCombinedWaveforms ( CombinedWaveforms cws, const float threshold )
 	{
-		WaveformCalculator::buildPulldownTable ( pulldownTable, model == MOS6581, cws, threshold );
+		WaveformCalculator::buildPulldownTable ( pulldownTable, is6581, cws, threshold );
 
 		for ( auto& vce : voice )
 			vce.waveformGenerator.setPulldownModels ( pulldownTable );
@@ -339,7 +327,7 @@ public:
 	{
 		voiceDCDrift = drift;
 
-		if constexpr ( std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>> )
+		if constexpr ( is6581 )
 			filter.setVoiceDCDrift ( drift );
 	}
 
@@ -524,7 +512,7 @@ public:
 			const auto	o2 = voice[ 1 ].output ( voice[ 0 ].waveformGenerator );
 			const auto	o3 = voice[ 2 ].output ( voice[ 1 ].waveformGenerator );
 
-			if constexpr ( std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>> )
+			if constexpr ( is6581 )
 			{
 				const auto	env1 = voice[ 0 ].envelopeGenerator.output ();
 				const auto	env2 = voice[ 1 ].envelopeGenerator.output ();
@@ -533,7 +521,7 @@ public:
 				const auto	input = int ( filter.clock ( o1, o2, o3, env1, env2, env3 ) );
 				return externalFilter.clock ( input + INT16_MIN );
 			}
-			else if constexpr ( std::is_same_v < FLT, Filter8580<true>> || std::is_same_v < FLT, Filter8580<false>> )
+			else
 			{
  				const auto	input = int ( filter.clock ( o1, o2, o3 ) );
  				return externalFilter.clock ( input + INT16_MIN );
@@ -558,7 +546,7 @@ public:
 					voice[ 2 ].envelopeGenerator.clock ();
 
 					if ( resampler.input ( output () ) ) [[ unlikely ]]
-						buf[ s++ ] = int16_t ( resampler.output ( scaleFactor ) );
+						buf[ s++ ] = resampler.output ();
 				}
 
 				cycles -= delta_t;
@@ -612,7 +600,7 @@ public:
 	*/
 	void setFilter6581Digi ( [[ maybe_unused ]] double adjustment )
 	{
-		if constexpr ( std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>> )
+		if constexpr ( is6581 )
 			filter.setDigiVolume ( adjustment );
 	}
 
