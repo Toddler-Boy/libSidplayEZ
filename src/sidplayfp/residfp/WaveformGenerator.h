@@ -733,7 +733,8 @@ public:
 
 		// The result of the pulse width compare is delayed one cycle.
 		// Push next pulse level into pulse level pipeline.
-		pulse_output = ( ( accumulator >> 12 ) >= pw ) ? 0xfff : 0x000;
+//		pulse_output = ( ( accumulator >> 12 ) >= pw ) ? 0xfff : 0x000;
+		pulse_output = -( ( accumulator >> 12 ) >= pw ) & 0xfff;
 
 		return waveform_output;
 	}
