@@ -216,20 +216,24 @@ private:
 		// Calculate the time to next voice sync
 		nextVoiceSync = std::numeric_limits<int>::max ();
 
-		for ( auto i = 0; i < numVoices; i++ )
+		auto updateSync = [ this ] ( const int i, const int j )
 		{
 			auto&		wave = voice[ i ].waveformGenerator;
 			const auto	freq = wave.readFreq ();
 
-			if ( wave.readTest () || freq == 0 || ! voice[ ( i + 1 ) % 3 ].waveformGenerator.readSync () ) [[ likely ]]
-				continue;
+			if ( wave.readTest () || freq == 0 || ! voice[ j ].waveformGenerator.readSync () ) [[ likely ]]
+				return;
 
 			const auto	accumulator = wave.readAccumulator ();
 			const auto	thisVoiceSync = ( ( 0x7FFFFF - accumulator ) & 0xFFFFFF ) / freq + 1;
 
 			if ( thisVoiceSync < nextVoiceSync )
 				nextVoiceSync = thisVoiceSync;
-		}
+		};
+
+		updateSync ( 0, 1 );
+		updateSync ( 1, 2 );
+		updateSync ( 2, 0 );
 	}
 
 	void recalculateDACs ()
@@ -529,11 +533,11 @@ public:
 		};
 
 		auto    s = 0;
-		while ( cycles )
+		while ( cycles ) [[ likely ]]
 		{
 			if ( auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 ) [[ likely ]]
 			{
-				for ( auto i = 0u; i < delta_t; i++ )
+				for ( auto i = 0u; i < delta_t; i++ ) [[ likely ]]
 				{
 					// clock waveform generators
 					voice[ 0 ].waveformGenerator.clock ();

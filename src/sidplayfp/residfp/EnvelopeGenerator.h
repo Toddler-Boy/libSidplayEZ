@@ -282,7 +282,7 @@ sidinline void EnvelopeGenerator::clock ()
 		const unsigned int feedback = ( ( lfsr << 14 ) ^ ( lfsr << 13 ) ) & 0x4000;
 		lfsr = ( lfsr >> 1 ) | feedback;
 	}
-	else
+	else [[ unlikely ]]
 	{
 		resetLfsr = true;
 	}
