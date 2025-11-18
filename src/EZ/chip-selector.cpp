@@ -16,7 +16,7 @@ constexpr char defaultProfiles[] = {
 
 ChipSelector::ChipSelector ()
 {
-	setProfiles ( defaultProfiles );
+	setProfiles ( std::string ( defaultProfiles, sizeof ( defaultProfiles ) ) );
 }
 //-----------------------------------------------------------------------------
 

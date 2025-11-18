@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <numbers>
+#include <cmath>
 
 namespace libsidplayEZ
 {
@@ -17,7 +18,7 @@ constexpr char defaultProfiles[] = {
 
 StereoSelector::StereoSelector ()
 {
-	setProfiles ( defaultProfiles );
+	setProfiles ( std::string ( defaultProfiles, sizeof ( defaultProfiles ) ) );
 }
 //-----------------------------------------------------------------------------
 
