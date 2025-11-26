@@ -111,7 +111,7 @@ namespace stringutils
 	}
 
 	return std::string ( (const char*)&outBuffer[ 0 ], out - &outBuffer[ 0 ] );
-};
+}
 //-----------------------------------------------------------------------------
 
 [[ nodiscard ]] std::vector<std::string> arrayFromTokens ( const std::string& input, const char delimeter )
