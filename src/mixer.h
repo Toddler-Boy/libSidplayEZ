@@ -42,7 +42,6 @@ public:
 
 private:
 	std::vector<sidemu*>	m_chips;
-	int32_t					m_iSamples[ MAX_SIDS ] = {};
 
 	// Mixer settings
 	float*		m_sampleBuffer[ 2 ] = { nullptr, nullptr };

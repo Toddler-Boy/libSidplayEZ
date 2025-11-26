@@ -364,7 +364,7 @@ private:
 
 			// Write changes to the shift register output caused by combined waveforms
 			// back into the shift register.
-			if ( shift_pipeline != 1 && !test ) [[ likely ]]
+			if ( shift_pipeline != 1 && ! test ) [[ likely ]]
 			{
 				// the output pulls down the SR bits
 				shift_register = shift_register & ( shift_mask | get_noise_writeback ( waveform_output ) );
@@ -537,7 +537,7 @@ public:
 		// Substitution of accumulator MSB when sawtooth = 0, ring_mod = 1.
 		ring_msb_mask = ( ( ~control >> 5 ) & ( control >> 2 ) & 0x1 ) << 23;
 
-		if ( waveform != waveform_prev )
+		if ( waveform != waveform_prev ) [[ unlikely ]]
 		{
 			auto	modWave = model_wave->data ();
 			auto	modPulldown = model_pulldown->data ();
@@ -581,9 +581,9 @@ public:
 				floating_output_ttl = is6581 ? FLOATING_OUTPUT_TTL_6581R3 : FLOATING_OUTPUT_TTL_8580R5;
 		}
 
-		if ( test != test_prev )
+		if ( test != test_prev ) [[ unlikely ]]
 		{
-			if ( test )
+			if ( test ) [[ unlikely ]]
 			{
 				// Reset accumulator.
 				accumulator = 0;
