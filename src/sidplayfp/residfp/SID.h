@@ -292,7 +292,6 @@ public:
 		{
 			vce.setEnvDAC ( envDAC );
 			vce.setWavDAC ( oscDAC );
-//			vce.waveformGenerator.setModel ( is6581 );
 			vce.waveformGenerator.setWaveformModels ( waveTable );
 		}
 
