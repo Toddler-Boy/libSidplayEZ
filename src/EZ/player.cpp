@@ -35,6 +35,8 @@ bool Player::loadSidFile ( const char* filename )
 	if ( ! info )
 		return false;
 
+	tuneOverride = overrideSelector.getOverride ( info->path (), info->dataFileName () );
+
 	// Fill basic tune information (global for all songs)
 	{
 		stiEZ.title = stringutils::extendedASCIItoUTF8 ( info->infoString ( 0 ) );
@@ -44,7 +46,8 @@ bool Player::loadSidFile ( const char* filename )
 		stiEZ.filename = std::string ( info->path () ) + std::string ( info->dataFileName () );
 
 		stiEZ.numSongs = info->songs ();
-		stiEZ.startSong = info->startSong ();
+
+		stiEZ.startSong = tuneOverride.startTune ? tuneOverride.startTune : info->startSong ();
 
 		stiEZ.playroutineID = sidID.findPlayerRoutines ( tune.getSidData () );
 
@@ -58,9 +61,17 @@ bool Player::loadSidFile ( const char* filename )
 }
 //-----------------------------------------------------------------------------
 
-bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo, const bool useFilter )
+bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFilter )
 {
 	readyToPlay = false;
+
+	//
+	// Apply overrides
+	//
+
+	// Start song
+	if ( ! songNo && tuneOverride.startTune )
+		songNo = tuneOverride.startTune;
 
 	// Select song
 	stiEZ.currentSong = tune.selectSong ( songNo );
@@ -69,6 +80,27 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo, const bool
 	if ( ! info )
 		return false;
 
+	// Reset
+	config.defaultC64Model = SidConfig::c64_model_t::PAL;
+	config.forceC64Model = false;
+	config.defaultSidModel = SidConfig::sid_model_t::MOS6581;
+	config.forceSidModel = false;
+
+	// Clock
+	if ( info->clockSpeed () == SidTuneInfo::clock_t::CLOCK_UNKNOWN && tuneOverride.clock )
+	{
+		config.defaultC64Model = tuneOverride.clock == 1 ? SidConfig::c64_model_t::PAL : SidConfig::c64_model_t::NTSC;
+		config.forceC64Model = true;
+	}
+
+	// SID
+	if ( tuneOverride.chipModel )
+	{
+		config.defaultSidModel = tuneOverride.chipModel == 1 ? SidConfig::sid_model_t::MOS6581 : SidConfig::sid_model_t::MOS8580;
+		config.forceSidModel = true;
+	}
+
+	// Apply config
 	config.useFilter = useFilter;
 	if ( ! engine.setConfig ( config ) )
 		return false;
@@ -83,10 +115,18 @@ bool libsidplayEZ::Player::setTuneNumber ( const unsigned int songNo, const bool
 	{
 		// Model(s)
 		for ( auto i = 0; i < engine.getNumChips (); ++i )
-			stiEZ.model.emplace_back ( info->sidModel ( i ) == SidTuneInfo::model_t::SIDMODEL_8580 ? "8580" : "6581" );
+		{
+			if ( config.forceSidModel )
+				stiEZ.model.emplace_back ( config.defaultSidModel == SidConfig::sid_model_t::MOS8580 ? "8580" : "6581" );
+			else
+				stiEZ.model.emplace_back ( info->sidModel ( i ) == SidTuneInfo::model_t::SIDMODEL_8580 ? "8580" : "6581" );
+		}
 
 		// Clock
-		stiEZ.clock = info->clockSpeed () == SidTuneInfo::clock_t::CLOCK_NTSC ? "NTSC" : "PAL";
+		if ( config.forceC64Model )
+			stiEZ.clock = config.defaultC64Model == SidConfig::c64_model_t::NTSC ? "NTSC" : "PAL";
+		else
+			stiEZ.clock = info->clockSpeed () == SidTuneInfo::clock_t::CLOCK_NTSC ? "NTSC" : "PAL";
 
 		// Speed
 		const auto& engineInfo = (const SidInfoImpl&)engine.getInfo ();

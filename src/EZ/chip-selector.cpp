@@ -78,6 +78,8 @@ std::pair<std::string, ChipSelector::settings> ChipSelector::getChipProfile ( co
 
 void ChipSelector::setProfiles ( const std::string& csvStr )
 {
+	chipProfiles.clear ();
+
 	auto	csv = TinyCSV ();
 
 	const auto	rows = csv.parseCSV ( csvStr );

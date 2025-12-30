@@ -1,7 +1,6 @@
 #include "stereo-selector.h"
 
 #include "tinyCSV.h"
-#include "../stringutils.h"
 
 #include <algorithm>
 #include <numbers>
@@ -66,6 +65,8 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 
 void StereoSelector::setProfiles ( const std::string& csvStr )
 {
+	stereoProfiles.clear ();
+
 	auto	csv = TinyCSV ();
 
 	const auto	rows = csv.parseCSV ( csvStr );
