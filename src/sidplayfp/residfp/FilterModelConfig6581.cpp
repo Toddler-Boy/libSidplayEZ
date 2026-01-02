@@ -22,6 +22,7 @@
 
 #include "FilterModelConfig6581.h"
 
+#include <algorithm>
 #include <cmath>
 #include <thread>
 

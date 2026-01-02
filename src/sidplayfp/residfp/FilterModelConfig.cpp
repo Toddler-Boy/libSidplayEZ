@@ -23,6 +23,8 @@
 #include "FilterModelConfig.h"
 
 #include <vector>
+#include <algorithm>
+#include <random>
 
 namespace reSIDfp
 {

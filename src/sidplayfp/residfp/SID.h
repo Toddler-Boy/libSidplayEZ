@@ -104,7 +104,6 @@
 * [2]: http://noname.c64.org/csdb/forums/?roomid=11&topicid=29025&showallposts=1
 */
 
-#include <memory>
 #include <algorithm>
 #include <limits>
 
@@ -115,7 +114,6 @@ namespace reSIDfp
 }
 
 #include "Dac.h"
-#include "Filter.h"
 
 #include "Filter6581.h"
 #include "Filter8580.h"

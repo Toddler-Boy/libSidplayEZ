@@ -23,8 +23,6 @@
 
 #include "FilterModelConfig.h"
 
-#include <memory>
-
 namespace reSIDfp
 {
 

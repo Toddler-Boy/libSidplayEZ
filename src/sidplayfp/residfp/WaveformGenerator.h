@@ -483,7 +483,7 @@ public:
 	* @param syncDest The oscillator that will be synced
 	* @param syncSource The sync source oscillator
 	*/
-	sidinline void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource )
+	sidinline void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource ) const
 	{
 		// A special case occurs when a sync source is synced itself on the same
 		// cycle as when its MSB is set high. In this case the destination will
