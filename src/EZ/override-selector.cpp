@@ -10,16 +10,6 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-constexpr char defaultOverrides[] = {
-#embed "tune-overrides.csv"
-};
-
-OverrideSelector::OverrideSelector ()
-{
-	setOverrides ( std::string ( defaultOverrides, sizeof ( defaultOverrides ) ) );
-}
-//-----------------------------------------------------------------------------
-
 OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, const char* _filename )
 {
 	auto	path = std::string ( _path ) + std::string ( _filename );

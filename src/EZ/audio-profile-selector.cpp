@@ -1,4 +1,4 @@
-#include "stereo-selector.h"
+#include "audio-profile-selector.h"
 
 #include "tinyCSV.h"
 
@@ -11,17 +11,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-constexpr char defaultProfiles[] = {
-#embed "stereo-profiles.csv"
-};
-
-StereoSelector::StereoSelector ()
-{
-	setProfiles ( std::string ( defaultProfiles, sizeof ( defaultProfiles ) ) );
-}
-//-----------------------------------------------------------------------------
-
-StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, const char* _filename )
+AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _path, const char* _filename )
 {
 	auto	path = std::string ( _path ) + std::string ( _filename );
 
@@ -63,7 +53,7 @@ StereoSelector::settings StereoSelector::getStereoProfile ( const char* _path, c
 }
 //-----------------------------------------------------------------------------
 
-void StereoSelector::setProfiles ( const std::string& csvStr )
+void AudioProfileSelector::setProfiles ( const std::string& csvStr )
 {
 	stereoProfiles.clear ();
 
@@ -84,7 +74,7 @@ void StereoSelector::setProfiles ( const std::string& csvStr )
 }
 //-----------------------------------------------------------------------------
 
-void StereoSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
+void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
 {
 	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> *width );
 	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> *width );
@@ -126,4 +116,3 @@ void StereoSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ 
 }
 
 }
-

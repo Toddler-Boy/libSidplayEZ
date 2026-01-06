@@ -7,11 +7,9 @@ namespace libsidplayEZ
 {
 //-----------------------------------------------------------------------------
 
-class StereoSelector final
+class AudioProfileSelector final
 {
 public:
-	StereoSelector ();
-
 	struct settings final
 	{
 		// Stereo width (in percent)
@@ -23,7 +21,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	settings getStereoProfile ( const char* path, const char* filename );
+	settings getProfile ( const char* path, const char* filename );
 	void setProfiles ( const std::string& csvStr );
 
 	static void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width );

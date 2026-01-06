@@ -139,7 +139,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// per author with the assumption they worked with the same machine their entire career
 	//
 	{
-		const auto [ profileName, chipProfile ] = chipSelector.getChipProfile ( info->path (), info->dataFileName () );
+		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName () );
 
 		stiEZ.chipProfile = profileName;
 
@@ -182,7 +182,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// a list where we want a full or narrowed stereo field and bass-adjustment
 	//
 	{
-		const auto stereoProfile = stereoSelector.getStereoProfile ( info->path (), info->dataFileName () );
+		const auto stereoProfile = audioSelector.getProfile ( info->path (), info->dataFileName () );
 
 		stiEZ.stereoWidth = stereoProfile.width;
 		stiEZ.bassAdjust = float ( stereoProfile.bass );

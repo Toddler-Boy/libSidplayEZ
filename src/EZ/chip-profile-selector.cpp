@@ -1,4 +1,4 @@
-#include "chip-selector.h"
+#include "chip-profile-selector.h"
 
 #include "tinyCSV.h"
 #include "../stringutils.h"
@@ -10,17 +10,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-constexpr char defaultProfiles[] = {
-#embed "chip-profiles.csv"
-};
-
-ChipSelector::ChipSelector ()
-{
-	setProfiles ( std::string ( defaultProfiles, sizeof ( defaultProfiles ) ) );
-}
-//-----------------------------------------------------------------------------
-
-std::pair<std::string, ChipSelector::settings> ChipSelector::getChipProfile ( const char* _path, const char* _filename )
+std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getProfile ( const char* _path, const char* _filename )
 {
 	auto	path = std::string ( _path );
 
@@ -76,7 +66,7 @@ std::pair<std::string, ChipSelector::settings> ChipSelector::getChipProfile ( co
 }
 //-----------------------------------------------------------------------------
 
-void ChipSelector::setProfiles ( const std::string& csvStr )
+void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 {
 	chipProfiles.clear ();
 
@@ -96,9 +86,9 @@ void ChipSelector::setProfiles ( const std::string& csvStr )
 		setting.digi = csv.getDouble ( i, "digi", setting.digi );
 
 		static const std::unordered_map<std::string, int> cwsLevels = {
-			{ "weak", ChipSelector::weak },
-			{ "average", ChipSelector::average },
-			{ "strong", ChipSelector::strong }
+			{ "weak", ChipProfileSelector::weak },
+			{ "average", ChipProfileSelector::average },
+			{ "strong", ChipProfileSelector::strong }
 		};
 
 		setting.cwsLevel = cwsLevels.at ( stringutils::toLower ( csv.getString ( i, "cwsLevel", "average" ) ) );

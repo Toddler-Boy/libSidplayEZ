@@ -7,11 +7,9 @@ namespace libsidplayEZ
 {
 //-----------------------------------------------------------------------------
 
-class ChipSelector final
+class ChipProfileSelector final
 {
 public:
-	ChipSelector ();
-
 	enum
 	{
 		weak,
@@ -40,7 +38,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	std::pair<std::string, settings> getChipProfile ( const char* path, const char* filename );
+	std::pair<std::string, settings> getProfile ( const char* path, const char* filename );
 
 	void setProfiles ( const std::string& csvStr );
 

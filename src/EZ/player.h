@@ -3,8 +3,8 @@
 #include "../player.h"
 #include "sidid.h"
 #include "override-selector.h"
-#include "chip-selector.h"
-#include "stereo-selector.h"
+#include "chip-profile-selector.h"
+#include "audio-profile-selector.h"
 #include "SidTuneInfoEZ.h"
 
 namespace libsidplayEZ
@@ -17,7 +17,7 @@ class Player final
 public:
 	bool loadSidIDConfig ( const char* filename ) { return sidID.loadSidIDConfig ( filename ); }
 	void setChipProfileMap ( const std::string& csvStr ) { chipSelector.setProfiles ( csvStr ); }
-	void setStereoProfileMap ( const std::string& cvsStr ) { stereoSelector.setProfiles ( cvsStr ); }
+	void setAudioProfileMap ( const std::string& cvsStr ) { audioSelector.setProfiles ( cvsStr ); }
 	void setTuneOverrides ( const std::string& cvsStr ) { overrideSelector.setOverrides ( cvsStr ); }
 
 	const OverrideSelector::overrideMap& getAllTuneOverrides () const { return overrideSelector.getAllOverrides (); }
@@ -47,9 +47,9 @@ public:
 private:
 	bool	readyToPlay = false;
 
-	OverrideSelector	overrideSelector;
-	ChipSelector		chipSelector;
-	StereoSelector		stereoSelector;
+	OverrideSelector		overrideSelector;
+	ChipProfileSelector		chipSelector;
+	AudioProfileSelector	audioSelector;
 
 	libsidplayfp::Player	engine;
 

@@ -33,7 +33,7 @@
 #include "mixer.h"
 #include "c64/c64.h"
 
-#include "EZ/chip-selector.h"
+#include "EZ/chip-profile-selector.h"
 
 #include <atomic>
 #include <vector>

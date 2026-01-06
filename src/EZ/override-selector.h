@@ -10,8 +10,6 @@ namespace libsidplayEZ
 class OverrideSelector final
 {
 public:
-	OverrideSelector ();
-
 	struct overrides final
 	{
 		std::string	tune;
