@@ -178,14 +178,14 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	}
 
 	//
-	// Get stereo profile for specific 2SID and 3SID tunes. Most will be mixed to mono, but we can provide
-	// a list where we want a full or narrowed stereo field and bass-adjustment
+	// Get audio profile for specific 2SID and 3SID, and even some 1SID tunes. Most will be mixed to mono,
+	// but we can provide a list where we want a full or narrowed stereo field and bass-adjustment
 	//
 	{
-		const auto stereoProfile = audioSelector.getProfile ( info->path (), info->dataFileName () );
+		const auto audioProfile = audioSelector.getProfile ( info->path (), info->dataFileName () );
 
-		stiEZ.stereoWidth = stereoProfile.width;
-		stiEZ.bassAdjust = float ( stereoProfile.bass );
+		stiEZ.stereoWidth = audioProfile.width;
+		stiEZ.bassAdjust = float ( audioProfile.bass );
 	}
 
 	return readyToPlay;
