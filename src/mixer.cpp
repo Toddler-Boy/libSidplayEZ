@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <cstring>
 
 #include "mixer.h"
 #include "sidemu.h"
@@ -88,7 +89,7 @@ void Mixer::doMix ()
 				sumBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 	}
@@ -107,7 +108,7 @@ void Mixer::doMix ()
 			convertBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 
@@ -131,7 +132,7 @@ void Mixer::doMix ()
 			}
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 	}

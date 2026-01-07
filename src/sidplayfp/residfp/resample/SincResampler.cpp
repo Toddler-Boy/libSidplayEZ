@@ -28,10 +28,7 @@
 #include <numeric>
 #include <execution>
 #include <algorithm>
-
-#if ! defined __APPLE__
-constexpr auto	M_PI = 3.14159265358979323846;
-#endif
+#include <numbers>
 //-----------------------------------------------------------------------------
 
 namespace reSIDfp
@@ -48,7 +45,7 @@ void SincResampler::setup ( double clockFrequency, double samplingFrequency, dou
 	const auto	A = -20.0 * std::log10 ( 1.0 / ( 1 << BITS ) );
 
 	// A fraction of the bandwidth is allocated to the transition band, which we double because we design the filter to transition halfway at Nyquist
-	const auto	dw = ( 1.0 - 2.0 * highestAccurateFrequency / samplingFrequency ) * M_PI * 2.0;
+	const auto	dw = ( 1.0 - 2.0 * highestAccurateFrequency / samplingFrequency ) * std::numbers::pi * 2.0;
 
 	constexpr auto I0 = [] ( double x )
 	{
@@ -116,10 +113,10 @@ void SincResampler::setup ( double clockFrequency, double samplingFrequency, dou
 	firTable.resize ( firRES * firN );
 
 	// The cutoff frequency is midway through the transition band, in effect the same as Nyquist
-	constexpr auto	wc = M_PI;
+	constexpr auto	wc = std::numbers::pi;
 
 	// Calculate the sinc tables
-	const auto	scale = 32768.0 * wc * r_cyclesPerSampleD / M_PI;
+	const auto	scale = 32768.0 * wc * r_cyclesPerSampleD / std::numbers::pi;
 
 	// We're not interested in the fractional part so use int division before converting to double
 	const auto	tmp = firN / 2;

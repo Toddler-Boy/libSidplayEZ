@@ -20,6 +20,7 @@
 
 #include "stringutils.h"
 
+#include <cstdint>
 #include <sstream>
 #include <fstream>
 

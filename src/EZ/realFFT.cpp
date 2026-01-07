@@ -99,10 +99,10 @@ void split ( std::span<float> data )
 		for ( j = 2; j <= n8; j++ )
 		{
 			a3 = 3 * a;
-			cc1 = std::cosf ( a );
-			ss1 = std::sinf ( a );
-			cc3 = std::cosf ( a3 );
-			ss3 = std::sinf ( a3 );
+			cc1 = std::cos ( a );
+			ss1 = std::sin ( a );
+			cc3 = std::cos ( a3 );
+			ss3 = std::sin ( a3 );
 			a = j * e;
 			i = 0;
 			id = n2 << 1;
@@ -161,7 +161,7 @@ void window_BlackmanHarris ( std::span<float> data )
 	for ( auto i = 0; i < n; ++i )
 	{
 		const auto	phase = float ( std::numbers::pi ) * 2.0f * ( float ( i ) / float ( n - 1 ) );
-		data[ i ] = 0.35875f - 0.48829f * std::cosf ( phase ) + 0.14128f * std::cosf ( phase * 2.0f ) - 0.01168f * std::cosf ( phase * 3.0f );
+		data[ i ] = 0.35875f - 0.48829f * std::cos ( phase ) + 0.14128f * std::cos ( phase * 2.0f ) - 0.01168f * std::cos ( phase * 3.0f );
 	}
 }
 //------------------------------------------------------------------------------
