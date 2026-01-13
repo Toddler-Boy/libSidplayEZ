@@ -41,7 +41,7 @@ struct SidTuneInfoEZ
 	std::vector<std::string>	model;
 
 	// "PAL" or "NTSC"
-	std::string		clock;
+	std::string		clock = "PAL";
 
 	// e.g. "CIA (PAL)", "50 Hz VBI (PAL)", etc.
 	std::string		speed;
