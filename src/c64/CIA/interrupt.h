@@ -27,7 +27,7 @@
 
 #include "../../EZ/config.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace libsidplayfp
 {

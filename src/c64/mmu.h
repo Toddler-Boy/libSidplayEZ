@@ -21,8 +21,6 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <stdint.h>
-
 #include "../sidmemory.h"
 #include "../EventScheduler.h"
 
@@ -31,7 +29,6 @@
 #include "Banks/SystemROMBanks.h"
 #include "Banks/ZeroRAMBank.h"
 
-#include <string.h>
 #include <algorithm>
 
 namespace libsidplayfp

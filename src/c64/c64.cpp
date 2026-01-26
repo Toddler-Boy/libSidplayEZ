@@ -22,8 +22,6 @@
 
 #include "c64.h"
 
-#include <algorithm>
-
 #include "CIA/mos652x.h"
 #include "VIC_II/mos656x.h"
 

@@ -23,7 +23,7 @@
 
 #include "FilterModelConfig8580.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <cassert>
 
 namespace reSIDfp

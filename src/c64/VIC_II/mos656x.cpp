@@ -31,9 +31,7 @@
 
 #include "mos656x.h"
 
-#include <cstring>
-
-#include "../../sidendian.h"
+#include <cstdint>
 
 namespace libsidplayfp
 {

@@ -26,7 +26,6 @@
 
 #include "Banks/Bank.h"
 #include "c64env.h"
-#include "../sidendian.h"
 #include "VIC_II/mos656x.h"
 
 namespace libsidplayfp

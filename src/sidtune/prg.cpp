@@ -22,8 +22,6 @@
 
 #include "prg.h"
 
-#include <memory>
-
 #include "../sidplayfp/SidTuneInfo.h"
 
 #include "SidTuneTools.h"

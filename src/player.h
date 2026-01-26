@@ -21,23 +21,17 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <stdint.h>
-#include <cstdio>
+#include <cstdint>
 
 #include "sidplayfp/SidConfig.h"
 #include "sidplayfp/SidTune.h"
-#include "sidplayfp/SidTuneInfo.h"
 #include "SidInfoImpl.h"
 #include "sidemu.h"
 
 #include "mixer.h"
 #include "c64/c64.h"
 
-#include "EZ/chip-profile-selector.h"
-
-#include <atomic>
 #include <vector>
-#include <unordered_map>
 
 namespace libsidplayfp
 {

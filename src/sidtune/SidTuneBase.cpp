@@ -22,10 +22,8 @@
 
 #include "SidTuneBase.h"
 
-#include <cstring>
-#include <climits>
+#include <cstdint>
 #include <iostream>
-#include <iomanip>
 #include <algorithm>
 #include <iterator>
 #include <fstream>
@@ -34,7 +32,6 @@
 #include "SidTuneInfoImpl.h"
 #include "../sidendian.h"
 #include "../sidmemory.h"
-#include "../stringutils.h"
 
 #include "p00.h"
 #include "prg.h"

@@ -25,7 +25,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <numeric>
 #include <execution>
 #include <algorithm>
 #include <numbers>

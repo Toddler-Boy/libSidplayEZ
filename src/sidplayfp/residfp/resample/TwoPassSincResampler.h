@@ -22,7 +22,6 @@
 */
 
 #include <cmath>
-#include <memory>
 
 #include "SincResampler.h"
 

@@ -22,6 +22,7 @@
 
 #include "reloc65.h"
 
+#include <cstdint>
 #include <cstring>
 #include <cassert>
 

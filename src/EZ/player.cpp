@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include "../stringutils.h"
+#include "../sidplayfp/SidTuneInfo.h"
 
 //-----------------------------------------------------------------------------
 

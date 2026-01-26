@@ -23,7 +23,7 @@
 
 #include "mos652x.h"
 
-#include <cstring>
+#include <cstdint>
 #include <algorithm>
 
 #include "../../sidendian.h"

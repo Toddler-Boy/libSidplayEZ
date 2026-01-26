@@ -22,9 +22,9 @@
 
 #include "PSID.h"
 
+#include <cstdint>
 #include <cstring>
 #include <string>
-#include <memory>
 
 #include "../sidplayfp/SidTuneInfo.h"
 

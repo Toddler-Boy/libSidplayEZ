@@ -29,7 +29,7 @@
 	 Ported to c++ and cut down for use in libsidplayfp by Leandro Nini
  */
 
-#include <stdint.h>
+#include <cstdint>
 
  /**
   * reloc65 -- A part of xa65 - 65xx/65816 cross-assembler and utility suite

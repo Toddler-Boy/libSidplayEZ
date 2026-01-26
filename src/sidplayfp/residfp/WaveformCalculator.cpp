@@ -22,8 +22,6 @@
 #include "WaveformCalculator.h"
 
 #include <cmath>
-#include <map>
-#include <cassert>
 
 namespace reSIDfp
 {

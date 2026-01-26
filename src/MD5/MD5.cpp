@@ -34,7 +34,6 @@
 
 #include "MD5.h"
 
-#include <string.h>
 #include <algorithm>
 
 #define T1 0xd76aa478

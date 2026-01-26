@@ -31,7 +31,7 @@
    ghost@aladdin.com
   */
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 class MD5

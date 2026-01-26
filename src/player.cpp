@@ -24,11 +24,11 @@
 #include "player.h"
 
 #include "sidplayfp/SidTune.h"
+#include "sidplayfp/SidTuneInfo.h"
 
 #include "sidemu.h"
 #include "psiddrv.h"
 #include "romCheck.h"
-#include "stringutils.h"
 
 namespace libsidplayfp
 {
