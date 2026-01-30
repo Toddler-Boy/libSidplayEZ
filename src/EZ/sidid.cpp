@@ -1,7 +1,7 @@
 /*
 * This file is part of libsidplayEZ, a SID player engine.
 *
-* Copyright 2025 Michael Hartmann
+* Copyright 2025-2026 Michael Hartmann
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ bool sidid::loadSidIDConfig ( const char* filename )
 
 	sidIDs.shrink_to_fit ();
 
-	return sidIDs.size () > 0;
+	return ! sidIDs.empty ();
 }
 //-----------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ std::vector<std::string> sidid::findPlayerRoutines ( const std::vector<uint8_t>&
 
 	auto identifybytes = [ &tuneData ] ( const std::vector<int16_t>& bytes ) -> bool
 	{
-		const auto	buffer = (const uint8_t* const)tuneData.data ();
+		const auto	buffer = static_cast<const uint8_t* const> ( tuneData.data () );
 		const auto	length = int ( tuneData.size () );
 		const auto	sigSize = int ( bytes.size () );
 
@@ -160,7 +160,7 @@ std::vector<std::string> sidid::findPlayerRoutines ( const std::vector<uint8_t>&
 	for ( const auto& id : sidIDs )
 		for ( const auto& sig : id.sigs )
 			if ( identifybytes ( sig ) )
-				if ( std::find ( routines.begin (), routines.end (), id.name ) == routines.end () )
+				if ( std::ranges::find ( routines, id.name ) == routines.end () )
 					routines.emplace_back ( id.name );
 
 	return routines;

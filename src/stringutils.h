@@ -65,6 +65,15 @@ namespace stringutils
 		return newStr;
 	}
 
+	[[ nodiscard ]] inline std::string toUpper ( const std::string& input )
+	{
+		auto	newStr = input;
+
+		std::transform ( newStr.begin (), newStr.end (), newStr.begin (), [] ( unsigned char c ) { return std::toupper ( c ); } );
+
+		return newStr;
+	}
+
 	[[ nodiscard ]] std::string utf8toExtendedASCII ( const std::string& input );
 	[[ nodiscard ]] std::string extendedASCIItoUTF8 ( const char* str );
 

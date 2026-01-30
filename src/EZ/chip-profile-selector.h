@@ -1,7 +1,7 @@
 #pragma once
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 namespace libsidplayEZ
 {
@@ -10,7 +10,7 @@ namespace libsidplayEZ
 class ChipProfileSelector final
 {
 public:
-	enum
+	enum : uint8_t
 	{
 		weak,
 		average,

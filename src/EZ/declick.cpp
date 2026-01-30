@@ -1,12 +1,12 @@
-#include "declick.h"
-
-#include "realFFT.h"
-
 #include <algorithm>
 #include <cmath>
 #include <bit>
 #include <numbers>
 #include <vector>
+
+#include "declick.h"
+
+#include "realFFT.h"
 
 //-----------------------------------------------------------------------------
 

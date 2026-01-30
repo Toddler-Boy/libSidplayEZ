@@ -3,7 +3,7 @@
 /*
  * This file is part of libsidplayEZ, a SID player engine.
  *
- *  Copyright 2025 Michael Hartmann
+ *  Copyright 2025-2026 Michael Hartmann
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

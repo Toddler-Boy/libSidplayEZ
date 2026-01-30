@@ -1,9 +1,8 @@
-#include "chip-profile-selector.h"
+#include <algorithm>
 
+#include "chip-profile-selector.h"
 #include "tinyCSV.h"
 #include "../stringutils.h"
-
-#include <algorithm>
 
 namespace libsidplayEZ
 {
@@ -15,7 +14,7 @@ std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getPr
 	auto	path = std::string ( _path );
 
 	// Normalize path separators
-	std::replace ( path.begin (), path.end (), '\\', '/' );
+	std::ranges::replace ( path, '\\', '/' );
 
 	// Remove root
 	auto	pos = path.rfind ( "/MUSICIANS/" );
@@ -75,25 +74,22 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 	const auto	rows = csv.parseCSV ( csvStr );
 	for ( auto i = 0; i < rows; ++i )
 	{
-		const auto	name = csv.getString ( i, "name" );
+		const auto	name = csv.get ( i, "name" );
 
 		settings	setting;
 
-		setting.folder = csv.getString ( i, "folder" );
-		setting.fltCox = csv.getDouble ( i, "fltCox", setting.fltCox );
-		setting.flt0Dac = csv.getDouble ( i, "flt0Dac", setting.flt0Dac );
-		setting.fltGain = csv.getDouble ( i, "fltGain", setting.fltGain );
-		setting.digi = csv.getDouble ( i, "digi", setting.digi );
+		setting.folder = csv.get ( i, "folder" );
+		setting.fltCox = csv.get ( i, "fltCox", setting.fltCox );
+		setting.flt0Dac = csv.get ( i, "flt0Dac", setting.flt0Dac );
+		setting.fltGain = csv.get ( i, "fltGain", setting.fltGain );
+		setting.digi = csv.get ( i, "digi", setting.digi );
 
-		static const std::unordered_map<std::string, int> cwsLevels = {
-			{ "weak", ChipProfileSelector::weak },
-			{ "average", ChipProfileSelector::average },
-			{ "strong", ChipProfileSelector::strong }
-		};
+		const auto	cwsLevel = stringutils::toLower ( csv.get ( i, "cwsLevel", "average" ) );
 
-		setting.cwsLevel = cwsLevels.at ( stringutils::toLower ( csv.getString ( i, "cwsLevel", "average" ) ) );
+		if ( cwsLevel == "weak" )			setting.cwsLevel = weak;
+		else if ( cwsLevel == "strong" )	setting.cwsLevel = strong;
 
-		const auto	exceptions = csv.getString ( i, "exceptions" );
+		const auto	exceptions = csv.get ( i, "exceptions" );
 		if ( ! exceptions.empty () )
 		{
 			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );

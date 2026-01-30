@@ -92,33 +92,4 @@ int TinyCSV::parseCSV ( const std::string& csvData )
 }
 //-----------------------------------------------------------------------------
 
-std::string TinyCSV::getString ( const int row, const std::string& column, const std::string& defaultValue )
-{
-	if ( size_t ( row ) >= data.size () )
-		return defaultValue;
-
-	auto	it = data[ row ].find ( column );
-	if ( it == data[ row ].end () )
-		return defaultValue;
-
-	return it->second;
-}
-//-----------------------------------------------------------------------------
-
-int TinyCSV::getInt ( const int row, const std::string& column, const int defaultValue )
-{
-	const auto	str = getString ( row, column, std::to_string ( defaultValue ) );
-
-	return std::stoi ( str );
-}
-//-----------------------------------------------------------------------------
-
-double TinyCSV::getDouble ( const int row, const std::string& column, const double defaultValue )
-{
-	const auto	str = getString ( row, column, std::to_string ( defaultValue ) );
-
-	return std::stod ( str );
-}
-//-----------------------------------------------------------------------------
-
 }

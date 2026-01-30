@@ -1,10 +1,10 @@
+#include <algorithm>
+#include <cmath>
+#include <numbers>
+
 #include "audio-profile-selector.h"
 
 #include "tinyCSV.h"
-
-#include <algorithm>
-#include <numbers>
-#include <cmath>
 
 namespace libsidplayEZ
 {
@@ -16,7 +16,7 @@ AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _p
 	auto	path = std::string ( _path ) + std::string ( _filename );
 
 	// Normalize path separators
-	std::replace ( path.begin (), path.end (), '\\', '/' );
+	std::ranges::replace ( path, '\\', '/' );
 
 	// Remove root
 	auto	pos = path.rfind ( "/MUSICIANS/" );
@@ -62,12 +62,12 @@ void AudioProfileSelector::setProfiles ( const std::string& csvStr )
 	const auto	rows = csv.parseCSV ( csvStr );
 	for ( auto i = 0; i < rows; ++i )
 	{
-		const auto	name = csv.getString ( i, "tune" );
+		const auto	name = csv.get ( i, "tune", "" );
 
 		settings	setting;
 
-		setting.width = csv.getInt ( i, "width", 0 );
-		setting.bass = csv.getDouble ( i, "bass", setting.bass );
+		setting.width = csv.get ( i, "width", setting.width );
+		setting.bass = csv.get ( i, "bass", setting.bass );
 
 		stereoProfiles[ name ] = setting;
 	}
@@ -81,7 +81,8 @@ void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restr
 
 	constexpr auto isEqual = [] ( const float a, const float b )
 	{
-		return std::abs ( a - b ) < 1e-6f;
+		constexpr auto	smallDelta = 1e-6f;
+		return std::abs ( a - b ) < smallDelta;
 	};
 
 	// Pure stereo, no down mixing required
@@ -114,5 +115,6 @@ void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restr
 		srcDstR[ i ] = mid - side;
 	}
 }
+//-----------------------------------------------------------------------------
 
 }

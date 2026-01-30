@@ -1,8 +1,8 @@
-#include "override-selector.h"
+#include <algorithm>
 
+#include "override-selector.h"
 #include "tinyCSV.h"
 
-#include <algorithm>
 #include "../stringutils.h"
 
 namespace libsidplayEZ
@@ -15,7 +15,7 @@ OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, c
 	auto	path = std::string ( _path ) + std::string ( _filename );
 
 	// Normalize path separators
-	std::replace ( path.begin (), path.end (), '\\', '/' );
+	std::ranges::replace ( path, '\\', '/' );
 
 	// Remove root
 	auto	pos = path.rfind ( "/MUSICIANS/" );
@@ -26,7 +26,7 @@ OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, c
 
 	path = path.substr ( pos );
 
-	const auto& it = std::find_if ( tuneOverrides.begin (), tuneOverrides.end (), [ &path ] ( const auto& a )
+	const auto& it = std::ranges::find_if ( tuneOverrides, [ &path ] ( const auto& a )
 	{
 		return path.starts_with ( a.tune );
 	} );
@@ -49,21 +49,17 @@ void OverrideSelector::setOverrides ( const std::string& csvStr )
 	{
 		overrides	setting;
 
-		setting.tune = csv.getString ( i, "tune" );
+		setting.tune = csv.get ( i, "tune" );
 
-		setting.startTune = uint16_t ( csv.getInt ( i, "start", 0 ) );
+		setting.startTune = uint16_t ( csv.get ( i, "start", 0 ) );
 
-		const auto	chip = csv.getString ( i, "chip", "" );
-		if ( chip == "6581" )
-			setting.chipModel = 1u;
-		else if ( chip == "8580" )
-			setting.chipModel = 2u;
+		const auto	chip = csv.get ( i, "chip" );
+		if ( chip == "6581" )		setting.chipModel = 1u;
+		else if ( chip == "8580" )	setting.chipModel = 2u;
 
-		const auto	clock = stringutils::toLower ( csv.getString ( i, "clock", "" ) );
-		if ( clock == "pal" )
-			setting.clock = 1u;
-		else if ( clock == "ntsc" )
-			setting.clock = 2u;
+		const auto	clock = stringutils::toUpper ( csv.get ( i, "clock" ) );
+		if ( clock == "PAL" )		setting.clock = 1u;
+		else if ( clock == "NTSC" )	setting.clock = 2u;
 
 		tuneOverrides.emplace_back ( setting );
 	}

@@ -1,7 +1,7 @@
-#include "realFFT.h"
-
 #include <numbers>
 #include <cmath>
+
+#include "realFFT.h"
 
 //-----------------------------------------------------------------------------
 
