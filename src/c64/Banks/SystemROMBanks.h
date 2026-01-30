@@ -20,9 +20,11 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include <ranges>
 
 #include "Bank.h"
 #include "../CPU/opcodes.h"
@@ -94,7 +96,7 @@ public:
 
 		if ( kernal == nullptr )
 		{
-			std::fill ( std::begin ( rom ), std::end ( rom ), RTSn );
+			std::ranges::fill ( rom, RTSn );
 
 			// IRQ routine
 			setVal ( 0xea31, JMPw );
