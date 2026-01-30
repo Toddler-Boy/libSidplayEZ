@@ -32,9 +32,10 @@
 
   */
 
-#include "MD5.h"
-
+#include <cstring>
 #include <algorithm>
+
+#include "MD5.h"
 
 #define T1 0xd76aa478
 #define T2 0xe8c7b756
