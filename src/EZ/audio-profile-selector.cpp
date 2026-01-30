@@ -81,8 +81,7 @@ void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restr
 
 	constexpr auto isEqual = [] ( const float a, const float b )
 	{
-		constexpr auto	smallDelta = 1e-6f;
-		return std::abs ( a - b ) < smallDelta;
+		return std::abs ( a - b ) < 1e-6f;
 	};
 
 	// Pure stereo, no down mixing required
