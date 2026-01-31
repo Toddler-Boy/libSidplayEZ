@@ -40,16 +40,9 @@ namespace libsidplayfp
 /**
 * Inherit this class to create a new SID emulation.
 */
-class sidemu final : public Bank
+class sidemu : public Bank
 {
 private:
-	reSIDfp::SID<reSIDfp::Filter6581<true>>		m_sid6581;
-	reSIDfp::SID<reSIDfp::Filter6581<false>>	m_sid6581_noFilter;
-	reSIDfp::SID<reSIDfp::Filter8580<true>>		m_sid8580;
-	reSIDfp::SID<reSIDfp::Filter8580<false>>	m_sid8580_noFilter;
-
-	int		modelIndex = 0;
-
 	uint8_t		lastpoke[ 0x20 ] = {};
 
 public:
@@ -69,7 +62,7 @@ public:
 	static constexpr auto	OUTPUTBUFFERSIZE = 5000u;
 
 protected:
-	EventScheduler&	eventScheduler;
+	EventScheduler& eventScheduler;
 
 	event_clock_t	m_accessClk = 0;
 
@@ -85,70 +78,21 @@ public:
 	sidemu ( EventScheduler& _eventScheduler )
 		: eventScheduler ( _eventScheduler )
 	{
-		reset ( 0xF );
-
-		m_sid6581.setChipModel ( reSIDfp::MOS6581 );
-		m_sid6581_noFilter.setChipModel ( reSIDfp::MOS6581 );
-		m_sid8580.setChipModel ( reSIDfp::MOS8580 );
-		m_sid8580_noFilter.setChipModel ( reSIDfp::MOS8580 );
 	}
 
-	void reset ( uint8_t volume )
+	virtual ~sidemu () = default;
+
+	virtual void reset ( uint8_t /*volume*/ )
 	{
 		std::fill ( std::begin ( lastpoke ), std::end ( lastpoke ), 0 );
 
 		m_accessClk = 0;
-
-		m_sid6581.reset ();
-		m_sid6581.write ( 0x18, volume );
-
-		m_sid6581_noFilter.reset ();
-		m_sid6581_noFilter.write ( 0x18, volume );
-
-		m_sid8580.reset ();
-		m_sid8580.write ( 0x18, volume );
-
-		m_sid8580_noFilter.reset ();
-		m_sid8580_noFilter.write ( 0x18, volume );
 	}
 
 	/**
 	* Clock the SID chip
 	*/
-	sidinline void clock ()
-	{
-		const event_clock_t	cycles = eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) - m_accessClk;
-		m_accessClk += cycles;
-
-		switch ( modelIndex )
-		{
-			case 0:
-				m_bufferpos += m_sid6581.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
-				break;
-
-			case 1:
-				m_bufferpos += m_sid6581_noFilter.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
-				break;
-
-			case 2:
-				m_bufferpos += m_sid8580.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
-				break;
-
-			case 3:
-				m_bufferpos += m_sid8580_noFilter.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
-				break;
-		}
-	}
-
-	/**
-	* Set SID model.
-	*/
-	void model ( SidConfig::sid_model_t _model, const bool useFilter = true )
-	{
-		modelIndex = _model == SidConfig::MOS6581 ? 0 : 2;
-		if ( ! useFilter )
-			++modelIndex;
-	}
+	virtual inline void clock () = 0;
 
 	/**
 	* Set the sampling method.
@@ -156,114 +100,28 @@ public:
 	* @param systemfreq
 	* @param outputfreq
 	*/
-	void sampling ( float systemfreq, float outputfreq )
-	{
-		m_sid6581.setSamplingParameters ( systemfreq, outputfreq );
-		m_sid6581_noFilter.setSamplingParameters ( systemfreq, outputfreq );
-		m_sid8580.setSamplingParameters ( systemfreq, outputfreq );
-		m_sid8580_noFilter.setSamplingParameters ( systemfreq, outputfreq );
-	}
+	virtual void sampling ( float systemfreq, float outputfreq ) = 0;
 
 	/**
 	* Get a detailed error message.
 	*/
 	[[ nodiscard ]] const char* error () const { return m_error.c_str (); }
 
-	[[ nodiscard ]] sidinline uint8_t read ( uint8_t addr )
-	{
-		clock ();
+	[[ nodiscard ]] virtual sidinline uint8_t read ( uint8_t addr ) = 0;
+	virtual sidinline void write ( uint8_t addr, uint8_t data ) = 0;
 
-		switch ( modelIndex )
-		{
-			case 0:			return m_sid6581.read ( addr );
-			case 1:			return m_sid6581_noFilter.read ( addr );
-			case 2:			return m_sid8580.read ( addr );
-		}
-		return m_sid8580_noFilter.read ( addr );
-	}
+	virtual void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) = 0;
+	virtual void filter6581Curve ( double filterCurve ) = 0;
+	virtual void filter6581Range ( double adjustment ) = 0;
+	virtual void filter6581Gain ( double adjustment ) = 0;
+	virtual void filter6581Digi ( double adjustment ) = 0;
+	virtual void voice6581DCDrift ( double adjustment ) = 0;
+	virtual void filter8580Curve ( double filterCurve ) = 0;
 
-	sidinline void write ( uint8_t addr, uint8_t data )
-	{
-		clock ();
+	virtual void setDacLeakage ( const double leakage ) = 0;
 
-		switch ( modelIndex )
-		{
-			case 0:
-				m_sid6581.write ( addr, data );
-				break;
-
-			case 1:
-				m_sid6581_noFilter.write ( addr, data );
-				break;
-
-			case 2:
-				m_sid8580.write ( addr, data );
-				break;
-
-			case 3:
-				m_sid8580_noFilter.write ( addr, data );
-				break;
-		}
-	}
-
-	void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold )
-	{
-		m_sid6581.setCombinedWaveforms ( cws, threshold );
-		m_sid6581_noFilter.setCombinedWaveforms ( cws, threshold );
-		m_sid8580.setCombinedWaveforms ( cws, threshold );
-		m_sid8580_noFilter.setCombinedWaveforms ( cws, threshold );
-	}
-
-	void filter6581Curve ( double filterCurve )			{	m_sid6581.setFilter6581Curve ( filterCurve );	}
-	void filter6581Range ( double adjustment )			{	m_sid6581.setFilter6581Range ( adjustment );	}
-	void filter6581Gain ( double adjustment )			{	m_sid6581.setFilter6581Gain ( adjustment );		}
-
-	void filter6581Digi ( double adjustment )
-	{
-		m_sid6581.setFilter6581Digi ( adjustment );
-		m_sid6581_noFilter.setFilter6581Digi ( adjustment );
-	}
-
-	void voice6581DCDrift ( double adjustment )
-	{
-		m_sid6581.setVoiceDCDrift ( adjustment );
-		m_sid6581_noFilter.setVoiceDCDrift ( adjustment );
-	}
-
-	void filter8580Curve ( double filterCurve )
-	{
-		m_sid8580.setFilter8580Curve ( filterCurve );
-	}
-
-	void setDacLeakage ( const double leakage )
-	{
-		m_sid6581.setDacLeakage ( leakage );
-		m_sid6581_noFilter.setDacLeakage ( leakage );
-		m_sid8580.setDacLeakage ( leakage );
-		m_sid8580_noFilter.setDacLeakage ( leakage );
-	}
-
-	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const
-	{
-		switch ( modelIndex )
-		{
-			case 0:			return m_sid6581.getEnvLevel ( voiceNo );
-			case 1:			return m_sid6581_noFilter.getEnvLevel ( voiceNo );
-			case 2:			return m_sid8580.getEnvLevel ( voiceNo );
-		}
-		return m_sid8580_noFilter.getEnvLevel ( voiceNo );
-	}
-
-	[[ nodiscard ]] bool wasFilterUsed () const
-	{
-		switch ( modelIndex )
-		{
-			case 0:			return m_sid6581.wasFilterUsed ();
-			case 1:			return m_sid6581_noFilter.wasFilterUsed ();
-			case 2:			return m_sid8580.wasFilterUsed ();
-		}
-		return m_sid8580_noFilter.wasFilterUsed ();
-	}
+	[[ nodiscard ]] virtual float getInternalEnvValue ( int voiceNo ) const = 0;
+	[[ nodiscard ]] virtual bool wasFilterUsed () const = 0;
 
 	/**
 	* Get the current position in buffer.
@@ -280,5 +138,85 @@ public:
 	*/
 	[[ nodiscard ]] sidinline int16_t* buffer () { return &m_buffer[ 0 ]; }
 };
+//-----------------------------------------------------------------------------
+
+template <typename FLT>
+class sidemuSpec final : public sidemu
+{
+public:
+	sidemuSpec ( EventScheduler& _eventScheduler )
+		: sidemu ( _eventScheduler )
+	{
+		reset ( 0xF );
+	}
+
+	void reset ( uint8_t volume ) override
+	{
+		sidemu::reset ( volume );
+
+		if constexpr ( std::is_same_v<FLT, reSIDfp::Filter6581<true>> || std::is_same_v<FLT, reSIDfp::Filter6581<false>> )
+			m_sid.setChipModel ( reSIDfp::MOS6581 );
+		else
+			m_sid.setChipModel ( reSIDfp::MOS8580 );
+
+		m_sid.reset ();
+		m_sid.write ( 0x18, volume );
+	}
+
+	inline void clock () override
+	{
+		const event_clock_t	cycles = eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) - m_accessClk;
+		m_accessClk += cycles;
+
+		m_bufferpos += m_sid.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
+	}
+
+	void sampling ( float systemfreq, float outputfreq ) override
+	{
+		m_sid.setSamplingParameters ( systemfreq, outputfreq );
+	}
+
+	[[ nodiscard ]] sidinline uint8_t read ( uint8_t addr ) override
+	{
+		clock ();
+		return m_sid.read ( addr );
+	}
+
+	sidinline void write ( uint8_t addr, uint8_t data ) override
+	{
+		clock ();
+		m_sid.write ( addr, data );
+	}
+
+	void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) override
+	{
+		m_sid.setCombinedWaveforms ( cws, threshold );
+	}
+
+	void filter6581Curve ( double filterCurve ) override { m_sid.setFilter6581Curve ( filterCurve ); }
+	void filter6581Range ( double adjustment ) override { m_sid.setFilter6581Range ( adjustment ); }
+	void filter6581Gain ( double adjustment ) override { m_sid.setFilter6581Gain ( adjustment ); }
+
+	void filter6581Digi ( double adjustment ) override	{	m_sid.setFilter6581Digi ( adjustment );	}
+	void voice6581DCDrift ( double adjustment ) override { m_sid.setVoiceDCDrift ( adjustment ); }
+
+	void filter8580Curve ( double filterCurve ) override { m_sid.setFilter8580Curve ( filterCurve ); }
+
+	void setDacLeakage ( const double leakage ) override { m_sid.setDacLeakage ( leakage ); }
+
+	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const override
+	{
+		return m_sid.getEnvLevel ( voiceNo );
+	}
+
+	[[ nodiscard ]] bool wasFilterUsed () const override
+	{
+		return m_sid.wasFilterUsed ();
+	}
+
+private:
+	reSIDfp::SID<FLT>		m_sid;
+};
+//-----------------------------------------------------------------------------
 
 }

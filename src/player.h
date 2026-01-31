@@ -45,7 +45,7 @@ private:
 	SidInfoImpl	m_info;				// Tune info
 	SidConfig	m_cfg;				// User Configuration Settings
 
-	sidemu		m_sidEmu[ 3 ] = { m_c64.getEventScheduler (), m_c64.getEventScheduler (), m_c64.getEventScheduler () };		// emulation of an actual SID chip
+	sidemu*		m_sidEmu[ 3 ] = { nullptr, nullptr, nullptr };	// emulation of an actual SID chip
 
 	std::string	m_errorString = "N/A";
 
@@ -65,6 +65,8 @@ private:
 	void sidRelease ();
 	void sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses, const bool useFilter );
 
+	void sidDestroy ();
+
 	void sidParams ( double cpuFreq, int frequency );
 
 	sidinline void run ( unsigned int events )
@@ -75,6 +77,7 @@ private:
 
 public:
 	Player ();
+	~Player ();
 
 	bool setConfig ( const SidConfig& cfg, bool force = false );
 	[[ nodiscard ]] const SidConfig& getConfig () const { return m_cfg; }

@@ -47,6 +47,12 @@ Player::Player ()
 }
 //-----------------------------------------------------------------------------
 
+Player::~Player ()
+{
+	sidDestroy ();
+}
+//-----------------------------------------------------------------------------
+
 template<class T>
 inline void checkRom ( const uint8_t* rom, std::string& desc )
 {
@@ -349,6 +355,16 @@ void Player::sidRelease ()
 }
 //-----------------------------------------------------------------------------
 
+void Player::sidDestroy ()
+{
+	for ( auto& a : m_sidEmu )
+	{
+		delete a;
+		a = nullptr;
+	}
+}
+//-----------------------------------------------------------------------------
+
 void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses, const bool useFilter )
 {
 	const auto  tuneInfo = m_tune->getInfo ();
@@ -362,12 +378,24 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 		return sidModel == SidTuneInfo::SIDMODEL_6581 ? SidConfig::MOS6581 : SidConfig::MOS8580;
 	};
 
+	sidDestroy ();
+
 	for ( auto i = 0; auto extraAddr : sidAddresses )
 	{
 		defaultModel = getSidModel ( tuneInfo->sidModel ( i ), defaultModel, forced );
 
-		auto	s = &m_sidEmu[ i ];
-		s->model ( defaultModel, useFilter );
+		if ( defaultModel == SidConfig::MOS8580 )
+			if ( useFilter )
+				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<true>> ( m_c64.getEventScheduler () );
+			else
+				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<false>> ( m_c64.getEventScheduler () );
+		else
+			if ( useFilter )
+				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<true>> ( m_c64.getEventScheduler () );
+			else
+				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<false>> ( m_c64.getEventScheduler () );
+
+		auto	s = m_sidEmu[ i ];
 
 		if ( i++ == 0 )
 		{
@@ -468,9 +496,9 @@ bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 
 bool Player::wasFilterUsed () const
 {
-	return		m_sidEmu[ 0 ].wasFilterUsed ()
-			|| ( getNumChips () > 1 && m_sidEmu[ 1 ].wasFilterUsed () )
-			|| ( getNumChips () > 2 && m_sidEmu[ 2 ].wasFilterUsed () );
+	return		m_sidEmu[ 0 ]->wasFilterUsed ()
+			|| ( getNumChips () > 1 && m_sidEmu[ 1 ]->wasFilterUsed () )
+			|| ( getNumChips () > 2 && m_sidEmu[ 2 ]->wasFilterUsed () );
 }
 //-----------------------------------------------------------------------------
 

@@ -160,6 +160,10 @@ private:
 	// Used to determine if the filter ever gets used during playback
 	uint8_t	filterUsage;
 
+	// Used to determine if the filter ever gets used during playback
+	int		volumeIndex = 0;
+	int8_t	lastVolume = 0;
+
 	// Time to live for the last written value
 	int	busValueTtl;
 
@@ -346,6 +350,9 @@ public:
 		resampler.reset ();
 
 		filterUsage = 0;
+		volumeIndex = 0;
+		lastVolume = 0;
+
 		busValue = 0;
 		busValueTtl = 0;
 		voiceSync ( false );
@@ -447,7 +454,12 @@ public:
 				filterUsage |= value;
 			}
 			break;
-			case 0x18:	filter.writeMODE_VOL ( value );									break;	// Volume and filter modes
+			case 0x18:																			// Volume and filter modes
+			{
+				filter.writeMODE_VOL ( value );
+				lastVolume = int8_t ( value & 0x0F );
+			}
+			break;
 
 			default:
 				break;
@@ -495,7 +507,7 @@ public:
 	* @param buf audio output buffer
 	* @return number of samples produced
 	*/
-	sidinline int clock ( unsigned int cycles, int16_t* buf )
+	sidinline int clock ( unsigned int cycles, int16_t* buf, int8_t* volRegBuf = nullptr )
 	{
 		// ageBusValue
 		if ( busValueTtl ) [[ likely ]]
@@ -530,9 +542,10 @@ public:
 		};
 
 		auto    s = 0;
+		auto	vs = 0;
 		while ( cycles ) [[ likely ]]
 		{
-			if ( auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 ) [[ likely ]]
+			if ( const auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 ) [[ likely ]]
 			{
 				for ( auto i = 0u; i < delta_t; i++ ) [[ likely ]]
 				{
@@ -547,7 +560,14 @@ public:
 					voice[ 2 ].envelopeGenerator.clock ();
 
 					if ( resampler.input ( output () ) ) [[ unlikely ]]
+					{
 						buf[ s++ ] = resampler.output ();
+						if ( volRegBuf && --volumeIndex < 0 )
+						{
+							volRegBuf[ vs++ ] = lastVolume;
+							volumeIndex = 5;
+						}
+					}
 				}
 
 				cycles -= delta_t;
@@ -616,8 +636,8 @@ public:
 			filter.setFilterCurve ( filterCurve );
 	}
 
-	float getEnvLevel ( int voiceNo ) const		{	return voice[ voiceNo ].getEnvLevel (); }
-	bool wasFilterUsed () const					{	return filterUsage & 0x0F;		}
+	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const		{	return voice[ voiceNo ].getEnvLevel (); }
+	[[ nodiscard ]] bool wasFilterUsed () const					{	return filterUsage & 0x0F;		}
 };
 //-----------------------------------------------------------------------------
 

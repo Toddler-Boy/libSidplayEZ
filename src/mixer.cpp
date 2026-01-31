@@ -20,8 +20,8 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
 #include "mixer.h"
@@ -53,7 +53,7 @@ void Mixer::doMix ()
 
 	const auto	samplesLeft = sampleCount - toCopy;
 
-	constexpr auto smp16ToFloat = [] ( int16_t input )
+	constexpr auto smp16ToFloat = [] ( const int16_t input )
 	{
 		constexpr auto inv = 1.0f / ( INT16_MAX + 1 );
 
@@ -89,7 +89,7 @@ void Mixer::doMix ()
 				sumBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 	}
@@ -108,7 +108,7 @@ void Mixer::doMix ()
 			convertBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 
@@ -132,7 +132,7 @@ void Mixer::doMix ()
 			}
 
 			// move the unhandled data to start of buffer, if any
-			memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->bufferpos ( samplesLeft );
 		}
 	}
