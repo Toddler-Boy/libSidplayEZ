@@ -84,7 +84,6 @@ public:
 private:
 	using sidBankMap_t = std::unordered_map<int, ExtraSidBank*>;
 
-private:
 	/// System clock frequency
 	double cpuFrequency;
 
@@ -133,10 +132,8 @@ private:
 	uint16_t		irqTime = 0;
 	event_clock_t	irqStart = 0;
 
-private:
 	static double getCpuFreq ( model_t model );
 
-private:
 	/**
 	* IRQ trigger signal.
 	*
@@ -195,19 +192,12 @@ public:
 	*
 	* @throws haltInstruction
 	*/
-	void clock () { eventScheduler.clock (); }
+	sidinline void clock () { eventScheduler.clock (); }
 
 	void reset ();
 	void resetCpu () { cpu.reset (); }
 
-	/**
-	* Set the c64 model.
-	*/
 	void setModel ( model_t model );
-
-	/**
-	* Set the cia model.
-	*/
 	void setCiaModel ( cia_model_t model );
 
 	/**
@@ -217,11 +207,6 @@ public:
 	*/
 	double getMainCpuSpeed () const { return cpuFrequency; }
 
-	/**
-	* Set the base SID.
-	*
-	* @param s the sid emu to set
-	*/
 	void setBaseSid ( sidemu* s );
 
 	/**

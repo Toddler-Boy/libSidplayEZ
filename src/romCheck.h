@@ -20,8 +20,8 @@
 */
 
 #include <cstdint>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include "MD5/MD5.h"
@@ -37,25 +37,10 @@ class romCheck
 private:
 	using md5map = std::unordered_map<std::string, const char*>;
 
-private:
-	/**
-	* Maps checksums to respective ROM description.
-	* Must be filled by derived class.
-	*/
-	md5map m_checksums;
+	md5map	m_checksums;
 
-	/**
-	* Pointer to the ROM buffer
-	*/
-	const uint8_t* m_rom;
-
-	/**
-	* Size of the ROM buffer.
-	*/
-	unsigned int m_size;
-
-private:
-	romCheck ();
+	const uint8_t*	m_rom;
+	const int		m_size;
 
 	/**
 	* Calculate the md5 digest.
@@ -77,7 +62,7 @@ protected:
 	* @param rom pointer to the ROM buffer
 	* @param size size of the ROM buffer
 	*/
-	romCheck ( const uint8_t* rom, int size )
+	romCheck ( const uint8_t* rom, const int size )
 		: m_rom ( rom )
 		, m_size ( size )
 	{

@@ -22,8 +22,8 @@
 */
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "../sidplayfp/SidTuneInfo.h"
 

@@ -22,8 +22,8 @@
  */
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "sidplayfp/SidInfo.h"
 #include "mixer.h"
@@ -35,15 +35,15 @@ class SidInfoImpl final : public SidInfo
 {
 public:
 	const std::string	m_name = "libsidplayEZ";
-	const std::string	m_version = "2.12.0";
+	const std::string	m_version = "3.0.0a";
 
 	std::vector<std::string>	m_credits = {
 		m_name + " " + m_version + " Engine:\n",
 		"Copyright (C) 2000 Simon White\n",
 		"Copyright (C) 2007-2010 Antti Lankila\n",
 		"Copyright (C) 2010-2024 Leandro Nini\n",
-		"Copyright (C) 2023-2025 Michael Hartmann\n",
-		"https://github.com/reFX/libsidplayEZ/\n",
+		"Copyright (C) 2023-2026 Michael Hartmann\n",
+		"https://github.com/Toddler-Boy/libsidplayEZ/\n",
 	};
 
 	std::string m_speedString;
@@ -59,13 +59,11 @@ public:
 
 	uint16_t m_powerOnDelay = 0;
 
-private:
+	SidInfoImpl () = default;
+
 	// prevent copying
 	SidInfoImpl ( const SidInfoImpl& ) = delete;
 	SidInfoImpl& operator=( SidInfoImpl& ) = delete;
-
-public:
-	SidInfoImpl () = default;
 
 	[[ nodiscard ]] const char* getName () const override { return m_name.c_str (); }
 	[[ nodiscard ]] const char* getVersion () const override { return m_version.c_str (); }

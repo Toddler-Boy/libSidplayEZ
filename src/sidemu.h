@@ -37,9 +37,6 @@
 namespace libsidplayfp
 {
 
-/**
-* Inherit this class to create a new SID emulation.
-*/
 class sidemu : public Bank
 {
 private:
@@ -111,11 +108,13 @@ public:
 	virtual sidinline void write ( uint8_t addr, uint8_t data ) = 0;
 
 	virtual void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) = 0;
+
 	virtual void filter6581Curve ( double filterCurve ) = 0;
 	virtual void filter6581Range ( double adjustment ) = 0;
 	virtual void filter6581Gain ( double adjustment ) = 0;
 	virtual void filter6581Digi ( double adjustment ) = 0;
 	virtual void voice6581DCDrift ( double adjustment ) = 0;
+
 	virtual void filter8580Curve ( double filterCurve ) = 0;
 
 	virtual void setDacLeakage ( const double leakage ) = 0;
@@ -140,6 +139,9 @@ public:
 };
 //-----------------------------------------------------------------------------
 
+//
+// Inherit this class to create a new SID emulations
+//
 template <typename FLT>
 class sidemuSpec final : public sidemu
 {
@@ -163,7 +165,7 @@ public:
 		m_sid.write ( 0x18, volume );
 	}
 
-	inline void clock () override
+	sidinline void clock () override
 	{
 		const event_clock_t	cycles = eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) - m_accessClk;
 		m_accessClk += cycles;
@@ -196,7 +198,6 @@ public:
 	void filter6581Curve ( double filterCurve ) override { m_sid.setFilter6581Curve ( filterCurve ); }
 	void filter6581Range ( double adjustment ) override { m_sid.setFilter6581Range ( adjustment ); }
 	void filter6581Gain ( double adjustment ) override { m_sid.setFilter6581Gain ( adjustment ); }
-
 	void filter6581Digi ( double adjustment ) override	{	m_sid.setFilter6581Digi ( adjustment );	}
 	void voice6581DCDrift ( double adjustment ) override { m_sid.setVoiceDCDrift ( adjustment ); }
 
@@ -204,15 +205,8 @@ public:
 
 	void setDacLeakage ( const double leakage ) override { m_sid.setDacLeakage ( leakage ); }
 
-	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const override
-	{
-		return m_sid.getEnvLevel ( voiceNo );
-	}
-
-	[[ nodiscard ]] bool wasFilterUsed () const override
-	{
-		return m_sid.wasFilterUsed ();
-	}
+	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const override	{	return m_sid.getEnvLevel ( voiceNo );	}
+	[[ nodiscard ]] bool wasFilterUsed () const override	{		return m_sid.wasFilterUsed ();	}
 
 private:
 	reSIDfp::SID<FLT>		m_sid;

@@ -1,7 +1,8 @@
 #pragma once
 /*
- * This file is part of libsidplayfp, a SID player engine.
+ * This file is part of libSidplayEZ, a SID player engine based on libsidplayfp.
  *
+ *  Copyright 2024-2026 Michael Hartmann <mike@ultrasid.com>
  *  Copyright 2011-2017 Leandro Nini
  *  Copyright 2007-2010 Antti Lankila
  *  Copyright 2000 Simon White
@@ -34,26 +35,26 @@
 class SidTuneInfo
 {
 public:
-	typedef enum {
+	using clock_t = enum : std::uint8_t {
 		CLOCK_UNKNOWN,
 		CLOCK_PAL,
 		CLOCK_NTSC,
 		CLOCK_ANY
-	} clock_t;
+	};
 
-	typedef enum {
+	using model_t = enum : std::uint8_t {
 		SIDMODEL_UNKNOWN,
 		SIDMODEL_6581,
 		SIDMODEL_8580,
 		SIDMODEL_ANY
-	} model_t;
+	};
 
-	typedef enum {
+	using compatibility_t = enum : std::uint8_t {
 		COMPATIBILITY_C64,		// File is C64 compatible
 		COMPATIBILITY_PSID,		// File is PSID specific
 		COMPATIBILITY_R64,		// File is Real C64 only
 		COMPATIBILITY_BASIC		// File requires C64 Basic
-	} compatibility_t;
+	};
 
 	static constexpr int SPEED_VBI = 0;		// Vertical-Blanking-Interrupt
 	static constexpr int SPEED_CIA_1A = 60;	// CIA 1 Timer A
