@@ -43,10 +43,10 @@ private:
 	uint8_t	ram[ 0x0400 ];
 
 public:
-	void reset () { std::fill ( std::begin ( ram ), std::end ( ram ), 0 ); }
+	void reset () noexcept { std::ranges::fill ( ram, 0 ); }
 
-	sidinline void poke ( uint16_t address, uint8_t value ) override { ram[ address & 0x3ff ] = value & 0xf; }
-	sidinline uint8_t peek ( uint16_t address ) override { return ram[ address & 0x3ff ]; }
+	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override { ram[ address & 0x3ff ] = value & 0xf; }
+	sidinline uint8_t peek ( uint16_t address ) noexcept override { return ram[ address & 0x3ff ]; }
 };
 
 }

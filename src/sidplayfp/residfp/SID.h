@@ -1,7 +1,8 @@
 #pragma once
 /*
-* This file is part of libsidplayfp, a SID player engine.
+* This file is part of libSidplayEZ, a SID player engine based on libsidplayfp.
 *
+* Copyright 2024-2026 Michael Hartmann <mike@ultrasid.com>
 * Copyright 2011-2024 Leandro Nini <drfiemost@users.sourceforge.net>
 * Copyright 2007-2010 Antti Lankila
 * Copyright 2004 Dag Lem <resid@nimrod.no>
@@ -109,8 +110,18 @@
 
 namespace reSIDfp
 {
-	typedef enum { MOS6581 = 1, MOS8580 } ChipModel;
-	typedef enum { WEAK, AVERAGE, STRONG } CombinedWaveforms;
+	using ChipModel = enum : std::uint8_t
+	{
+		MOS6581 = 1,
+		MOS8580
+	};
+
+	using CombinedWaveforms = enum : std::uint8_t
+	{
+		WEAK,
+		AVERAGE,
+		STRONG
+	};
 }
 
 #include "Dac.h"
@@ -205,7 +216,7 @@ private:
 	*
 	* @param sync whether to do the actual voice synchronization
 	*/
-	sidinline void voiceSync ( const bool sync )
+	sidinline void voiceSync ( const bool sync ) noexcept
 	{
 		// Synchronize the 3 waveform generators
 		if ( sync ) [[ unlikely ]]
@@ -238,7 +249,7 @@ private:
 		updateSync ( 2, 0 );
 	}
 
-	void recalculateDACs ()
+	void recalculateDACs () noexcept
 	{
 		constexpr auto	ENV_DAC_BITS = 8u;
 		constexpr auto	OSC_DAC_BITS = 12u;
@@ -275,7 +286,6 @@ public:
 		waveTable = WaveformCalculator::buildWaveTable ();
 
 		reset ();
-//		setChipModel ( MOS8580 );
 	}
 
 	/**
@@ -283,7 +293,7 @@ public:
 	*
 	* @param model chip model to use
 	*/
-	void setChipModel ( ChipModel _model )
+	void setChipModel ( ChipModel _model ) noexcept
 	{
 		model = _model;
 
@@ -303,12 +313,12 @@ public:
 	/**
 	* Get currently emulated chip model.
 	*/
-	ChipModel getChipModel () const { return model; }
+	[[ nodiscard ]] ChipModel getChipModel () const noexcept { return model; }
 
 	/**
 	* Set combined waveforms strength.
 	*/
-	void setCombinedWaveforms ( CombinedWaveforms cws, const float threshold )
+	void setCombinedWaveforms ( CombinedWaveforms cws, const float threshold ) noexcept
 	{
 		WaveformCalculator::buildPulldownTable ( pulldownTable, is6581, cws, threshold );
 
@@ -319,7 +329,7 @@ public:
 	/**
 	* Set DAC leakage
 	*/
-	void setDacLeakage ( const double leakage )
+	void setDacLeakage ( const double leakage ) noexcept
 	{
 		dacLeakage = leakage;
 		recalculateDACs ();
@@ -328,7 +338,7 @@ public:
 	/**
 	* Set Voice DC drift
 	*/
-	void setVoiceDCDrift ( const double drift )
+	void setVoiceDCDrift ( const double drift ) noexcept
 	{
 		voiceDCDrift = drift;
 
@@ -339,7 +349,7 @@ public:
 	/**
 	* SID reset.
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		for ( auto& vce : voice )
 			vce.reset ();
@@ -378,7 +388,7 @@ public:
 	* @param offset SID register to read
 	* @return value read from chip
 	*/
-	[[ nodiscard ]] sidinline uint8_t read ( int offset )
+	[[ nodiscard ]] sidinline uint8_t read ( int offset ) noexcept
 	{
 		switch ( offset )
 		{
@@ -418,7 +428,7 @@ public:
 	* @param offset chip register to write
 	* @param value value to write
 	*/
-	sidinline void write ( int offset, uint8_t value )
+	sidinline void write ( int offset, uint8_t value ) noexcept
 	{
 		busValue = value;
 		busValueTtl = modelTTL;
@@ -493,7 +503,7 @@ public:
 	* @param highestAccurateFrequency
 	* @throw SIDError
 	*/
-	void setSamplingParameters ( double clockFrequency, double samplingFrequency )
+	void setSamplingParameters ( double clockFrequency, double samplingFrequency ) noexcept
 	{
 		externalFilter.setClockFrequency ( clockFrequency );
 
@@ -507,7 +517,7 @@ public:
 	* @param buf audio output buffer
 	* @return number of samples produced
 	*/
-	sidinline int clock ( unsigned int cycles, int16_t* buf, int8_t* volRegBuf = nullptr )
+	sidinline int clock ( unsigned int cycles, int16_t* buf, int8_t* volRegBuf = nullptr ) noexcept
 	{
 		// ageBusValue
 		if ( busValueTtl ) [[ likely ]]
@@ -586,7 +596,7 @@ public:
 	*
 	* @see Filter6581::setFilterCurve(double)
 	*/
-	void setFilter6581Curve ( [[ maybe_unused ]] double filterCurve )
+	void setFilter6581Curve ( [[ maybe_unused ]] double filterCurve ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
 			filter.setFilterCurve ( filterCurve );
@@ -597,7 +607,7 @@ public:
 	*
 	* @see Filter6581::setFilterRange(double)
 	*/
-	void setFilter6581Range ( [[ maybe_unused ]] double adjustment )
+	void setFilter6581Range ( [[ maybe_unused ]] double adjustment ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
 			filter.setFilterRange ( adjustment );
@@ -608,7 +618,7 @@ public:
 	*
 	* @see Filter6581::setFilterGain(double)
 	*/
-	void setFilter6581Gain ( [[ maybe_unused ]] double adjustment )
+	void setFilter6581Gain ( [[ maybe_unused ]] double adjustment ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
 			filter.setFilterGain ( adjustment );
@@ -619,7 +629,7 @@ public:
 	*
 	* @see Filter6581::setDigitVolume(double)
 	*/
-	void setFilter6581Digi ( [[ maybe_unused ]] double adjustment )
+	void setFilter6581Digi ( [[ maybe_unused ]] double adjustment ) noexcept
 	{
 		if constexpr ( is6581 )
 			filter.setDigiVolume ( adjustment );
@@ -630,14 +640,14 @@ public:
 	*
 	* @see Filter8580::setFilterCurve(double)
 	*/
-	void setFilter8580Curve ( [[ maybe_unused ]] double filterCurve )
+	void setFilter8580Curve ( [[ maybe_unused ]] double filterCurve ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter8580<true>> )
 			filter.setFilterCurve ( filterCurve );
 	}
 
-	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const		{	return voice[ voiceNo ].getEnvLevel (); }
-	[[ nodiscard ]] bool wasFilterUsed () const					{	return filterUsage & 0x0F;		}
+	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const noexcept {	return voice[ voiceNo ].getEnvLevel (); }
+	[[ nodiscard ]] bool wasFilterUsed () const noexcept {	return filterUsage & 0x0F;		}
 };
 //-----------------------------------------------------------------------------
 

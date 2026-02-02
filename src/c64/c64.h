@@ -132,7 +132,7 @@ private:
 	uint16_t		irqTime = 0;
 	event_clock_t	irqStart = 0;
 
-	static double getCpuFreq ( model_t model );
+	static double getCpuFreq ( model_t model ) noexcept;
 
 	/**
 	* IRQ trigger signal.
@@ -141,19 +141,19 @@ private:
 	*
 	* @param state
 	*/
-	sidinline void interruptIRQ ( bool state ) override;
+	sidinline void interruptIRQ ( bool state ) noexcept override;
 
 	/**
 	* NMI trigger signal.
 	*
 	* Calls permitted any time, but normally originated by chips at PHI1.
 	*/
-	sidinline void interruptNMI () override { cpu.triggerNMI (); }
+	sidinline void interruptNMI () noexcept override { cpu.triggerNMI (); }
 
 	/**
 	* Reset signal.
 	*/
-	sidinline void interruptRST () override { cpu.triggerRST (); }
+	sidinline void interruptRST () noexcept override { cpu.triggerRST (); }
 
 	/**
 	* BA signal.
@@ -162,14 +162,14 @@ private:
 	*
 	* @param state
 	*/
-	sidinline void setBA ( bool state ) override;
+	sidinline void setBA ( bool state ) noexcept override;
 
 	/**
 	* @param state fire pressed, active low
 	*/
-	sidinline void lightpen ( bool state ) override;
+	sidinline void lightpen ( bool state ) noexcept override;
 
-	void resetIoBank ();
+	void resetIoBank () noexcept;
 
 public:
 	c64 ();
@@ -180,9 +180,9 @@ public:
 	*
 	* @return the scheduler
 	*/
-	EventScheduler& getEventScheduler () { return eventScheduler; }
+	EventScheduler& getEventScheduler () noexcept { return eventScheduler; }
 
-	uint32_t getTimeMs () const
+	uint32_t getTimeMs () const noexcept
 	{
 		return static_cast<uint32_t>( ( eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) * 1000 ) / cpuFrequency );
 	}
@@ -192,22 +192,22 @@ public:
 	*
 	* @throws haltInstruction
 	*/
-	sidinline void clock () { eventScheduler.clock (); }
+	sidinline void clock () noexcept { eventScheduler.clock (); }
 
-	void reset ();
-	void resetCpu () { cpu.reset (); }
+	void reset () noexcept;
+	void resetCpu () noexcept { cpu.reset (); }
 
-	void setModel ( model_t model );
-	void setCiaModel ( cia_model_t model );
+	void setModel ( model_t model ) noexcept;
+	void setCiaModel ( cia_model_t model ) noexcept;
 
 	/**
 	* Get the CPU clock speed.
 	*
 	* @return the speed in Hertz
 	*/
-	double getMainCpuSpeed () const { return cpuFrequency; }
+	double getMainCpuSpeed () const noexcept { return cpuFrequency; }
 
-	void setBaseSid ( sidemu* s );
+	void setBaseSid ( sidemu* s ) noexcept;
 
 	/**
 	* Add an extra SID.
@@ -218,34 +218,34 @@ public:
 	*
 	* @return false if address is unsupported
 	*/
-	bool addExtraSid ( sidemu* s, uint16_t address );
+	bool addExtraSid ( sidemu* s, uint16_t address ) noexcept;
 
 	/**
 	* Remove all the SIDs.
 	*/
-	void clearSids ();
+	void clearSids () noexcept;
 
 	/**
 	* Get the components credits
 	*/
 	//@{
-	const char* cpuCredits () const { return cpu.credits (); }
-	const char* ciaCredits () const { return cia1.credits (); }
-	const char* vicCredits () const { return vic.credits (); }
+	const char* cpuCredits () const noexcept { return cpu.credits (); }
+	const char* ciaCredits () const noexcept { return cia1.credits (); }
+	const char* vicCredits () const noexcept { return vic.credits (); }
 	//@}
 
-	sidmemory& getMemInterface () { return mmu; }
+	sidmemory& getMemInterface () noexcept { return mmu; }
 
-	uint16_t getCia1TimerA () const { return cia1.getTimerA (); }
+	uint16_t getCia1TimerA () const noexcept { return cia1.getTimerA (); }
 
 	/**
 	* Get amount of cycles spent in the last IRQ
 	*/
-	uint16_t getInterruptCycles () const { return irqTime; }
+	uint16_t getInterruptCycles () const noexcept { return irqTime; }
 };
 //-----------------------------------------------------------------------------
 
-void c64::interruptIRQ ( bool state )
+void c64::interruptIRQ ( bool state ) noexcept
 {
 	if ( state )
 	{
@@ -271,7 +271,7 @@ void c64::interruptIRQ ( bool state )
 }
 //-----------------------------------------------------------------------------
 
-void c64::setBA ( bool state )
+void c64::setBA ( bool state ) noexcept
 {
 	// only react to changes in state
 	if ( state == oldBAState )
@@ -284,7 +284,7 @@ void c64::setBA ( bool state )
 }
 //-----------------------------------------------------------------------------
 
-void c64::lightpen ( bool state )
+void c64::lightpen ( bool state ) noexcept
 {
 	if ( ! state )
 		vic.triggerLightpen ();

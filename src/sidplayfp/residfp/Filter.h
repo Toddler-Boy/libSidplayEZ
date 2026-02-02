@@ -71,12 +71,12 @@ protected:
 	/**
 	* Set filter cutoff frequency.
 	*/
-	sidinline virtual void updatedCenterFrequency () = 0;
+	sidinline virtual void updatedCenterFrequency () noexcept = 0;
 
 	/**
 	* Mixing configuration modified (offsets change)
 	*/
-	sidinline void updateMixing ()
+	sidinline void updateMixing () noexcept
 	{
 		// Voice 3 is silenced by voice3off if it is not routed through the filter
 		voice3Mask = ( filterModeRouting & 0x84 ) == 0x80 ? 0 : UINT_MAX;
@@ -121,7 +121,7 @@ public:
 	/**
 	* SID reset.
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		writeFC_LO ( 0 );
 		writeFC_HI ( 0 );
@@ -134,7 +134,7 @@ public:
 	*
 	* @param fc_lo Frequency Cutoff Low-Byte
 	*/
-	void writeFC_LO ( uint8_t fc_lo )
+	void writeFC_LO ( uint8_t fc_lo ) noexcept
 	{
 		if constexpr ( useFilter )
 		{
@@ -149,7 +149,7 @@ public:
 	*
 	* @param fc_hi Frequency Cutoff High-Byte
 	*/
-	void writeFC_HI ( uint8_t fc_hi )
+	void writeFC_HI ( uint8_t fc_hi ) noexcept
 	{
 		if constexpr ( useFilter )
 		{
@@ -164,7 +164,7 @@ public:
 	*
 	* @param res_filt Resonance/Filter
 	*/
-	void writeRES_FILT ( uint8_t res_filt )
+	void writeRES_FILT ( uint8_t res_filt ) noexcept
 	{
 		constexpr auto	mask = useFilter ? 0x0F : 0x00;
 
@@ -181,7 +181,7 @@ public:
 	*
 	* @param mode_vol Filter Mode/Volume
 	*/
-	void writeMODE_VOL ( uint8_t mode_vol )
+	void writeMODE_VOL ( uint8_t mode_vol ) noexcept
 	{
 		constexpr auto	mask = useFilter ? 0xF0 : 0x80;
 

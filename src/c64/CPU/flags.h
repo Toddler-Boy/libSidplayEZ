@@ -40,7 +40,7 @@ private:
 	bool	N;	//< Negative
 
 public:
-	sidinline void reset ()
+	sidinline void reset () noexcept
 	{
 		C = Z = I = D = V = N = false;
 	}
@@ -50,7 +50,7 @@ public:
 	*
 	* @param value to set flags from
 	*/
-	sidinline void setNZ ( uint8_t value )
+	sidinline void setNZ ( uint8_t value ) noexcept
 	{
 		Z = value == 0;
 		N = value & 0x80;
@@ -59,7 +59,7 @@ public:
 	/**
 	* Get status register value.
 	*/
-	sidinline uint8_t get ()
+	sidinline uint8_t get () noexcept
 	{
 		uint8_t sr = 0;
 
@@ -76,7 +76,7 @@ public:
 	/**
 	* Set status register value.
 	*/
-	sidinline void set ( uint8_t sr )
+	sidinline void set ( uint8_t sr ) noexcept
 	{
 		C = sr & 0x01;
 		Z = sr & 0x02;
@@ -86,19 +86,19 @@ public:
 		N = sr & 0x80;
 	}
 
-	sidinline bool getN () const { return N; }
-	sidinline bool getC () const { return C; }
-	sidinline bool getD () const { return D; }
-	sidinline bool getZ () const { return Z; }
-	sidinline bool getV () const { return V; }
-	sidinline bool getI () const { return I; }
+	sidinline bool getN () const noexcept { return N; }
+	sidinline bool getC () const noexcept { return C; }
+	sidinline bool getD () const noexcept { return D; }
+	sidinline bool getZ () const noexcept { return Z; }
+	sidinline bool getV () const noexcept { return V; }
+	sidinline bool getI () const noexcept { return I; }
 
-	sidinline void setN ( bool f ) { N = f; }
-	sidinline void setC ( bool f ) { C = f; }
-	sidinline void setD ( bool f ) { D = f; }
-	sidinline void setZ ( bool f ) { Z = f; }
-	sidinline void setV ( bool f ) { V = f; }
-	sidinline void setI ( bool f ) { I = f; }
+	sidinline void setN ( bool f ) noexcept { N = f; }
+	sidinline void setC ( bool f ) noexcept { C = f; }
+	sidinline void setD ( bool f ) noexcept { D = f; }
+	sidinline void setZ ( bool f ) noexcept { Z = f; }
+	sidinline void setV ( bool f ) noexcept { V = f; }
+	sidinline void setI ( bool f ) noexcept { I = f; }
 };
 
 }

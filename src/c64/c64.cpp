@@ -66,7 +66,7 @@ const cia_model_data_t ciaModelData[] =
 };
 //-----------------------------------------------------------------------------
 
-double c64::getCpuFreq ( model_t model )
+double c64::getCpuFreq ( model_t model ) noexcept
 {
 	// The crystal clock that drives the VIC II chip is four times
 	// the color burst frequency
@@ -93,7 +93,7 @@ c64::c64 ()
 }
 //-----------------------------------------------------------------------------
 
-void c64::resetIoBank ()
+void c64::resetIoBank () noexcept
 {
 	ioBank.setBank ( 0x0, &vic );
 	ioBank.setBank ( 0x1, &vic );
@@ -114,7 +114,7 @@ void c64::resetIoBank ()
 }
 //-----------------------------------------------------------------------------
 
-void c64::reset ()
+void c64::reset () noexcept
 {
 	eventScheduler.reset ();
 
@@ -137,7 +137,7 @@ void c64::reset ()
 }
 //-----------------------------------------------------------------------------
 
-void c64::setModel ( model_t model )
+void c64::setModel ( model_t model ) noexcept
 {
 	cpuFrequency = getCpuFreq ( model );
 	vic.chip ( modelData[ model ].vicModel );
@@ -148,20 +148,20 @@ void c64::setModel ( model_t model )
 }
 //-----------------------------------------------------------------------------
 
-void c64::setCiaModel ( cia_model_t model )
+void c64::setCiaModel ( cia_model_t model ) noexcept
 {
 	cia1.setModel ( ciaModelData[ model ].ciaModel );
 	cia2.setModel ( ciaModelData[ model ].ciaModel );
 }
 //-----------------------------------------------------------------------------
 
-void c64::setBaseSid ( sidemu* s )
+void c64::setBaseSid ( sidemu* s ) noexcept
 {
 	sidBank.setSID ( s );
 }
 //-----------------------------------------------------------------------------
 
-bool c64::addExtraSid ( sidemu* s, uint16_t address )
+bool c64::addExtraSid ( sidemu* s, uint16_t address ) noexcept
 {
 	// Check for valid address in the IO area range ($Dxxx)
 	if ( ( address & 0xF000 ) != 0xD000 )
@@ -201,7 +201,7 @@ c64::~c64 ()
 }
 //-----------------------------------------------------------------------------
 
-void c64::clearSids ()
+void c64::clearSids () noexcept
 {
 	sidBank.setSID ( nullptr );
 

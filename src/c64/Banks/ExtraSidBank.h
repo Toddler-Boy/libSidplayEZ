@@ -49,16 +49,16 @@ private:
 	std::vector<sidemu*>	sids;
 
 public:
-	void reset ()
+	void reset () noexcept
 	{
 		for ( auto sid : sids )
 			sid->reset ( 0xF );
 	}
 
-	void resetSIDMapper ( Bank* bank )					{	std::fill_n ( mapper, MAPPER_SIZE, bank );	}
+	void resetSIDMapper ( Bank* bank ) noexcept {	std::fill_n ( mapper, MAPPER_SIZE, bank );	}
 
-	sidinline uint8_t peek ( uint16_t addr ) override				{	return mapper[ addr >> 5 & ( MAPPER_SIZE - 1 ) ]->peek ( addr );	}
-	sidinline void poke ( uint16_t addr, uint8_t data ) override	{	mapper[ addr >> 5 & ( MAPPER_SIZE - 1 ) ]->poke ( addr, data );		}
+	sidinline uint8_t peek ( uint16_t addr ) noexcept override				{	return mapper[ addr >> 5 & ( MAPPER_SIZE - 1 ) ]->peek ( addr );	}
+	sidinline void poke ( uint16_t addr, uint8_t data ) noexcept override	{	mapper[ addr >> 5 & ( MAPPER_SIZE - 1 ) ]->poke ( addr, data );		}
 
 	/**
 	* Set SID emulation.
@@ -66,7 +66,7 @@ public:
 	* @param s the emulation
 	* @param address the address where to put the chip
 	*/
-	void addSID ( sidemu* s, uint16_t address )
+	void addSID ( sidemu* s, uint16_t address ) noexcept
 	{
 		sids.push_back ( s );
 		mapper[ address >> 5 & ( MAPPER_SIZE - 1 ) ] = s;

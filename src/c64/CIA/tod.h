@@ -46,7 +46,6 @@ private:
 		HOURS = 3
 	};
 
-private:
 	/// Event scheduler.
 	EventScheduler& eventScheduler;
 
@@ -68,17 +67,16 @@ private:
 	uint8_t latch[ 4 ];
 	uint8_t alarm[ 4 ];
 
-private:
-	sidinline void checkAlarm ();
-	sidinline void updateCounters ();
+	sidinline void checkAlarm () noexcept;
+	sidinline void updateCounters () noexcept;
 
-	void event () override;
+	void event () noexcept override;
 
 public:
-	Tod ( EventScheduler& scheduler, MOS652X& parent, uint8_t regs[ 0x10 ] )
+	Tod ( EventScheduler& scheduler, MOS652X& _parent, uint8_t regs[ 0x10 ] )
 		: Event ( "CIA Time of Day" )
 		, eventScheduler ( scheduler )
-		, parent ( parent )
+		, parent ( _parent )
 		, cra ( regs[ 0x0e ] )
 		, crb ( regs[ 0x0f ] )
 		, period ( ~0 )			// Dummy
@@ -88,7 +86,7 @@ public:
 	/**
 	* Reset TOD.
 	*/
-	void reset ();
+	void reset () noexcept;
 
 	/**
 	* Read TOD register.
@@ -96,7 +94,7 @@ public:
 	* @param addr
 	*            register register to read
 	*/
-	uint8_t read ( uint8_t reg );
+	uint8_t read ( uint8_t reg ) noexcept;
 
 	/**
 	* Write TOD register.
@@ -106,14 +104,14 @@ public:
 	* @param data
 	*            value to write
 	*/
-	void write ( uint8_t reg, uint8_t data );
+	void write ( uint8_t reg, uint8_t data ) noexcept;
 
 	/**
 	* Set TOD period.
 	*
 	* @param clock
 	*/
-	void setPeriod ( event_clock_t _clock ) { period = _clock * ( 1 << 7 ); }
+	void setPeriod ( event_clock_t _clock ) noexcept { period = _clock * ( 1 << 7 ); }
 };
 
 }

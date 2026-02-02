@@ -60,7 +60,7 @@ private:
 	//@}
 
 	void clFilterVcrIds ();
-	[[ nodiscard ]] sidinline double getDacZero ( double adjustment ) const	{	return dac_zero + adjustment;	}
+	[[ nodiscard ]] sidinline double getDacZero ( double adjustment ) const noexcept {	return dac_zero + adjustment;	}
 
 	// Voice DC offset LUT
 	double	voiceDC[ 256 ];
@@ -68,9 +68,9 @@ private:
 public:
 	FilterModelConfig6581 ();
 
-	void setFilterRange ( double adjustment );
+	void setFilterRange ( double adjustment ) noexcept;
 
-	void setVoiceDCDrift ( double drift );
+	void setVoiceDCDrift ( double drift ) noexcept;
 
 	/**
 	* Construct an 11 bit cutoff frequency DAC output voltage table.
@@ -80,13 +80,13 @@ public:
 	* @param adjustment
 	* @return the DAC table
 	*/
-	[[ nodiscard ]] uint16_t* getDAC ( double adjustment ) const;
-	[[ nodiscard ]] double getWL_snake () const { return WL_snake; }
+	[[ nodiscard ]] uint16_t* getDAC ( double adjustment ) const noexcept;
+	[[ nodiscard ]] double getWL_snake () const noexcept { return WL_snake; }
 
-	[[ nodiscard ]] sidinline uint16_t getVcr_nVg ( const int i )		 const	{	return vcr_nVg[ i ]; }
-	[[ nodiscard ]] sidinline unsigned int getVcr_n_Ids_term ( const int i ) const	{	return vcr_n_Ids_term[ i ]; }
+	[[ nodiscard ]] sidinline uint16_t getVcr_nVg ( const int i ) const noexcept {	return vcr_nVg[ i ]; }
+	[[ nodiscard ]] sidinline unsigned int getVcr_n_Ids_term ( const int i ) const noexcept {	return vcr_n_Ids_term[ i ]; }
 
-	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value, unsigned int env ) const
+	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value, unsigned int env ) const noexcept
 	{
 		const auto	tmp = N16 * ( ( value * voice_voltage_range + voiceDC[ env ] ) - vmin );
 

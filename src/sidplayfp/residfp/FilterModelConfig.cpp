@@ -78,14 +78,14 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::setUCox ( double new_uCox )
+void FilterModelConfig::setUCox ( double new_uCox ) noexcept
 {
 	uCox = new_uCox;
 	currFactorCoeff = denorm * ( uCox / 2.0 * 1.0e-6 / C );
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::buildSummerTable ( OpAmp& opampModel )
+void FilterModelConfig::buildSummerTable ( OpAmp& opampModel ) noexcept
 {
 	// The filter summer operates at n ~ 1, and has 5 fundamentally different
 	// input configurations (2 - 6 input "resistors").
@@ -114,7 +114,7 @@ void FilterModelConfig::buildSummerTable ( OpAmp& opampModel )
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::buildMixerTable ( OpAmp& opampModel, double nRatio )
+void FilterModelConfig::buildMixerTable ( OpAmp& opampModel, double nRatio ) noexcept
 {
 	// The audio mixer operates at n ~ 8/6, and has 8 fundamentally different
 	// input configurations (0 - 7 input "resistors").
@@ -141,7 +141,7 @@ void FilterModelConfig::buildMixerTable ( OpAmp& opampModel, double nRatio )
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor )
+void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) noexcept
 {
 	// 4 bit "resistor" ladders in the audio output gain necessitate 16 gain tables.
 	// From die photographs of the volume "resistor" ladders it follows that
@@ -164,7 +164,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor )
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] )
+void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept
 {
 	const auto	r_N16 = 1.0 / N16;
 

@@ -93,7 +93,7 @@ namespace WaveformCalculator
 	* @param model Chip model to use
 	* @return Pulldown table
 	*/
-	void buildPulldownTable ( std::vector<int16_t>& pulldownTable, const bool is6581, const int combinedWaveformStrength, const float threshold );
+	void buildPulldownTable ( std::vector<int16_t>& pulldownTable, const bool is6581, const int combinedWaveformStrength, const float threshold ) noexcept;
 }
 
 } // namespace reSIDfp

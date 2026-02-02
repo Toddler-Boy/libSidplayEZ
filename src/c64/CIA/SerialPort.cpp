@@ -30,7 +30,7 @@ namespace libsidplayfp
 
 //-----------------------------------------------------------------------------
 
-void SerialPort::reset ()
+void SerialPort::reset () noexcept
 {
 	count = 0;
 	cntHistory = 0;
@@ -43,13 +43,13 @@ void SerialPort::reset ()
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::event ()
+void SerialPort::event () noexcept
 {
 	parent.spInterrupt ();
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::syncCntHistory ()
+void SerialPort::syncCntHistory () noexcept
 {
 	const event_clock_t	time = eventScheduler.getTime ( EVENT_CLOCK_PHI1 );
 	const event_clock_t	clocks = time - lastSync;
@@ -60,13 +60,13 @@ void SerialPort::syncCntHistory ()
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::startSdr ()
+void SerialPort::startSdr () noexcept
 {
 	eventScheduler.schedule ( startSdrEvent, 1 );
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::doStartSdr ()
+void SerialPort::doStartSdr () noexcept
 {
 	if ( ! loaded )
 		loaded = true;
@@ -75,7 +75,7 @@ void SerialPort::doStartSdr ()
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::switchSerialDirection ( bool input )
+void SerialPort::switchSerialDirection ( bool input ) noexcept
 {
 	syncCntHistory ();
 
@@ -110,7 +110,7 @@ void SerialPort::switchSerialDirection ( bool input )
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::handle ()
+void SerialPort::handle () noexcept
 {
 	// Output rate 8 bits at ta / 2
 	if ( loaded && ( count == 0 ) )
@@ -131,12 +131,12 @@ void SerialPort::handle ()
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::flipFake ()
+void SerialPort::flipFake () noexcept
 {
 }
 //-----------------------------------------------------------------------------
 
-void SerialPort::flipCnt ()
+void SerialPort::flipCnt () noexcept
 {
 	if ( count == 0 )
 		return;

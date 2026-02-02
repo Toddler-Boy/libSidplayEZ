@@ -99,7 +99,7 @@ public:
     /**
      * Reset root position
      */
-	void reset ()
+	void reset () noexcept
     {
         x = vmin;
     }
@@ -111,7 +111,7 @@ public:
      * @param vi input voltage
      * @return vo output voltage
      */
-	sidinline double solve ( double n, double vi )
+	sidinline double solve ( double n, double vi ) noexcept
 	{
 		constexpr auto	EPSILON = 1e-8;
 

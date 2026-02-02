@@ -33,7 +33,7 @@
 namespace reSIDfp
 {
 
-void SincResampler::setup ( double clockFrequency, double samplingFrequency, double highestAccurateFrequency )
+void SincResampler::setup ( double clockFrequency, double samplingFrequency, double highestAccurateFrequency ) noexcept
 {
 	reset ();
 
@@ -142,9 +142,9 @@ void SincResampler::setup ( double clockFrequency, double samplingFrequency, dou
 }
 //-----------------------------------------------------------------------------
 
-void SincResampler::reset ()
+void SincResampler::reset () noexcept
 {
-	std::fill ( std::begin ( sample ), std::end ( sample ), 0 );
+	std::ranges::fill ( sample, 0 );
 	sampleOffset = 0;
 }
 //-----------------------------------------------------------------------------

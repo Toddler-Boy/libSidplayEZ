@@ -36,17 +36,17 @@ namespace libsidplayfp
 class SidBank final : public Bank
 {
 public:
-	void reset () {	sid->reset ( 0xf );	}
+	void reset () noexcept {	sid->reset ( 0xf );	}
 
-	sidinline uint8_t peek ( uint16_t addr ) override { return sid->peek ( addr ); }
-	sidinline void poke ( uint16_t addr, uint8_t data ) override { sid->poke ( addr, data ); }
+	sidinline uint8_t peek ( uint16_t addr ) noexcept override { return sid->peek ( addr ); }
+	sidinline void poke ( uint16_t addr, uint8_t data ) noexcept override { sid->poke ( addr, data ); }
 
 	/**
 	* Set SID emulation.
 	*
 	* @param s the emulation, nullptr to remove current sid
 	*/
-	void setSID ( sidemu* s )	{	sid = s;	}
+	void setSID ( sidemu* s ) noexcept {	sid = s;	}
 
 private:
 	// SID chip

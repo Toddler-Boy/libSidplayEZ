@@ -23,20 +23,23 @@
 
 #include "EZ/config.h"
 
-// Set the lo byte (8 bit) in a word (16 bit)
-sidinline void set_16lo8 ( uint16_t& word, uint8_t byte )		{	word = ( word & 0xff00 ) | byte;	}
+namespace
+{
+	// Set the lo byte (8 bit) in a word (16 bit)
+	sidinline void set_16lo8 ( uint16_t& word, uint8_t byte )		{	word = ( word & 0xff00 ) | byte;	}
 
-// Get the lo byte (8 bit) in a word (16 bit)
-[[ nodiscard ]] sidinline uint8_t get_16lo8 ( uint16_t word )	{	return uint8_t ( word );			}
+	// Get the lo byte (8 bit) in a word (16 bit)
+	[[ nodiscard ]] sidinline uint8_t get_16lo8 ( uint16_t word )	{	return uint8_t ( word );			}
 
-// Convert high-byte and low-byte to 16-bit word.
-[[ nodiscard ]] sidinline uint16_t get_16 ( uint8_t hi, uint8_t lo ) { return uint16_t ( ( hi << 8 ) | lo ); }
+	// Convert high-byte and low-byte to 16-bit word.
+	[[ nodiscard ]] sidinline uint16_t get_16 ( uint8_t hi, uint8_t lo ) { return uint16_t ( ( hi << 8 ) | lo ); }
 
-// Set the hi byte (8 bit) in a word (16 bit)
-sidinline void set_16hi8 ( uint16_t& word, uint8_t byte )		{	word = ( word & 0x00FF ) | uint16_t ( byte << 8 );	}
+	// Set the hi byte (8 bit) in a word (16 bit)
+	sidinline void set_16hi8 ( uint16_t& word, uint8_t byte )		{	word = ( word & 0x00FF ) | uint16_t ( byte << 8 );	}
 
-// Get the hi byte (8 bit) in a word (16 bit)
-[[ nodiscard ]] sidinline uint8_t get_16hi8 ( uint16_t word )	{	return uint8_t ( word >> 8 );		}
+	// Get the hi byte (8 bit) in a word (16 bit)
+	[[ nodiscard ]] sidinline uint8_t get_16hi8 ( uint16_t word )	{	return uint8_t ( word >> 8 );		}
 
-// Convert high-byte and low-byte to 16-bit little endian word
-[[ nodiscard ]] sidinline uint16_t get_little16 ( const uint8_t ptr[ 2 ] )	{	return uint16_t ( ( ptr[ 1 ] << 8 ) | ptr[ 0 ] );	}
+	// Convert high-byte and low-byte to 16-bit little endian word
+	[[ nodiscard ]] sidinline uint16_t get_little16 ( const uint8_t ptr[ 2 ] )	{	return uint16_t ( ( ptr[ 1 ] << 8 ) | ptr[ 0 ] );	}
+}

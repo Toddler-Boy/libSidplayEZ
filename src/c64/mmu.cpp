@@ -35,7 +35,7 @@ uint8_t readBank ( MMU& self, uint16_t addr )
 }
 //-----------------------------------------------------------------------------
 
-uint8_t readIO ( MMU& self, uint16_t addr )
+uint8_t readIO ( MMU& self, uint16_t addr ) noexcept
 {
 	return self.ioBank->peek ( addr );
 }
@@ -57,7 +57,7 @@ MMU::MMU ( EventScheduler& scheduler, IOBank* _ioBank )
 }
 //-----------------------------------------------------------------------------
 
-void MMU::setCpuPort ( uint8_t state )
+void MMU::setCpuPort ( uint8_t state ) noexcept
 {
 	loram = ( state & 1 ) != 0;
 	hiram = ( state & 2 ) != 0;
@@ -67,7 +67,7 @@ void MMU::setCpuPort ( uint8_t state )
 }
 //-----------------------------------------------------------------------------
 
-void MMU::updateMappingPHI2 ()
+void MMU::updateMappingPHI2 () noexcept
 {
 	ReadFunc	readRAM = &readBank<SystemRAMBank, &MMU::ramBank>;
 	cpuReadMap[ 0xe ] = cpuReadMap[ 0xf ] = hiram ? &readBank<KernalRomBank, &MMU::kernalRomBank> : readRAM;
@@ -86,7 +86,7 @@ void MMU::updateMappingPHI2 ()
 }
 //-----------------------------------------------------------------------------
 
-void MMU::reset ()
+void MMU::reset () noexcept
 {
 	ramBank.reset ();
 	zeroRAMBank.reset ();
@@ -108,7 +108,7 @@ void MMU::reset ()
 * but since the VIC emulation currently does not fetch
 * any value from memory we return a pseudo random value.
 */
-uint8_t MMU::getLastReadByte () const
+uint8_t MMU::getLastReadByte () const noexcept
 {
 	// LCG
 	seed = seed * 1664525 + 1013904223;

@@ -42,14 +42,14 @@ public:
 	{
 	}
 
-	EventScheduler& scheduler () const { return eventScheduler; }
+	EventScheduler& scheduler () const noexcept { return eventScheduler; }
 
-	virtual void interruptIRQ ( bool state ) = 0;
-	virtual void interruptNMI () = 0;
-	virtual void interruptRST () = 0;
+	virtual void interruptIRQ ( bool state ) noexcept = 0;
+	virtual void interruptNMI () noexcept = 0;
+	virtual void interruptRST () noexcept = 0;
 
-	virtual void setBA ( bool state ) = 0;
-	virtual void lightpen ( bool state ) = 0;
+	virtual void setBA ( bool state ) noexcept = 0;
+	virtual void lightpen ( bool state ) noexcept = 0;
 
 protected:
 	~c64env () = default;

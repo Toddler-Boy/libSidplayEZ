@@ -77,7 +77,7 @@ public:
 	*
 	* @param input
 	*/
-	[[ nodiscard ]] sidinline int clock ( int input )
+	[[ nodiscard ]] sidinline int clock ( int input ) noexcept
 	{
 		const auto	Vi = input << 11;
 		const auto	dVlp = ( w0lp_1_s7 * ( Vi - Vlp ) ) >> 7;
@@ -100,7 +100,7 @@ public:
 	*
 	* @param frequency the main system clock frequency
 	*/
-	void setClockFrequency ( double frequency )
+	void setClockFrequency ( double frequency ) noexcept
 	{
 		reset ();
 
@@ -118,7 +118,7 @@ public:
 	/**
 	* SID reset
 	*/
-	void reset ()
+	void reset () noexcept
 	{
  		// Simulate that the filter has run until it settled
 		Vlp = Vhp = -( 1 << ( 15 + 11 ) );

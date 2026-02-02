@@ -327,7 +327,7 @@ protected:
 	/**
 	* Set filter cutoff frequency.
 	*/
-	sidinline void updatedCenterFrequency () override
+	sidinline void updatedCenterFrequency () noexcept override
 	{
 		if constexpr ( useFilter )
 		{
@@ -355,7 +355,7 @@ public:
 		delete[] f0_dac;
 	}
 
-	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3, uint8_t env1, uint8_t env2, uint8_t env3 )
+	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3, uint8_t env1, uint8_t env2, uint8_t env3 ) noexcept
 	{
 		if constexpr ( ! useFilter )
 		{
@@ -407,7 +407,7 @@ public:
 	*
 	* @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
 	*/
-	void setFilterCurve ( double curvePosition )
+	void setFilterCurve ( double curvePosition ) noexcept
 	{
 		delete[] f0_dac;
 		f0_dac = fmc6581.getDAC ( curvePosition );
@@ -419,7 +419,7 @@ public:
 	*
 	* @param adjustment 0 .. 2, where 0 sets center frequency low, 1 is default, 2 is bright. This also affects the range
 	*/
-	void setFilterRange ( double adjustment )
+	void setFilterRange ( double adjustment ) noexcept
 	{
 		fmc6581.setFilterRange ( adjustment );
 	}
@@ -429,7 +429,7 @@ public:
 	*
 	* @param adjustment 0 .. 2
 	*/
-	void setFilterGain ( double adjustment )
+	void setFilterGain ( double adjustment ) noexcept
 	{
 		filterGain = int ( adjustment * ( 1 << 12 ) );
 		filterOffset = 32767 * ( ( 1 << 12 ) - filterGain );
@@ -440,7 +440,7 @@ public:
 	*
 	* @param adjustment 0 .. 1
 	*/
-	void setDigiVolume ( double adjustment )
+	void setDigiVolume ( double adjustment ) noexcept
 	{
 		this->Ve = int16_t ( adjustment * fmc6581.getNormalizedVoice ( 0.0f, 0 ) );
 	}
@@ -450,7 +450,7 @@ public:
 	*
 	* @param adjustment 0 .. 1, where 0 has no drift at all and 1 is with full drift
 	*/
-	void setVoiceDCDrift ( double adjustment )
+	void setVoiceDCDrift ( double adjustment ) noexcept
 	{
 		fmc6581.setVoiceDCDrift ( adjustment );
 	}
@@ -460,7 +460,7 @@ public:
 	*
 	* @param input a signed 16 bit sample
 	*/
-	void input ( int16_t _input ) { this->Ve = fmc6581.getNormalizedVoice ( _input / 32768.0f, 0 ); }
+	void input ( int16_t _input ) noexcept { this->Ve = fmc6581.getNormalizedVoice ( _input / 32768.0f, 0 ); }
 };
 
 

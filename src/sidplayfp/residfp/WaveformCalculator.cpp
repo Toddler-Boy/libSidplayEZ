@@ -43,21 +43,25 @@ using CombinedWaveformConfig = struct
 	float distance2;
 };
 
-// Distance functions
-static float exponentialDistance ( float distance, int i )
+namespace
 {
-	return std::pow ( distance, float ( -i ) );
+	// Distance functions
+	float exponentialDistance ( float distance, int i ) noexcept
+	{
+		return std::pow ( distance, float ( -i ) );
+	}
+
+	float linearDistance ( float distance, int i ) noexcept
+	{
+		return 1.0f / ( 1.0f + i * distance );
+	}
+
+	float quadraticDistance ( float distance, int i ) noexcept
+	{
+		return 1.0f / ( 1.0f + ( i * i ) * distance );
+	}
 }
 
-static float linearDistance ( float distance, int i )
-{
-	return 1.0f / ( 1.0f + i * distance );
-}
-
-static float quadraticDistance ( float distance, int i )
-{
-	return 1.0f / ( 1.0f + ( i * i ) * distance );
-}
 
 /**
  * Parameters derived with the Monte Carlo method based on
@@ -155,7 +159,7 @@ const CombinedWaveformConfig config[ 3 ][ 2 ][ 5 ] =
 };
 //-----------------------------------------------------------------------------
 
-std::vector<int16_t> WaveformCalculator::buildWaveTable ()
+std::vector<int16_t> WaveformCalculator::buildWaveTable () noexcept
 {
 	std::vector<int16_t>	waveTable ( 4 * 4096 );
 
@@ -189,7 +193,7 @@ std::vector<int16_t> WaveformCalculator::buildWaveTable ()
 * @param threshold
 * @param accumulator the high bits of the accumulator value
 */
-static int16_t calculatePulldown ( float distancetable[], float topbit, float pulsestrength, float threshold, unsigned int accumulator )
+static int16_t calculatePulldown ( float distancetable[], float topbit, float pulsestrength, float threshold, unsigned int accumulator ) noexcept
 {
 	float	bit[ 12 ];
 
@@ -235,7 +239,7 @@ static int16_t calculatePulldown ( float distancetable[], float topbit, float pu
 }
 //-----------------------------------------------------------------------------
 
-void WaveformCalculator::buildPulldownTable ( std::vector<int16_t>& pulldownTable, const bool is6581, const int combinedWaveformStrength, const float threshold )
+void WaveformCalculator::buildPulldownTable ( std::vector<int16_t>& pulldownTable, const bool is6581, const int combinedWaveformStrength, const float threshold ) noexcept
 {
 	pulldownTable.resize ( 5 * 4096 );
 

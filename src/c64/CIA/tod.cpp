@@ -30,7 +30,7 @@
 namespace libsidplayfp
 {
 
-void Tod::reset ()
+void Tod::reset () noexcept
 {
 	cycles = 0;
 	todtickcounter = 0;
@@ -46,7 +46,7 @@ void Tod::reset ()
 	eventScheduler.schedule ( *this, 0, EVENT_CLOCK_PHI1 );
 }
 
-uint8_t Tod::read ( uint8_t reg )
+uint8_t Tod::read ( uint8_t reg ) noexcept
 {
 	// TOD clock is latched by reading Hours, and released
 	// upon reading Tenths of Seconds. The counter itself
@@ -63,7 +63,7 @@ uint8_t Tod::read ( uint8_t reg )
 	return latch[ reg ];
 }
 
-void Tod::write ( uint8_t reg, uint8_t data )
+void Tod::write ( uint8_t reg, uint8_t data ) noexcept
 {
 	switch ( reg )
 	{
@@ -124,7 +124,7 @@ void Tod::write ( uint8_t reg, uint8_t data )
 		checkAlarm ();
 }
 
-void Tod::event ()
+void Tod::event () noexcept
 {
 	cycles += period;
 
@@ -160,7 +160,7 @@ void Tod::event ()
 	}
 }
 
-void Tod::updateCounters ()
+void Tod::updateCounters () noexcept
 {
 	// advance the counters.
 	// - individual counters are 4 bit
@@ -229,7 +229,7 @@ void Tod::updateCounters ()
 	checkAlarm ();
 }
 
-void Tod::checkAlarm ()
+void Tod::checkAlarm () noexcept
 {
 	if ( ! std::memcmp ( alarm, clock, sizeof ( alarm ) ) )
 		parent.todInterrupt ();

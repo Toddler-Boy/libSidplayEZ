@@ -79,7 +79,7 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 };
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig6581::setFilterRange ( double adjustment )
+void FilterModelConfig6581::setFilterRange ( double adjustment ) noexcept
 {
 	adjustment = std::clamp ( adjustment, 0.0, 1.0 );
 
@@ -96,7 +96,7 @@ void FilterModelConfig6581::setFilterRange ( double adjustment )
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig6581::setVoiceDCDrift ( double drift )
+void FilterModelConfig6581::setVoiceDCDrift ( double drift ) noexcept
 {
 	/**
 	* On 6581 the DC offset varies between ~5.0V and ~5.214V depending on
@@ -187,7 +187,7 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig6581::clFilterVcrIds ()
+void FilterModelConfig6581::clFilterVcrIds () noexcept
 {
 	//  EKV model:
 	//
@@ -218,7 +218,7 @@ void FilterModelConfig6581::clFilterVcrIds ()
 }
 //-----------------------------------------------------------------------------
 
-uint16_t* FilterModelConfig6581::getDAC ( double adjustment ) const
+uint16_t* FilterModelConfig6581::getDAC ( double adjustment ) const noexcept
 {
 	const auto  _dac_zero = getDacZero ( adjustment );
 

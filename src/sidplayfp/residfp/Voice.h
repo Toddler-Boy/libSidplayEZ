@@ -63,7 +63,7 @@ public:
 	* @param ringModulator Ring-modulator for waveform
 	* @return the voice analog output
 	*/
-	sidinline float output ( WaveformGenerator<is6581>& ringModulator )
+	sidinline float output ( WaveformGenerator<is6581>& ringModulator ) noexcept
 	{
 		const auto	wav = waveformGenerator.output ( ringModulator );
 		const auto	env = envelopeGenerator.output ();
@@ -80,7 +80,7 @@ public:
 	*
 	* @param dac
 	*/
-	void setWavDAC ( float* dac ) { wavDAC = dac; }
+	void setWavDAC ( float* dac ) noexcept { wavDAC = dac; }
 
 	/**
 	* Set the analog DAC emulation for envelope.
@@ -88,14 +88,14 @@ public:
 	*
 	* @param dac
 	*/
-	void setEnvDAC ( float* dac ) { envDAC = dac; }
+	void setEnvDAC ( float* dac ) noexcept { envDAC = dac; }
 
 	/**
 	* Write control register.
 	*
 	* @param control Control register value.
 	*/
-	void writeCONTROL_REG ( uint8_t control )
+	void writeCONTROL_REG ( uint8_t control ) noexcept
 	{
 		waveformGenerator.writeCONTROL_REG ( control );
 		envelopeGenerator.writeCONTROL_REG ( control );
@@ -104,13 +104,13 @@ public:
 	/**
 	* SID reset.
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		waveformGenerator.reset ();
 		envelopeGenerator.reset ();
 	}
 
-	float getEnvLevel () const { return envLevel; }
+	float getEnvLevel () const noexcept { return envLevel; }
 };
 
 } // namespace reSIDfp

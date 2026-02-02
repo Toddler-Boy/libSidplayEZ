@@ -73,7 +73,7 @@ MOS656X::MOS656X ( EventScheduler& scheduler )
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::reset ()
+void MOS656X::reset () noexcept
 {
 	irqFlags = 0;
 	irqMask = 0;
@@ -97,7 +97,7 @@ void MOS656X::reset ()
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::chip ( model_t model )
+void MOS656X::chip ( model_t model ) noexcept
 {
 	const auto	model_idx = static_cast<std::underlying_type_t<model_t>>( model );
 
@@ -111,7 +111,7 @@ void MOS656X::chip ( model_t model )
 }
 //-----------------------------------------------------------------------------
 
-uint8_t MOS656X::read ( uint8_t addr )
+uint8_t MOS656X::read ( uint8_t addr ) noexcept
 {
 	addr &= 0x3f;
 
@@ -149,7 +149,7 @@ uint8_t MOS656X::read ( uint8_t addr )
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::write ( uint8_t addr, uint8_t data )
+void MOS656X::write ( uint8_t addr, uint8_t data ) noexcept
 {
 	addr &= 0x3f;
 
@@ -236,7 +236,7 @@ void MOS656X::write ( uint8_t addr, uint8_t data )
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::handleIrqState ()
+void MOS656X::handleIrqState () noexcept
 {
 	// signal an IRQ unless we already signaled it
 	if ( ( irqFlags & irqMask & 0x0f ) != 0 )
@@ -258,7 +258,7 @@ void MOS656X::handleIrqState ()
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::event ()
+void MOS656X::event () noexcept
 {
 	const event_clock_t cycles = eventScheduler.getTime ( eventScheduler.phase () ) - rasterClk;
 
@@ -280,7 +280,7 @@ void MOS656X::event ()
 }
 //-----------------------------------------------------------------------------
 
-event_clock_t MOS656X::clockPAL ()
+event_clock_t MOS656X::clockPAL () noexcept
 {
 	event_clock_t delay = 1;
 
@@ -412,7 +412,7 @@ event_clock_t MOS656X::clockPAL ()
 }
 //-----------------------------------------------------------------------------
 
-event_clock_t MOS656X::clockNTSC ()
+event_clock_t MOS656X::clockNTSC () noexcept
 {
 	event_clock_t delay = 1;
 
@@ -553,7 +553,7 @@ event_clock_t MOS656X::clockNTSC ()
 }
 //-----------------------------------------------------------------------------
 
-event_clock_t MOS656X::clockOldNTSC ()
+event_clock_t MOS656X::clockOldNTSC () noexcept
 {
 	event_clock_t delay = 1;
 
@@ -688,7 +688,7 @@ event_clock_t MOS656X::clockOldNTSC ()
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::triggerLightpen ()
+void MOS656X::triggerLightpen () noexcept
 {
 	lpAsserted = true;
 
@@ -696,7 +696,7 @@ void MOS656X::triggerLightpen ()
 }
 //-----------------------------------------------------------------------------
 
-void MOS656X::clearLightpen ()
+void MOS656X::clearLightpen () noexcept
 {
 	lpAsserted = false;
 }

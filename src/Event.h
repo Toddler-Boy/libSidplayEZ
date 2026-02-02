@@ -58,7 +58,7 @@ public:
 	* reschedule themselves with the EventScheduler during
 	* invocations.
 	*/
-	virtual void event () = 0;
+	virtual void event () noexcept = 0;
 
 protected:
 	~Event () {}

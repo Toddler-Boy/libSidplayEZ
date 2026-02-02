@@ -46,7 +46,7 @@ private:
 	* The envelope state machine's distinct states. In addition to this,
 	* envelope has a hold mode, which freezes envelope counter to zero.
 	*/
-	enum class State
+	enum class State : uint8_t
 	{
 		ATTACK, DECAY_SUSTAIN, RELEASE
 	};
@@ -142,20 +142,20 @@ private:
 	};
 
 private:
-	void set_exponential_counter ();
+	sidinline void set_exponential_counter () noexcept;
 
-	void state_change ();
+	sidinline void state_change () noexcept;
 
 public:
 	/**
 	* SID clocking.
 	*/
-	void clock ();
+	sidinline void clock () noexcept;
 
 	/**
 	* Get the Envelope Generator digital output.
 	*/
-	[[ nodiscard ]] sidinline uint8_t output () const { return envelope_counter; }
+	[[ nodiscard ]] sidinline uint8_t output () const noexcept { return envelope_counter; }
 
 	/**
 	* SID reset.
@@ -195,7 +195,7 @@ public:
 };
 //-----------------------------------------------------------------------------
 
-sidinline void EnvelopeGenerator::clock ()
+sidinline void EnvelopeGenerator::clock () noexcept
 {
 	env3 = envelope_counter;
 
@@ -328,7 +328,7 @@ sidinline void EnvelopeGenerator::clock ()
 *  1 - Nothing
 *  2 - Counter is disabled
 */
-sidinline void EnvelopeGenerator::state_change ()
+sidinline void EnvelopeGenerator::state_change () noexcept
 {
 	state_pipeline--;
 
@@ -369,7 +369,7 @@ sidinline void EnvelopeGenerator::state_change ()
 }
 //-----------------------------------------------------------------------------
 
-sidinline void EnvelopeGenerator::set_exponential_counter ()
+sidinline void EnvelopeGenerator::set_exponential_counter () noexcept
 {
 	// Check for change of exponential counter period.
 	//

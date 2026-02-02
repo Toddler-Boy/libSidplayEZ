@@ -96,34 +96,34 @@ private:
 	/**
 	* Perform scheduled cycle skipping, and resume.
 	*/
-	void cycleSkippingEvent ();
+	void cycleSkippingEvent () noexcept;
 
 	/**
 	* Execute one CIA state transition.
 	*/
-	void clock ();
+	void clock () noexcept;
 
 	/**
 	* Reschedule CIA event at the earliest interesting time.
 	* If CIA timer is stopped or is programmed to just count down,
 	* the events are paused.
 	*/
-	sidinline void reschedule ();
+	sidinline void reschedule () noexcept;
 
 	/**
 	* Timer ticking event.
 	*/
-	void event () override;
+	void event () noexcept override;
 
 	/**
 	* Signal timer underflow.
 	*/
-	virtual void underFlow () = 0;
+	virtual void underFlow () noexcept = 0;
 
 	/**
 	* Handle the serial port.
 	*/
-	virtual void serialPort () {}
+	virtual void serialPort () noexcept {}
 
 protected:
 	/**
@@ -147,26 +147,26 @@ public:
 	*
 	* @param cr control register value
 	*/
-	void setControlRegister ( uint8_t cr );
+	void setControlRegister ( uint8_t cr ) noexcept;
 
 	/**
 	* Perform cycle skipping manually.
 	*
 	* Clocks the CIA up to the state it should be in, and stops all events.
 	*/
-	void syncWithCpu ();
+	void syncWithCpu () noexcept;
 
 	/**
 	* Counterpart of syncWithCpu(),
 	* starts the event ticking if it is needed.
 	* No clock() call or anything such is permissible here!
 	*/
-	void wakeUpAfterSyncWithCpu ();
+	void wakeUpAfterSyncWithCpu () noexcept;
 
 	/**
 	* Reset timer.
 	*/
-	void reset ();
+	void reset () noexcept;
 
 	/**
 	* Set low byte of Timer start value (Latch).
@@ -174,7 +174,7 @@ public:
 	* @param data
 	*            low byte of latch
 	*/
-	void latchLo ( uint8_t data );
+	void latchLo ( uint8_t data ) noexcept;
 
 	/**
 	* Set high byte of Timer start value (Latch).
@@ -182,7 +182,7 @@ public:
 	* @param data
 	*            high byte of latch
 	*/
-	void latchHi ( uint8_t data );
+	void latchHi ( uint8_t data ) noexcept;
 
 	/**
 	* Set PB6/PB7 Flipflop state.
@@ -190,21 +190,21 @@ public:
 	* @param state
 	*            PB6/PB7 flipflop state
 	*/
-	sidinline void setPbToggle ( bool _state ) { pbToggle = _state; }
+	sidinline void setPbToggle ( bool _state ) noexcept { pbToggle = _state; }
 
 	/**
 	* Get current state value.
 	*
 	* @return current state value
 	*/
-	sidinline int32_t getState () const { return state; }
+	sidinline int32_t getState () const noexcept { return state; }
 
 	/**
 	* Get current timer value.
 	*
 	* @return current timer value
 	*/
-	sidinline uint16_t getTimer () const { return timer; }
+	sidinline uint16_t getTimer () const noexcept { return timer; }
 
 	/**
 	* Get PB6/PB7 Flipflop state.
@@ -212,10 +212,11 @@ public:
 	* @param reg value of the control register
 	* @return PB6/PB7 flipflop state
 	*/
-	sidinline bool getPb ( uint8_t reg ) const { return ( reg & 0x04 ) ? pbToggle : ( state & CIAT_OUT ); }
+	sidinline bool getPb ( uint8_t reg ) const noexcept { return ( reg & 0x04 ) ? pbToggle : ( state & CIAT_OUT ); }
 };
+//-----------------------------------------------------------------------------
 
-void Timer::reschedule ()
+void Timer::reschedule () noexcept
 {
 	// There are only two subcases to consider.
 	//
@@ -268,5 +269,6 @@ void Timer::reschedule ()
 		ciaEventPauseTime = -1;
 	}
 }
+//-----------------------------------------------------------------------------
 
 }

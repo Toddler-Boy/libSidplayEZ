@@ -31,9 +31,9 @@ namespace libsidplayfp
 class PLA
 {
 public:
-	virtual void setCpuPort ( uint8_t state ) = 0;
-	virtual uint8_t getLastReadByte () const = 0;
-	virtual event_clock_t getPhi2Time () const = 0;
+	virtual void setCpuPort ( uint8_t state ) noexcept = 0;
+	[[ nodiscard ]] virtual uint8_t getLastReadByte () const noexcept = 0;
+	[[ nodiscard ]] virtual event_clock_t getPhi2Time () const noexcept = 0;
 };
 
 }

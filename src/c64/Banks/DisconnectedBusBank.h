@@ -51,12 +51,12 @@ public:
 	/**
 	* No device is connected so this is a no-op.
 	*/
-	sidinline void poke ( uint16_t, uint8_t ) override {}
+	sidinline void poke ( uint16_t, uint8_t ) noexcept override {}
 
 	/**
 	* No device is connected so this should return the value left on the bus.
 	*/
-	sidinline uint8_t peek ( uint16_t ) override { return pla.getLastReadByte (); }
+	sidinline uint8_t peek ( uint16_t ) noexcept override { return pla.getLastReadByte (); }
 };
 
 }

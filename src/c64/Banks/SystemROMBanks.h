@@ -49,33 +49,33 @@ protected:
 	/**
 	* Set value at memory address.
 	*/
-	void setVal ( uint16_t address, uint8_t val ) { rom[ address & ( N - 1 ) ] = val; }
+	void setVal ( uint16_t address, uint8_t val ) noexcept { rom[ address & ( N - 1 ) ] = val; }
 
 	/**
 	* Return value from memory address.
 	*/
-	uint8_t getVal ( uint16_t address ) const { return rom[ address & ( N - 1 ) ]; }
+	uint8_t getVal ( uint16_t address ) const noexcept { return rom[ address & ( N - 1 ) ]; }
 
 	/**
 	* Return pointer to memory address.
 	*/
-	void* getPtr ( uint16_t address ) const { return (void*)&rom[ address & ( N - 1 ) ]; }
+	void* getPtr ( uint16_t address ) const noexcept { return (void*)&rom[ address & ( N - 1 ) ]; }
 
 public:
 	/**
 	* Copy content from source buffer.
 	*/
-	void set ( const uint8_t* source ) { if ( source != nullptr ) memcpy ( rom, source, N ); }
+	void set ( const uint8_t* source ) noexcept { if ( source != nullptr ) memcpy ( rom, source, N ); }
 
 	/**
 	* Writing to ROM is a no-op.
 	*/
-	void poke ( uint16_t, uint8_t ) override {}
+	void poke ( uint16_t, uint8_t ) noexcept override {}
 
 	/**
 	* Read from ROM.
 	*/
-	uint8_t peek ( uint16_t address ) override { return rom[ address & ( N - 1 ) ]; }
+	uint8_t peek ( uint16_t address ) noexcept override { return rom[ address & ( N - 1 ) ]; }
 };
 
 /**
@@ -90,7 +90,7 @@ private:
 	uint8_t resetVectorHi;  // 0xfffd
 
 public:
-	void set ( const uint8_t* kernal )
+	void set ( const uint8_t* kernal ) noexcept
 	{
 		romBank<0x2000>::set ( kernal );
 
@@ -149,7 +149,7 @@ public:
 		resetVectorHi = getVal ( 0xfffd );
 	}
 
-	void reset ()
+	void reset () noexcept
 	{
 		// Restore original Reset Vector
 		setVal ( 0xfffc, resetVectorLo );
@@ -161,7 +161,7 @@ public:
 		*
 		* @param addr the new addres to point to
 		*/
-	void installResetHook ( uint16_t addr )
+	void installResetHook ( uint16_t addr ) noexcept
 	{
 		setVal ( 0xfffc, get_16lo8 ( addr ) );
 		setVal ( 0xfffd, get_16hi8 ( addr ) );
@@ -180,7 +180,7 @@ private:
 	uint8_t subTune[ 11 ];
 
 public:
-	void set ( const uint8_t* basic )
+	void set ( const uint8_t* basic ) noexcept
 	{
 		romBank<0x2000>::set ( basic );
 
@@ -189,7 +189,7 @@ public:
 		std::memcpy ( subTune, getPtr ( 0xbf53 ), sizeof ( subTune ) );
 	}
 
-	void reset ()
+	void reset () noexcept
 	{
 		// Restore original BASIC Warm Start
 		std::memcpy ( getPtr ( 0xa7ae ), trap, sizeof ( trap ) );
@@ -201,14 +201,14 @@ public:
 	*
 	* @param addr
 	*/
-	void installTrap ( uint16_t addr )
+	void installTrap ( uint16_t addr ) noexcept
 	{
 		setVal ( 0xa7ae, JMPw );
 		setVal ( 0xa7af, get_16lo8 ( addr ) );
 		setVal ( 0xa7b0, get_16hi8 ( addr ) );
 	}
 
-	void setSubtune ( uint8_t tune )
+	void setSubtune ( uint8_t tune ) noexcept
 	{
 		setVal ( 0xbf53, LDAb );
 		setVal ( 0xbf54, tune );

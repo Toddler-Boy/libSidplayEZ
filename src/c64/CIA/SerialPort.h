@@ -58,15 +58,14 @@ private:
 
 	bool model4485 = false;
 
-private:
-	void event () override;
+	void event () noexcept override;
 
-	void flipCnt ();
-	void flipFake ();
+	void flipCnt () noexcept;
+	void flipFake () noexcept;
 
-	void doStartSdr ();
+	void doStartSdr () noexcept;
 
-	void syncCntHistory ();
+	void syncCntHistory () noexcept;
 
 public:
 	explicit SerialPort ( EventScheduler& scheduler, MOS652X& _parent )
@@ -79,15 +78,15 @@ public:
 	{
 	}
 
-	void reset ();
+	void reset () noexcept;
 
-	void setModel4485 ( bool is4485 ) { model4485 = is4485; }
+	void setModel4485 ( bool is4485 ) noexcept { model4485 = is4485; }
 
-	void startSdr ();
+	void startSdr () noexcept;
 
-	void switchSerialDirection ( bool input );
+	void switchSerialDirection ( bool input ) noexcept;
 
-	void handle ();
+	void handle () noexcept;
 };
 
 }

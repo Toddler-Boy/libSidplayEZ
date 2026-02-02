@@ -51,9 +51,9 @@ private:
 	/**
 	* Signal underflows of Timer A to Timer B.
 	*/
-	void underFlow () override;
+	void underFlow () noexcept override;
 
-	void serialPort () override;
+	void serialPort () noexcept override;
 
 public:
 	/**
@@ -71,7 +71,7 @@ public:
 class TimerB final : public Timer
 {
 private:
-	void underFlow () override;
+	void underFlow () noexcept override;
 
 public:
 	/**
@@ -82,7 +82,7 @@ public:
 	/**
 	* Receive an underflow from Timer A.
 	*/
-	void cascade ()
+	void cascade () noexcept
 	{
 		// we pretend that we are CPU doing a write to ctrl register
 		syncWithCpu ();
@@ -95,7 +95,7 @@ public:
 	*
 	* @return true if start flag is set, false otherwise
 	*/
-	bool started () const { return ( state & CIAT_CR_START ) != 0; }
+	bool started () const noexcept { return ( state & CIAT_CR_START ) != 0; }
 };
 
 /**
@@ -104,7 +104,7 @@ public:
 class InterruptSource8521 final : public InterruptSource
 {
 protected:
-	void triggerInterrupt () override
+	void triggerInterrupt () noexcept override
 	{
 		idr |= INTERRUPT_REQUEST;
 		idrTemp |= INTERRUPT_REQUEST;
@@ -116,7 +116,7 @@ protected:
 public:
 	InterruptSource8521 ( EventScheduler& scheduler, MOS652X& parent ) : InterruptSource ( scheduler, parent )	{}
 
-	void trigger ( uint8_t interruptMask ) override;
+	void trigger ( uint8_t interruptMask ) noexcept override;
 };
 
 /**
@@ -125,14 +125,14 @@ public:
 class InterruptSource6526 final : public InterruptSource
 {
 protected:
-	void triggerInterrupt () override { idr |= INTERRUPT_REQUEST; }
+	void triggerInterrupt () noexcept override { idr |= INTERRUPT_REQUEST; }
 
 public:
 	InterruptSource6526 ( EventScheduler& scheduler, MOS652X& parent ) : InterruptSource ( scheduler, parent )	{}
 
-	void trigger ( uint8_t interruptMask ) override;
+	void trigger ( uint8_t interruptMask ) noexcept override;
 
-	uint8_t clear () override;
+	uint8_t clear () noexcept override;
 };
 
 /**
@@ -149,12 +149,12 @@ class MOS652X
 	friend class Tod;
 
 public:
-	typedef enum
+	using model_t = enum : uint8_t
 	{
 		MOS6526 = 0,     ///< Old CIA model, interrupts are delayed by 1 clock
 		MOS8521,        ///< New CIA model
 		MOS6526W4485,   ///< A batch of old CIA model with unique serial port behavior
-	} model_t;
+	};
 
 private:
 	static const char* credit;
@@ -164,18 +164,17 @@ protected:
 	EventScheduler& eventScheduler;
 
 	/// Ports
-	//@{
-	uint8_t& pra, & prb, & ddra, & ddrb;
-	//@}
+	uint8_t&	pra;
+	uint8_t&	prb;
+	uint8_t&	ddra;
+	uint8_t&	ddrb;
 
 	/// These are all CIA registers.
 	uint8_t regs[ 0x10 ];
 
 	/// Timers A and B.
-	//@{
 	TimerA timerA;
 	TimerB timerB;
-	//@}
 
 	/// Interrupt Source
 	std::unique_ptr<InterruptSource> interruptSource;
@@ -195,12 +194,12 @@ private:
 	/**
 	* Trigger an interrupt from TOD.
 	*/
-	void todInterrupt ();
+	void todInterrupt () noexcept;
 
 	/**
 	* Trigger an interrupt from Serial Port.
 	*/
-	void spInterrupt ();
+	void spInterrupt () noexcept;
 
 	/**
 	* This event exists solely to break the ambiguity of what scheduling on
@@ -214,20 +213,20 @@ private:
 	* - PHI1 a.event()
 	* - PHI1 b.event()
 	*/
-	void bTick ();
+	void bTick () noexcept;
 
 	/**
 	* Timer A underflow.
 	*/
-	void underflowA ();
+	void underflowA () noexcept;
 
 	/** Timer B underflow. */
-	void underflowB ();
+	void underflowB () noexcept;
 
 	/**
 	* Handle the serial port.
 	*/
-	void handleSerialPort ();
+	void handleSerialPort () noexcept;
 
 protected:
 	/**
@@ -243,15 +242,15 @@ protected:
 	* @param state
 	*            interrupt state
 	*/
-	virtual void interrupt ( bool state ) = 0;
+	virtual void interrupt ( bool state ) noexcept = 0;
 
-	virtual void portA () {}
-	virtual void portB () {}
+	virtual void portA () noexcept {}
+	virtual void portB () noexcept {}
 
 	/**
 	* Timers can appear on the port.
 	*/
-	uint8_t adjustDataPort ( uint8_t data );
+	uint8_t adjustDataPort ( uint8_t data ) noexcept;
 
 	/**
 	* Read CIA register.
@@ -259,7 +258,7 @@ protected:
 	* @param addr
 	*            register address to read (lowest 4 bits)
 	*/
-	uint8_t read ( uint8_t addr );
+	uint8_t read ( uint8_t addr ) noexcept;
 
 	/**
 	* Write CIA register.
@@ -269,7 +268,7 @@ protected:
 	* @param data
 	*            value to write
 	*/
-	void write ( uint8_t addr, uint8_t data );
+	void write ( uint8_t addr, uint8_t data ) noexcept;
 
 public:
 	/**
@@ -277,26 +276,26 @@ public:
 	*
 	* @param model
 	*/
-	void setModel ( model_t model );
+	void setModel ( model_t model ) noexcept;
 
 	/**
 	* Reset CIA.
 	*/
-	virtual void reset ();
+	virtual void reset () noexcept;
 
 	/**
 	* Get the credits.
 	*
 	* @return the credits
 	*/
-	static const char* credits ();
+	static const char* credits () noexcept;
 
 	/**
 	* Set day-of-time event occurence of rate.
 	*
 	* @param clock
 	*/
-	void setDayOfTimeRate ( unsigned int clock ) { tod.setPeriod ( clock ); }
+	void setDayOfTimeRate ( unsigned int clock ) noexcept { tod.setPeriod ( clock ); }
 };
 
 }

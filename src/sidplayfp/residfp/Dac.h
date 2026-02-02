@@ -100,7 +100,7 @@ public:
 	*
 	* @param chipModel 6581 or 8580
 	*/
-	void kinkedDac ( const bool is6581 );
+	void kinkedDac ( const bool is6581 ) noexcept;
 
 	/**
 	* Get the Vo output for a  given combination of input bits.
@@ -108,7 +108,7 @@ public:
 	* @param input the digital input
 	* @return the analog output value
 	*/
-	[[ nodiscard ]] double getOutput ( unsigned int input, const bool saturation = false ) const;
+	[[ nodiscard ]] double getOutput ( unsigned int input, const bool saturation = false ) const noexcept;
 };
 //-----------------------------------------------------------------------------
 

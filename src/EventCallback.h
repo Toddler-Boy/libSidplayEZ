@@ -33,12 +33,10 @@ class EventCallback final : public Event
 private:
 	using Callback = void ( This::* )();
 
-private:
 	This& m_this;
 	Callback const m_callback;
 
-private:
-	void event () override { ( m_this.*m_callback )( ); }
+	void event () noexcept override { ( m_this.*m_callback )( ); }
 
 public:
 	EventCallback ( const char* const name, This& object, Callback callback )
@@ -56,8 +54,7 @@ class FastEventCallback final : public Event
 private:
 	This&	m_this;
 
-private:
-	void event () override { ( m_this.*Callback )(); }
+	void event () noexcept override { ( m_this.*Callback )(); }
 
 public:
 	FastEventCallback ( const char* const name, This& object )

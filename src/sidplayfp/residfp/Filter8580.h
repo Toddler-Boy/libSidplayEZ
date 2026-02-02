@@ -282,7 +282,7 @@ protected:
 	/**
 	* Set filter cutoff frequency.
 	*/
-	sidinline void updatedCenterFrequency () override
+	sidinline void updatedCenterFrequency () noexcept override
 	{
 		if constexpr ( useFilter )
 		{
@@ -335,7 +335,7 @@ public:
 		input ( 0 );	// extremely low digi output, helps with preventing clicks/pops
 	}
 
-	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3 )
+	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3 ) noexcept
 	{
 		if constexpr ( ! useFilter )
 		{
@@ -385,7 +385,7 @@ public:
 	*
 	* @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
 	*/
-	void setFilterCurve ( double curvePosition )
+	void setFilterCurve ( double curvePosition ) noexcept
 	{
 		// Adjust curvePosition (1.2 <= curvePosition <= 1.8)
 		curvePosition = 1.2 + curvePosition * 0.6;
@@ -399,7 +399,7 @@ public:
 	*
 	* @param input a signed 16 bit sample
 	*/
-	void input ( int16_t _input ) { this->Ve = fmc8580.getNormalizedVoice ( _input / 32768.0f ); }
+	void input ( int16_t _input ) noexcept { this->Ve = fmc8580.getNormalizedVoice ( _input / 32768.0f ); }
 };
 
 } // namespace reSIDfp

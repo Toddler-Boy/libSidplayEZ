@@ -46,9 +46,9 @@ public:
 	FilterModelConfig8580 ();
 
 public:
-	[[ nodiscard ]] sidinline constexpr double getVref () const { return Vref * VOLTAGE_SKEW; }
+	[[ nodiscard ]] sidinline constexpr double getVref () const noexcept { return Vref * VOLTAGE_SKEW; }
 
-	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value ) const
+	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value ) const noexcept
 	{
 		const auto	tmp = N16 * ( ( value * voice_voltage_range + getVref () ) - vmin );
 

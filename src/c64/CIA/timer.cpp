@@ -27,14 +27,14 @@
 namespace libsidplayfp
 {
 
-void Timer::setControlRegister ( uint8_t cr )
+void Timer::setControlRegister ( uint8_t cr ) noexcept
 {
 	state &= ~CIAT_CR_MASK;
 	state |= ( cr & CIAT_CR_MASK ) ^ CIAT_PHI2IN;
 	lastControlValue = cr;
 }
 
-void Timer::syncWithCpu ()
+void Timer::syncWithCpu () noexcept
 {
 	if ( ciaEventPauseTime > 0 )
 	{
@@ -57,19 +57,19 @@ void Timer::syncWithCpu ()
 	ciaEventPauseTime = -1;
 }
 
-void Timer::wakeUpAfterSyncWithCpu ()
+void Timer::wakeUpAfterSyncWithCpu () noexcept
 {
 	ciaEventPauseTime = 0;
 	eventScheduler.schedule ( *this, 0, EVENT_CLOCK_PHI1 );
 }
 
-void Timer::event ()
+void Timer::event () noexcept
 {
 	clock ();
 	reschedule ();
 }
 
-void Timer::cycleSkippingEvent ()
+void Timer::cycleSkippingEvent () noexcept
 {
 	const event_clock_t elapsed = eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) - ciaEventPauseTime;
 	ciaEventPauseTime = 0;
@@ -77,7 +77,7 @@ void Timer::cycleSkippingEvent ()
 	event ();
 }
 
-void Timer::clock ()
+void Timer::clock () noexcept
 {
 	if ( ( state & CIAT_COUNT3 ) != 0 )
 		timer--;
@@ -124,7 +124,7 @@ void Timer::clock ()
 	}
 }
 
-void Timer::reset ()
+void Timer::reset () noexcept
 {
 	eventScheduler.cancel ( *this );
 	timer = latch = 0xffff;
@@ -135,14 +135,14 @@ void Timer::reset ()
 	eventScheduler.schedule ( *this, 1, EVENT_CLOCK_PHI1 );
 }
 
-void Timer::latchLo ( uint8_t data )
+void Timer::latchLo ( uint8_t data ) noexcept
 {
 	set_16lo8 ( latch, data );
 	if ( ( state & CIAT_LOAD ) != 0 )
 		timer = latch;
 }
 
-void Timer::latchHi ( uint8_t data )
+void Timer::latchHi ( uint8_t data ) noexcept
 {
 	set_16hi8 ( latch, data );
 	if ( ( state & CIAT_LOAD ) != 0 )

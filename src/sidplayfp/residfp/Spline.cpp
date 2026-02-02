@@ -92,7 +92,7 @@ Spline::Spline ( const std::vector<Point>& input )
 }
 //-----------------------------------------------------------------------------
 
-Spline::Point Spline::evaluate ( double x ) const
+Spline::Point Spline::evaluate ( double x ) const noexcept
 {
 	if ( ( x < c->x1 ) || ( x > c->x2 ) )
 	{

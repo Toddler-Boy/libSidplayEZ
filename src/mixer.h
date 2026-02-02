@@ -52,17 +52,17 @@ private:
 	bool		m_wait = false;
 
 public:
-	void doMix ();
+	void doMix () noexcept;
 
 	/**
 	* This clocks the SID chips to the present moment, if they aren't already
 	*/
-	void clockChips ();
+	void clockChips () noexcept;
 
 	/**
 	* Reset sidemu buffer position discarding produced samples
 	*/
-	void resetBufs ();
+	void resetBufs () noexcept;
 
 	/**
 	* Prepare for mixing cycle
@@ -70,19 +70,19 @@ public:
 	* @param buffer output buffer
 	* @param count size of the buffer in samples
 	*/
-	void begin ( float* bufferL, float* bufferR, uint32_t count );
+	void begin ( float* bufferL, float* bufferR, uint32_t count ) noexcept;
 
 	/**
 	* Remove all SIDs from the mixer
 	*/
-	void clearSids ();
+	void clearSids () noexcept;
 
 	/**
 	* Add a SID to the mixer
 	*
 	* @param chip the sid emu to add
 	*/
-	void addSid ( sidemu* chip );
+	void addSid ( sidemu* chip ) noexcept;
 
 	/**
 	* Get a SID from the mixer
@@ -90,31 +90,31 @@ public:
 	* @param i the number of the SID to get
 	* @return a pointer to the requested sid emu or 0 if not found
 	*/
-	[[ nodiscard ]] sidinline sidemu* getSid ( int i ) const { return ( i < int ( m_chips.size () ) ) ? m_chips[ i ] : nullptr; }
+	[[ nodiscard ]] sidinline sidemu* getSid ( int i ) const noexcept { return ( i < int ( m_chips.size () ) ) ? m_chips[ i ] : nullptr; }
 
 	/**
 	* Set sample rate.
 	*
 	* @param rate sample rate in Hertz
 	*/
-	void setSamplerate ( uint32_t rate );
+	void setSamplerate ( uint32_t rate ) noexcept;
 
 	/**
 	* Check if the buffer have been filled
 	*/
-	[[ nodiscard ]] sidinline bool notFinished () const { return m_sampleIndex < m_sampleCount; }
+	[[ nodiscard ]] sidinline bool notFinished () const noexcept { return m_sampleIndex < m_sampleCount; }
 
 	/**
 	* Get the number of samples generated up to now
 	*/
-	[[ nodiscard ]] sidinline uint32_t samplesGenerated () const { return m_sampleIndex; }
+	[[ nodiscard ]] sidinline uint32_t samplesGenerated () const noexcept { return m_sampleIndex; }
 
 	/*
 	 * Wait till we consume the buffer
 	 */
-	[[ nodiscard ]] sidinline bool wait () const { return m_wait; }
+	[[ nodiscard ]] sidinline bool wait () const noexcept { return m_wait; }
 
-	[[ nodiscard ]] sidinline int getNumChips () const { return int ( m_chips.size () ); }
+	[[ nodiscard ]] sidinline int getNumChips () const noexcept { return int ( m_chips.size () ); }
 };
 
 }

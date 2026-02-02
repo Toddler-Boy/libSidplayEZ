@@ -53,7 +53,7 @@ public:
 	* ...
 	* $c000: ff ff 00 00 00 00 ff ff ff ff 00 00 00 00 ff ff
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		uint8_t byte = 0x00;
 		for ( auto j = 0x0000; j < 0x10000; j += 0x4000 )
@@ -67,8 +67,8 @@ public:
 		}
 	}
 
-	sidinline uint8_t peek ( uint16_t address ) override				{	return ram[ address ];	}
-	sidinline void poke ( uint16_t address, uint8_t value ) override	{	ram[ address ] = value;	}
+	sidinline uint8_t peek ( uint16_t address ) noexcept override				{	return ram[ address ];	}
+	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override	{	ram[ address ] = value;	}
 };
 
 }

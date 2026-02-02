@@ -79,7 +79,7 @@ private:
 	* @return convolved result
 	*/
 	//-----------------------------------------------------------------------------
-	sidinline int fir ( int subcycle )
+	sidinline int fir ( int subcycle ) noexcept
 	{
 		auto convolve = [] ( const int32_t* const __restrict__ a, const int16_t* const __restrict__ b, const int bLength )
 		{
@@ -130,9 +130,9 @@ public:
 	* @param samplingFrequency Desired output sampling rate
 	* @param highestAccurateFrequency passband frequency limit
 	*/
-	void setup ( double clockFrequency, double samplingFrequency, double highestAccurateFrequency );
+	void setup ( double clockFrequency, double samplingFrequency, double highestAccurateFrequency ) noexcept;
 
-	[[ nodiscard ]] sidinline bool input ( const int input )
+	[[ nodiscard ]] sidinline bool input ( const int input ) noexcept
 	{
 		auto	ready = false;
 
@@ -151,7 +151,7 @@ public:
 		return ready;
 	}
 
-	[[ nodiscard ]] sidinline int output () const { return outputValue; }
+	[[ nodiscard ]] sidinline int output () const noexcept { return outputValue; }
 
 	void reset ();
 };

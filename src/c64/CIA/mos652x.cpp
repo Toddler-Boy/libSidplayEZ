@@ -54,26 +54,26 @@ enum
 
 // Timer A
 
-void TimerA::underFlow ()
+void TimerA::underFlow () noexcept
 {
 	parent.underflowA ();
 }
 
-void TimerA::serialPort ()
+void TimerA::serialPort () noexcept
 {
 	parent.handleSerialPort ();
 }
 
 // Timer B
 
-void TimerB::underFlow ()
+void TimerB::underFlow () noexcept
 {
 	parent.underflowB ();
 }
 
 // Interrupt Source 8521
 
-void InterruptSource8521::trigger ( uint8_t interruptMask )
+void InterruptSource8521::trigger ( uint8_t interruptMask ) noexcept
 {
 	if ( InterruptSource::isTriggered ( interruptMask ) )
 	{
@@ -83,7 +83,7 @@ void InterruptSource8521::trigger ( uint8_t interruptMask )
 
 // Interrupt Source 6526
 
-void InterruptSource6526::trigger ( uint8_t interruptMask )
+void InterruptSource6526::trigger ( uint8_t interruptMask ) noexcept
 {
 	if ( InterruptSource::isTriggered ( interruptMask ) )
 	{
@@ -101,7 +101,7 @@ void InterruptSource6526::trigger ( uint8_t interruptMask )
 	}
 }
 
-uint8_t InterruptSource6526::clear ()
+uint8_t InterruptSource6526::clear () noexcept
 {
 	uint8_t oldIdr = InterruptSource::clear ();
 	idr &= INTERRUPT_REQUEST;
@@ -109,7 +109,7 @@ uint8_t InterruptSource6526::clear ()
 	return oldIdr;
 }
 
-const char* MOS652X::credits ()
+const char* MOS652X::credits () noexcept
 {
 	return
 		"MOS6526/8521 (CIA) Emulation:\n"
@@ -135,7 +135,7 @@ MOS652X::MOS652X ( EventScheduler& scheduler )
 	MOS652X::reset ();
 }
 
-void MOS652X::handleSerialPort ()
+void MOS652X::handleSerialPort () noexcept
 {
 	if ( regs[ CRA ] & 0x40 )
 	{
@@ -143,7 +143,7 @@ void MOS652X::handleSerialPort ()
 	}
 }
 
-void MOS652X::reset ()
+void MOS652X::reset () noexcept
 {
 	std::fill ( std::begin ( regs ), std::end ( regs ), 0 );
 
@@ -162,7 +162,7 @@ void MOS652X::reset ()
 	eventScheduler.cancel ( bTickEvent );
 }
 
-uint8_t MOS652X::adjustDataPort ( uint8_t data )
+uint8_t MOS652X::adjustDataPort ( uint8_t data ) noexcept
 {
 	if ( regs[ CRA ] & 0x02 )
 	{
@@ -179,7 +179,7 @@ uint8_t MOS652X::adjustDataPort ( uint8_t data )
 	return data;
 }
 
-uint8_t MOS652X::read ( uint8_t addr )
+uint8_t MOS652X::read ( uint8_t addr ) noexcept
 {
 	addr &= 0x0f;
 
@@ -211,7 +211,7 @@ uint8_t MOS652X::read ( uint8_t addr )
 	}
 }
 
-void MOS652X::write ( uint8_t addr, uint8_t data )
+void MOS652X::write ( uint8_t addr, uint8_t data ) noexcept
 {
 	addr &= 0x0F;
 
@@ -277,12 +277,12 @@ void MOS652X::write ( uint8_t addr, uint8_t data )
 	timerB.wakeUpAfterSyncWithCpu ();
 }
 
-void MOS652X::bTick ()
+void MOS652X::bTick () noexcept
 {
 	timerB.cascade ();
 }
 
-void MOS652X::underflowA ()
+void MOS652X::underflowA () noexcept
 {
 	interruptSource->trigger ( InterruptSource::INTERRUPT_UNDERFLOW_A );
 
@@ -291,22 +291,22 @@ void MOS652X::underflowA ()
 			eventScheduler.schedule ( bTickEvent, 0, EVENT_CLOCK_PHI2 );
 }
 
-void MOS652X::underflowB ()
+void MOS652X::underflowB () noexcept
 {
 	interruptSource->trigger ( InterruptSource::INTERRUPT_UNDERFLOW_B );
 }
 
-void MOS652X::todInterrupt ()
+void MOS652X::todInterrupt () noexcept
 {
 	interruptSource->trigger ( InterruptSource::INTERRUPT_ALARM );
 }
 
-void MOS652X::spInterrupt ()
+void MOS652X::spInterrupt () noexcept
 {
 	interruptSource->trigger ( InterruptSource::INTERRUPT_SP );
 }
 
-void MOS652X::setModel ( model_t model )
+void MOS652X::setModel ( model_t model ) noexcept
 {
 	switch ( model )
 	{

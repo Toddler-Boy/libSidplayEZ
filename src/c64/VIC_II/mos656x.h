@@ -59,7 +59,6 @@ private:
 		ClockFunc clock;
 	};
 
-private:
 	static const model_data_t modelData[];
 
 	/// raster IRQ flag
@@ -74,7 +73,6 @@ private:
 	/// Last line when we check for bad lines
 	static const unsigned int LAST_DMA_LINE = 0xf7;
 
-private:
 	/// Current model clock function.
 	ClockFunc clock;
 
@@ -135,25 +133,24 @@ private:
 
 	EventCallback<MOS656X> lightpenTriggerEvent;
 
-private:
-	event_clock_t clockPAL ();
-	event_clock_t clockNTSC ();
-	event_clock_t clockOldNTSC ();
+	event_clock_t clockPAL () noexcept;
+	event_clock_t clockNTSC () noexcept;
+	event_clock_t clockOldNTSC () noexcept;
 
 	/**
 	* Signal CPU interrupt if requested by VIC.
 	*/
-	void handleIrqState ();
+	void handleIrqState () noexcept;
 
 	/**
 	* AEC state was updated.
 	*/
-	void badLineStateChange () { setBA ( !isBadLine ); }
+	void badLineStateChange () noexcept { setBA ( !isBadLine ); }
 
 	/**
 	* RasterY IRQ edge detector.
 	*/
-	void rasterYIRQEdgeDetector ()
+	void rasterYIRQEdgeDetector () noexcept
 	{
 		const auto	oldRasterYIRQCondition = rasterYIRQCondition;
 		rasterYIRQCondition = rasterY == readRasterLineIRQ ();
@@ -161,7 +158,7 @@ private:
 			activateIRQFlag ( IRQ_RASTER );
 	}
 
-	void lightpenTrigger ()
+	void lightpenTrigger () noexcept
 	{
 		// Synchronise simulation
 		sync ();
@@ -174,7 +171,7 @@ private:
 	* Set an IRQ flag and trigger an IRQ if the corresponding IRQ mask is set.
 	* The IRQ only gets activated, i.e. flag 0x80 gets set, if it was not active before.
 	*/
-	void activateIRQFlag ( int flag )
+	void activateIRQFlag ( int flag ) noexcept
 	{
 		irqFlags |= flag;
 		handleIrqState ();
@@ -185,16 +182,16 @@ private:
 	*
 	* @return raster line when to trigger an IRQ
 	*/
-	unsigned int readRasterLineIRQ () const	{	return regs[ 0x12 ] + ( ( regs[ 0x11 ] & 0x80 ) << 1 );	}
+	unsigned int readRasterLineIRQ () const noexcept {	return regs[ 0x12 ] + ( ( regs[ 0x11 ] & 0x80 ) << 1 );	}
 
 	/**
 	* Read the DEN flag which tells whether the display is enabled
 	*
 	* @return true if DEN is set, otherwise false
 	*/
-	sidinline bool readDEN () const { return ( regs[ 0x11 ] & 0x10 ) != 0; }
+	sidinline bool readDEN () const noexcept { return ( regs[ 0x11 ] & 0x10 ) != 0; }
 
-	sidinline bool evaluateIsBadLine () const
+	sidinline bool evaluateIsBadLine () const noexcept
 	{
 		return		areBadLinesEnabled
 				&&	rasterY >= FIRST_DMA_LINE
@@ -205,9 +202,9 @@ private:
 	/**
 	* Get previous value of Y raster
 	*/
-	sidinline unsigned int oldRasterY () const		{	return ( rasterY > 0 ? rasterY : maxRasters ) - 1;	}
+	sidinline unsigned int oldRasterY () const noexcept {	return ( rasterY > 0 ? rasterY : maxRasters ) - 1;	}
 
-	sidinline void sync ()
+	sidinline void sync () noexcept
 	{
 		eventScheduler.cancel ( *this );
 		event ();
@@ -216,7 +213,7 @@ private:
 	/**
 	* Check for vertical blanking.
 	*/
-	sidinline void checkVblank ()
+	sidinline void checkVblank () noexcept
 	{
 		// IRQ occurred (xraster != 0)
 		if ( rasterY == ( maxRasters - 1 ) )
@@ -247,7 +244,7 @@ private:
 	/**
 	* Vertical blank (line 0).
 	*/
-	sidinline void vblank ()
+	sidinline void vblank () noexcept
 	{
 		if ( vblanking )
 		{
@@ -265,7 +262,7 @@ private:
 	* Start DMA for sprite n.
 	*/
 	template<int n>
-	sidinline void startDma ()
+	sidinline void startDma () noexcept
 	{
 		if ( sprites.isDma ( 0x01 << n ) )
 			setBA ( false );
@@ -275,7 +272,7 @@ private:
 	* End DMA for sprite n.
 	*/
 	template<int n>
-	sidinline void endDma ()
+	sidinline void endDma () noexcept
 	{
 		if ( ! sprites.isDma ( 0x06 << n ) )
 			setBA ( true );
@@ -284,7 +281,7 @@ private:
 	/**
 	* Start bad line.
 	*/
-	sidinline void startBadline ()
+	sidinline void startBadline () noexcept
 	{
 		if ( isBadLine )
 			setBA ( false );
@@ -295,8 +292,8 @@ protected:
 	~MOS656X () {}
 
 	// Environment Interface
-	virtual void interrupt ( bool state ) = 0;
-	virtual void setBA ( bool state ) = 0;
+	virtual void interrupt ( bool state ) noexcept = 0;
+	virtual void setBA ( bool state ) noexcept = 0;
 
 	/**
 	* Read VIC register.
@@ -304,7 +301,7 @@ protected:
 	* @param addr
 	*            Register to read.
 	*/
-	uint8_t read ( uint8_t addr );
+	uint8_t read ( uint8_t addr ) noexcept;
 
 	/**
 	* Write to VIC register.
@@ -314,30 +311,30 @@ protected:
 	* @param data
 	*            Data byte to write.
 	*/
-	void write ( uint8_t addr, uint8_t data );
+	void write ( uint8_t addr, uint8_t data ) noexcept;
 
 public:
-	void event () override;
+	void event () noexcept override;
 
 	/**
 	* Set chip model.
 	*/
-	void chip ( model_t model );
+	void chip ( model_t model ) noexcept;
 
 	/**
 	* Trigger the lightpen. Sets the lightpen usage flag.
 	*/
-	void triggerLightpen ();
+	void triggerLightpen () noexcept;
 
 	/**
 	* Clears the lightpen usage flag.
 	*/
-	void clearLightpen ();
+	void clearLightpen () noexcept;
 
 	/**
 	* Reset VIC II.
 	*/
-	void reset ();
+	void reset () noexcept;
 
 	static const char* credits ();
 };
@@ -348,7 +345,7 @@ public:
 * Start DMA for sprite 0.
 */
 template<>
-sidinline void MOS656X::startDma<0> ()
+sidinline void MOS656X::startDma<0> () noexcept
 {
 	setBA ( ! sprites.isDma ( 0x01 ) );
 }
@@ -357,7 +354,7 @@ sidinline void MOS656X::startDma<0> ()
 * End DMA for sprite 7.
 */
 template<>
-sidinline void MOS656X::endDma<7> ()
+sidinline void MOS656X::endDma<7> () noexcept
 {
 	setBA ( true );
 }

@@ -29,21 +29,23 @@
 
 namespace libsidplayfp {
 
-void Mixer::clockChips ()
+//-----------------------------------------------------------------------------
+
+void Mixer::clockChips () noexcept
 {
 	for ( auto chp : m_chips )
 		chp->clock ();
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::resetBufs ()
+void Mixer::resetBufs () noexcept
 {
 	for ( auto chp : m_chips )
 		chp->bufferpos ( 0 );
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::doMix ()
+void Mixer::doMix () noexcept
 {
 	// extract buffer info now that the SID is updated
 	// clock() may update bufferpos
@@ -142,7 +144,7 @@ void Mixer::doMix ()
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::begin ( float* bufferL, float* bufferR, uint32_t count )
+void Mixer::begin ( float* bufferL, float* bufferR, uint32_t count ) noexcept
 {
 	// we need a minimum buffer-size, otherwise a crash might occur
 	assert ( count > 100 );
@@ -156,20 +158,20 @@ void Mixer::begin ( float* bufferL, float* bufferR, uint32_t count )
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::clearSids ()
+void Mixer::clearSids () noexcept
 {
 	m_chips.clear ();
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::addSid ( sidemu* chip )
+void Mixer::addSid ( sidemu* chip ) noexcept
 {
 	if ( chip )
 		m_chips.push_back ( chip );
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::setSamplerate ( uint32_t rate )
+void Mixer::setSamplerate ( uint32_t rate ) noexcept
 {
 	m_sampleRate = rate;
 }

@@ -121,7 +121,7 @@ namespace reSIDfp
 * we're back to normal cycles.
 */
 
-sidinline unsigned int get_noise_writeback ( unsigned int waveform_output )
+sidinline unsigned int get_noise_writeback ( unsigned int waveform_output ) noexcept
 {
 	return
 		( ( waveform_output & ( 1u << 11 ) ) >> 9 ) |  // Bit 11 -> bit 20
@@ -186,7 +186,7 @@ sidinline unsigned int get_noise_writeback ( unsigned int waveform_output )
 *
 * The low 4 waveform bits are zero (grounded).
 */
-template < bool is6581 >
+template <bool is6581>
 class WaveformGenerator final
 {
 private:
@@ -249,7 +249,6 @@ private:
 	/// Tell whether the accumulator MSB was set high on this cycle.
 	bool msb_rising = false;
 
-private:
 	static constexpr unsigned int	shift_mask =
 		~(
 			( 1u << 2 ) |  // Bit 20
@@ -267,7 +266,7 @@ private:
 	* The XORing for bit0 is done in this cycle using the test bit latched during
 	* the previous phi2 cycle.
 	*/
-	sidinline void shift_phase2 ( const unsigned int waveform_old, const unsigned int waveform_new )
+	sidinline void shift_phase2 ( const unsigned int waveform_old, const unsigned int waveform_new ) noexcept
 	{
 		auto do_writeback = [ = ] () -> bool
 		{
@@ -347,7 +346,7 @@ private:
 	}
 	//-----------------------------------------------------------------------------
 
-	sidinline void write_shift_register ()
+	sidinline void write_shift_register () noexcept
 	{
 		if ( waveform > 0x8 ) [[ unlikely ]]
 		{
@@ -380,7 +379,7 @@ private:
 		}
 	}
 
-	sidinline void set_noise_output ()
+	sidinline void set_noise_output () noexcept
 	{
 		noise_output =
 			( ( shift_register & ( 1u << 2 ) ) << 9 ) |  // Bit 20 -> bit 11
@@ -395,12 +394,12 @@ private:
 		set_no_noise_or_noise_output ();
 	}
 
-	sidinline void set_no_noise_or_noise_output ()
+	sidinline void set_no_noise_or_noise_output () noexcept
 	{
 		no_noise_or_noise_output = no_noise | noise_output;
 	}
 
-	sidinline void shiftregBitfade ()
+	sidinline void shiftregBitfade () noexcept
 	{
 		shift_register |= shift_register >> 1;
 		shift_register |= 0x400000;
@@ -419,7 +418,7 @@ public:
 	/**
 	* SID clocking.
 	*/
-	sidinline void clock ()
+	sidinline void clock () noexcept
 	{
 		if ( test ) [[ unlikely ]]
 		{
@@ -483,7 +482,7 @@ public:
 	* @param syncDest The oscillator that will be synced
 	* @param syncSource The sync source oscillator
 	*/
-	sidinline void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource ) const
+	sidinline void synchronize ( WaveformGenerator& syncDest, WaveformGenerator& syncSource ) const noexcept
 	{
 		// A special case occurs when a sync source is synced itself on the same
 		// cycle as when its MSB is set high. In this case the destination will
@@ -497,35 +496,35 @@ public:
 	*
 	* @param freq_lo low 8 bits of frequency
 	*/
-	void writeFREQ_LO ( uint8_t freq_lo ) { freq = ( freq & 0xff00 ) | ( freq_lo & 0xff ); }
+	void writeFREQ_LO ( uint8_t freq_lo ) noexcept { freq = ( freq & 0xff00 ) | ( freq_lo & 0xff ); }
 
 	/**
 	* Write FREQ HI register.
 	*
 	* @param freq_hi high 8 bits of frequency
 	*/
-	void writeFREQ_HI ( uint8_t freq_hi ) { freq = ( freq_hi << 8 & 0xff00 ) | ( freq & 0xff ); }
+	void writeFREQ_HI ( uint8_t freq_hi ) noexcept { freq = ( freq_hi << 8 & 0xff00 ) | ( freq & 0xff ); }
 
 	/**
 	* Write PW LO register.
 	*
 	* @param pw_lo low 8 bits of pulse width
 	*/
-	void writePW_LO ( uint8_t pw_lo ) { pw = ( pw & 0xf00 ) | ( pw_lo & 0x0ff ); }
+	void writePW_LO ( uint8_t pw_lo ) noexcept { pw = ( pw & 0xf00 ) | ( pw_lo & 0x0ff ); }
 
 	/**
 	* Write PW HI register.
 	*
 	* @param pw_hi high 8 bits of pulse width
 	*/
-	void writePW_HI ( uint8_t pw_hi ) { pw = ( pw_hi << 8 & 0xf00 ) | ( pw & 0x0ff ); }
+	void writePW_HI ( uint8_t pw_hi ) noexcept { pw = ( pw_hi << 8 & 0xf00 ) | ( pw & 0x0ff ); }
 
 	/**
 	* Write CONTROL REGISTER register.
 	*
 	* @param control control register value
 	*/
-	void writeCONTROL_REG ( uint8_t control )
+	void writeCONTROL_REG ( uint8_t control ) noexcept
 	{
 		const auto	waveform_prev = waveform;
 		const auto	test_prev = test;
@@ -618,7 +617,7 @@ public:
 	/**
 	* SID reset.
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		// accumulator is not changed on reset
 		freq = 0;
@@ -661,7 +660,7 @@ public:
 	* @param ringModulator The oscillator ring-modulating current one.
 	* @return the waveform generator digital output
 	*/
-	sidinline unsigned int output ( const WaveformGenerator& ringModulator )
+	sidinline unsigned int output ( const WaveformGenerator& ringModulator ) noexcept
 	{
 		// Set output value.
 		if ( waveform ) [[ likely ]]
@@ -742,27 +741,27 @@ public:
 	/**
 	* Read OSC3 value.
 	*/
-	sidinline uint8_t readOSC () const { return uint8_t ( osc3 >> 4 ); }
+	sidinline uint8_t readOSC () const noexcept { return uint8_t ( osc3 >> 4 ); }
 
 	/**
 	* Read accumulator value.
 	*/
-	sidinline unsigned int readAccumulator () const { return accumulator; }
+	sidinline unsigned int readAccumulator () const noexcept { return accumulator; }
 
 	/**
 	* Read freq value.
 	*/
-	sidinline unsigned int readFreq () const { return freq; }
+	sidinline unsigned int readFreq () const noexcept { return freq; }
 
 	/**
 	* Read test value.
 	*/
-	sidinline bool readTest () const { return test; }
+	sidinline bool readTest () const noexcept { return test; }
 
 	/**
 	* Read sync value.
 	*/
-	sidinline bool readSync () const { return sync; }
+	sidinline bool readSync () const noexcept { return sync; }
 };
 
 } // namespace reSIDfp

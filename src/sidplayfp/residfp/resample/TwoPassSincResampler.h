@@ -34,7 +34,7 @@ template <int scaleFactor>
 class TwoPassSincResampler final
 {
 public:
-	void setup ( double clockFrequency, double samplingFrequency )
+	void setup ( double clockFrequency, double samplingFrequency ) noexcept
 	{
 		// Set the passband frequency slightly below half sampling frequency
 		//   pass_freq <= 0.9*sample_freq/2
@@ -55,12 +55,12 @@ public:
 		s2.setup ( intermediateFrequency, samplingFrequency, halfFreq );
 	}
 
-	[[ nodiscard ]] sidinline bool input ( const int sample )
+	[[ nodiscard ]] sidinline bool input ( const int sample ) noexcept
 	{
 		return s1.input ( sample ) && s2.input ( s1.output () );
 	}
 
-	[[ nodiscard ]] sidinline int16_t output () const
+	[[ nodiscard ]] sidinline int16_t output () const noexcept
 	{
 		/*
 		* Clip the input as it may overflow the 16 bit range.

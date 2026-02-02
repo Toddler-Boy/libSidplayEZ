@@ -85,31 +85,31 @@ private:
 	EventCallback<InterruptSource> clearIrqEvent;
 
 protected:
-	sidinline bool interruptTriggered () const { return idr & INTERRUPT_REQUEST; }
+	sidinline bool interruptTriggered () const noexcept { return idr & INTERRUPT_REQUEST; }
 
-	sidinline bool interruptMasked ( uint8_t interruptMask ) const
+	sidinline bool interruptMasked ( uint8_t interruptMask ) const noexcept
 	{
 		return ( ( interruptMask != INTERRUPT_NONE ) ? interruptMask : idr ) & icr;
 	}
 
-	virtual void triggerInterrupt () = 0;
+	virtual void triggerInterrupt () noexcept = 0;
 
 	/**
 	* Check if interrupts were ackowledged during previous cycle.
 	*/
-	sidinline bool ack0 () const { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ) == ( last_clear + 1 ); }
-	sidinline bool write0 () const { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ) == ( last_set + 1 ); }
+	sidinline bool ack0 () const noexcept { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ) == ( last_clear + 1 ); }
+	sidinline bool write0 () const noexcept { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ) == ( last_set + 1 ); }
 
 	/**
 	* Signal interrupt to CPU.
 	*/
-	void interrupt ();
+	void interrupt () noexcept;
 
-	void updateIdr ();
+	void updateIdr () noexcept;
 
-	void setIrq ();
+	void setIrq () noexcept;
 
-	void clearIrq ();
+	void clearIrq () noexcept;
 
 protected:
 	/**
@@ -129,9 +129,9 @@ protected:
 	}
 
 	/**
-		* Schedules an IRQ asserting state transition for next cycle.
-		*/
-	void schedule ( int delay )
+	* Schedules an IRQ asserting state transition for next cycle.
+	*/
+	void schedule ( int delay ) noexcept
 	{
 		if ( ! scheduled )
 		{
@@ -140,12 +140,12 @@ protected:
 		}
 	}
 
-	void scheduleIrq ()
+	void scheduleIrq () noexcept
 	{
 		eventScheduler.schedule ( setIrqEvent, 1, EVENT_CLOCK_PHI1 );
 	}
 
-	bool isTriggered ( uint8_t interruptMask );
+	bool isTriggered ( uint8_t interruptMask ) noexcept;
 
 public:
 	virtual ~InterruptSource () {}
@@ -155,20 +155,20 @@ public:
 	*
 	* @param interruptMask Interrupt flag number
 	*/
-	virtual void trigger ( uint8_t interruptMask ) = 0;
+	virtual void trigger ( uint8_t interruptMask ) noexcept = 0;
 
 	/**
 	* Clear interrupt state.
 	*
 	* @return old interrupt state
 	*/
-	virtual uint8_t clear ();
+	virtual uint8_t clear () noexcept;
 
 	/**
 	* Clear pending interrupts, but do not signal to CPU we lost them.
 	* It is assumed that all components get reset() calls in synchronous manner.
 	*/
-	virtual void reset ()
+	virtual void reset () noexcept
 	{
 		last_clear = 0;
 		last_set = 0;
@@ -190,7 +190,7 @@ public:
 		*
 		* @param interruptMask control mask bits
 		*/
-	void set ( uint8_t interruptMask );
+	void set ( uint8_t interruptMask ) noexcept;
 };
 
 }

@@ -40,12 +40,13 @@ namespace libsidplayfp
 class Sprites
 {
 private:
-    const uint8_t &enable, &y_expansion;
+	const uint8_t&	enable;
+	const uint8_t&	y_expansion;
 
-	uint8_t exp_flop;
-	uint8_t dma;
-	uint8_t mc_base[ SPRITES ];
-	uint8_t mc[ SPRITES ];
+	uint8_t	exp_flop;
+	uint8_t	dma;
+	uint8_t	mc_base[ SPRITES ];
+	uint8_t	mc[ SPRITES ];
 
 public:
 	Sprites ( uint8_t regs[ 0x40 ] )
@@ -55,20 +56,20 @@ public:
 		reset ();
 	}
 
-	sidinline void reset ()
+	sidinline void reset () noexcept
 	{
 		exp_flop = 0xff;
 		dma = 0;
 
-		std::fill ( std::begin ( mc_base ), std::end ( mc_base ), 0 );
-		std::fill ( std::begin ( mc ), std::end ( mc ), 0 );
+		std::ranges::fill ( mc_base, 0);
+		std::ranges::fill ( mc, 0 );
 	}
 
     /**
      * Update mc values in one pass
      * after the dma has been processed
      */
-	sidinline void updateMc ()
+	sidinline void updateMc () noexcept
 	{
 		uint8_t mask = 1;
 		for ( auto i = 0u; i < SPRITES; i++, mask <<= 1 )
@@ -79,7 +80,7 @@ public:
     /**
      * Update mc base value.
      */
-	sidinline void updateMcBase()
+	sidinline void updateMcBase () noexcept
     {
 		uint8_t mask = 1;
 		for ( auto i = 0u; i < SPRITES; i++, mask <<= 1 )
@@ -96,7 +97,7 @@ public:
     /**
      * Calculate sprite expansion.
      */
-	sidinline void checkExp()
+	sidinline void checkExp () noexcept
     {
         exp_flop ^= dma & y_expansion;
     }
@@ -104,7 +105,7 @@ public:
     /**
      * Check if sprite is displayed.
      */
-	sidinline void checkDisplay()
+	sidinline void checkDisplay () noexcept
     {
         std::copy_n ( mc_base, SPRITES, mc );
     }
@@ -115,7 +116,7 @@ public:
      * @rasterY y raster position
      * @regs the VIC registers
      */
-	sidinline void checkDma ( unsigned int rasterY, uint8_t regs[ 0x40 ] )
+	sidinline void checkDma ( unsigned int rasterY, uint8_t regs[ 0x40 ] ) noexcept
 	{
 		const uint8_t y = rasterY & 0xff;
 		uint8_t mask = 1;
@@ -136,7 +137,7 @@ public:
      * @param data the data written to the register
      * @param lineCycle current line cycle
      */
-	sidinline void lineCrunch ( uint8_t data, unsigned int lineCycle )
+	sidinline void lineCrunch ( uint8_t data, unsigned int lineCycle ) noexcept
 	{
 		uint8_t mask = 1;
 		for ( auto i = 0u; i < SPRITES; i++, mask <<= 1 )
@@ -164,7 +165,7 @@ public:
      *
      * @param val bitmask for selected sprites
      */
-	[[ nodiscard ]] sidinline bool isDma ( unsigned int val ) const
+	[[ nodiscard ]] sidinline bool isDma ( unsigned int val ) const noexcept
 	{
 		return dma & val;
 	}

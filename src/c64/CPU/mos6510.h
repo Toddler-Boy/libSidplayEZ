@@ -48,6 +48,9 @@ class MOS6510
 public:
 	class haltInstruction {};
 
+	// Status register interrupt bit
+	static constexpr int SR_INTERRUPT = 2;
+
 private:
 	/**
 	* IRQ/NMI magic limit values.
@@ -56,46 +59,40 @@ private:
 	*/
 	static constexpr int MAX = 65536;
 
-	/// Stack page location
+	// Stack page location
 	static constexpr uint8_t SP_PAGE = 0x01;
 
-public:
-	/// Status register interrupt bit.
-	static constexpr int SR_INTERRUPT = 2;
-
-private:
 	struct ProcessorCycle
 	{
 		void ( *func )( MOS6510& ) = nullptr;
 		bool nosteal = false;
 	};
 
-private:
-	/// Event scheduler
+	// Event scheduler
 	EventScheduler& eventScheduler;
 
-	/// Data bus
+	// Data bus
 	c64cpubus&		dataBus;
 
-	/// Current instruction and subcycle within instruction
+	// Current instruction and subcycle within instruction
 	int cycleCount;
 
-	/// When IRQ was triggered. -MAX means "during some previous instruction", MAX means "no IRQ"
+	// When IRQ was triggered. -MAX means "during some previous instruction", MAX means "no IRQ"
 	int interruptCycle;
 
-	/// IRQ asserted on CPU
+	// IRQ asserted on CPU
 	bool irqAssertedOnPin;
 
-	/// NMI requested?
+	// NMI requested?
 	bool nmiFlag;
 
-	/// RST requested?
+	// RST requested?
 	bool rstFlag;
 
-	/// RDY pin state (stop CPU on read)
+	// RDY pin state (stop CPU on read)
 	bool rdy;
 
-	/// Address Low summer carry
+	// Address Low summer carry
 	bool adl_carry;
 
 	bool d1x1;
@@ -120,10 +117,9 @@ private:
 	/// Table of CPU opcode implementations
 	struct ProcessorCycle instrTable[ 0x101 << 3 ] = {};
 
-private:
-	void eventWithoutSteals ();
-	void eventWithSteals ();
-	void removeIRQ ();
+	void eventWithoutSteals () noexcept;
+	void eventWithSteals () noexcept;
+	void removeIRQ () noexcept;
 
 	// Represents an instruction subcycle that writes
 	FastEventCallback<MOS6510, &MOS6510::eventWithoutSteals>	m_nosteal;
@@ -132,127 +128,127 @@ private:
 
 	FastEventCallback<MOS6510, &MOS6510::removeIRQ>				clearInt;
 
-	sidinline void Initialise ();
+	sidinline void Initialise () noexcept;
 
 	// Declare Interrupt Routines
-	sidinline void IRQLoRequest ();
-	sidinline void IRQHiRequest ();
-	sidinline void interruptsAndNextOpcode ();
-	sidinline void calculateInterruptTriggerCycle ();
+	sidinline void IRQLoRequest () noexcept;
+	sidinline void IRQHiRequest () noexcept;
+	sidinline void interruptsAndNextOpcode () noexcept;
+	sidinline void calculateInterruptTriggerCycle () noexcept;
 
 	// Declare Instruction Routines
-	sidinline void fetchNextOpcode ();
-	sidinline void throwAwayFetch ();
-	sidinline void throwAwayRead ();
-	sidinline void FetchDataByte ();
-	sidinline void FetchLowAddr ();
-	sidinline void FetchLowAddrX ();
-	sidinline void FetchLowAddrY ();
-	sidinline void FetchHighAddr ();
-	sidinline void FetchHighAddrX ();
-	sidinline void FetchHighAddrX2 ();
-	sidinline void FetchHighAddrY ();
-	sidinline void FetchHighAddrY2 ();
-	sidinline void FetchLowEffAddr ();
-	sidinline void FetchHighEffAddr ();
-	sidinline void FetchHighEffAddrY ();
-	sidinline void FetchHighEffAddrY2 ();
-	sidinline void FetchLowPointer ();
-	sidinline void FetchLowPointerX ();
-	sidinline void FetchHighPointer ();
-	sidinline void FetchEffAddrDataByte ();
-	sidinline void PutEffAddrDataByte ();
-	sidinline void PushLowPC ();
-	sidinline void PushHighPC ();
-	sidinline void PushSR ();
-	sidinline void PopLowPC ();
-	sidinline void PopHighPC ();
-	sidinline void PopSR ();
-	sidinline void brkPushLowPC ();
-	sidinline void WasteCycle ();
+	sidinline void fetchNextOpcode () noexcept;
+	sidinline void throwAwayFetch () noexcept;
+	sidinline void throwAwayRead () noexcept;
+	sidinline void FetchDataByte () noexcept;
+	sidinline void FetchLowAddr () noexcept;
+	sidinline void FetchLowAddrX () noexcept;
+	sidinline void FetchLowAddrY () noexcept;
+	sidinline void FetchHighAddr () noexcept;
+	sidinline void FetchHighAddrX () noexcept;
+	sidinline void FetchHighAddrX2 () noexcept;
+	sidinline void FetchHighAddrY () noexcept;
+	sidinline void FetchHighAddrY2 () noexcept;
+	sidinline void FetchLowEffAddr () noexcept;
+	sidinline void FetchHighEffAddr () noexcept;
+	sidinline void FetchHighEffAddrY () noexcept;
+	sidinline void FetchHighEffAddrY2 () noexcept;
+	sidinline void FetchLowPointer () noexcept;
+	sidinline void FetchLowPointerX () noexcept;
+	sidinline void FetchHighPointer () noexcept;
+	sidinline void FetchEffAddrDataByte () noexcept;
+	sidinline void PutEffAddrDataByte () noexcept;
+	sidinline void PushLowPC () noexcept;
+	sidinline void PushHighPC () noexcept;
+	sidinline void PushSR () noexcept;
+	sidinline void PopLowPC () noexcept;
+	sidinline void PopHighPC () noexcept;
+	sidinline void PopSR () noexcept;
+	sidinline void brkPushLowPC () noexcept;
+	sidinline void WasteCycle () noexcept;
 
-	sidinline void Push ( uint8_t data );
-	sidinline uint8_t Pop ();
-	sidinline void compare ( uint8_t data );
+	sidinline void Push ( uint8_t data ) noexcept;
+	sidinline uint8_t Pop () noexcept;
+	sidinline void compare ( uint8_t data ) noexcept;
 
 	// Delcare Instruction Operation Routines
-	sidinline void adc_instr ();
-	sidinline void alr_instr ();
-	sidinline void anc_instr ();
-	sidinline void and_instr ();
-	sidinline void ane_instr ();
-	sidinline void arr_instr ();
-	sidinline void asl_instr ();
-	sidinline void asla_instr ();
-	sidinline void aso_instr ();
-	sidinline void axa_instr ();
-	sidinline void axs_instr ();
-	sidinline void bcc_instr ();
-	sidinline void bcs_instr ();
-	sidinline void beq_instr ();
-	sidinline void bit_instr ();
-	sidinline void bmi_instr ();
-	sidinline void bne_instr ();
-	sidinline void branch_instr ( bool condition );
-	sidinline void fix_branch ();
-	sidinline void bpl_instr ();
-	sidinline void bvc_instr ();
-	sidinline void bvs_instr ();
-	sidinline void clc_instr ();
-	sidinline void cld_instr ();
-	sidinline void cli_instr ();
-	sidinline void clv_instr ();
-	sidinline void cmp_instr ();
-	sidinline void cpx_instr ();
-	sidinline void cpy_instr ();
-	sidinline void dcm_instr ();
-	sidinline void dec_instr ();
-	sidinline void dex_instr ();
-	sidinline void dey_instr ();
-	sidinline void eor_instr ();
-	sidinline void inc_instr ();
-	sidinline void ins_instr ();
-	sidinline void inx_instr ();
-	sidinline void iny_instr ();
-	sidinline void jmp_instr ();
-	sidinline void las_instr ();
-	sidinline void lax_instr ();
-	sidinline void lda_instr ();
-	sidinline void ldx_instr ();
-	sidinline void ldy_instr ();
-	sidinline void lse_instr ();
-	sidinline void lsr_instr ();
-	sidinline void lsra_instr ();
-	sidinline void oal_instr ();
-	sidinline void ora_instr ();
-	sidinline void pha_instr ();
-	sidinline void pla_instr ();
-	sidinline void rla_instr ();
-	sidinline void rol_instr ();
-	sidinline void rola_instr ();
-	sidinline void ror_instr ();
-	sidinline void rora_instr ();
-	sidinline void rra_instr ();
-	sidinline void rti_instr ();
-	sidinline void rts_instr ();
-	sidinline void sbx_instr ();
-	sidinline void say_instr ();
-	sidinline void sbc_instr ();
-	sidinline void sec_instr ();
-	sidinline void sed_instr ();
-	sidinline void sei_instr ();
-	sidinline void shs_instr ();
-	sidinline void sta_instr ();
-	sidinline void stx_instr ();
-	sidinline void sty_instr ();
-	sidinline void tax_instr ();
-	sidinline void tay_instr ();
-	sidinline void tsx_instr ();
-	sidinline void txa_instr ();
-	sidinline void txs_instr ();
-	sidinline void tya_instr ();
-	sidinline void xas_instr ();
-	sidinline void sh_instr ();
+	sidinline void adc_instr () noexcept;
+	sidinline void alr_instr () noexcept;
+	sidinline void anc_instr () noexcept;
+	sidinline void and_instr () noexcept;
+	sidinline void ane_instr () noexcept;
+	sidinline void arr_instr () noexcept;
+	sidinline void asl_instr () noexcept;
+	sidinline void asla_instr () noexcept;
+	sidinline void aso_instr () noexcept;
+	sidinline void axa_instr () noexcept;
+	sidinline void axs_instr () noexcept;
+	sidinline void bcc_instr () noexcept;
+	sidinline void bcs_instr () noexcept;
+	sidinline void beq_instr () noexcept;
+	sidinline void bit_instr () noexcept;
+	sidinline void bmi_instr () noexcept;
+	sidinline void bne_instr () noexcept;
+	sidinline void branch_instr ( bool condition ) noexcept;
+	sidinline void fix_branch () noexcept;
+	sidinline void bpl_instr () noexcept;
+	sidinline void bvc_instr () noexcept;
+	sidinline void bvs_instr () noexcept;
+	sidinline void clc_instr () noexcept;
+	sidinline void cld_instr () noexcept;
+	sidinline void cli_instr () noexcept;
+	sidinline void clv_instr () noexcept;
+	sidinline void cmp_instr () noexcept;
+	sidinline void cpx_instr () noexcept;
+	sidinline void cpy_instr () noexcept;
+	sidinline void dcm_instr () noexcept;
+	sidinline void dec_instr () noexcept;
+	sidinline void dex_instr () noexcept;
+	sidinline void dey_instr () noexcept;
+	sidinline void eor_instr () noexcept;
+	sidinline void inc_instr () noexcept;
+	sidinline void ins_instr () noexcept;
+	sidinline void inx_instr () noexcept;
+	sidinline void iny_instr () noexcept;
+	sidinline void jmp_instr () noexcept;
+	sidinline void las_instr () noexcept;
+	sidinline void lax_instr () noexcept;
+	sidinline void lda_instr () noexcept;
+	sidinline void ldx_instr () noexcept;
+	sidinline void ldy_instr () noexcept;
+	sidinline void lse_instr () noexcept;
+	sidinline void lsr_instr () noexcept;
+	sidinline void lsra_instr () noexcept;
+	sidinline void oal_instr () noexcept;
+	sidinline void ora_instr () noexcept;
+	sidinline void pha_instr () noexcept;
+	sidinline void pla_instr () noexcept;
+	sidinline void rla_instr () noexcept;
+	sidinline void rol_instr () noexcept;
+	sidinline void rola_instr () noexcept;
+	sidinline void ror_instr () noexcept;
+	sidinline void rora_instr () noexcept;
+	sidinline void rra_instr () noexcept;
+	sidinline void rti_instr () noexcept;
+	sidinline void rts_instr () noexcept;
+	sidinline void sbx_instr () noexcept;
+	sidinline void say_instr () noexcept;
+	sidinline void sbc_instr () noexcept;
+	sidinline void sec_instr () noexcept;
+	sidinline void sed_instr () noexcept;
+	sidinline void sei_instr () noexcept;
+	sidinline void shs_instr () noexcept;
+	sidinline void sta_instr () noexcept;
+	sidinline void stx_instr () noexcept;
+	sidinline void sty_instr () noexcept;
+	sidinline void tax_instr () noexcept;
+	sidinline void tay_instr () noexcept;
+	sidinline void tsx_instr () noexcept;
+	sidinline void txa_instr () noexcept;
+	sidinline void txs_instr () noexcept;
+	sidinline void tya_instr () noexcept;
+	sidinline void xas_instr () noexcept;
+	sidinline void sh_instr () noexcept;
 
 	/**
 	* @throws haltInstruction
@@ -260,12 +256,12 @@ private:
 	void invalidOpcode ();
 
 	// Declare Arithmetic Operations
-	sidinline void doADC ();
-	sidinline void doSBC ();
+	sidinline void doADC () noexcept;
+	sidinline void doSBC () noexcept;
 
-	sidinline bool checkInterrupts () const { return rstFlag || nmiFlag || ( irqAssertedOnPin && ! flags.getI () ); }
+	sidinline bool checkInterrupts () const noexcept { return rstFlag || nmiFlag || ( irqAssertedOnPin && ! flags.getI () ); }
 
-	sidinline void buildInstructionTable ();
+	sidinline void buildInstructionTable () noexcept;
 
 public:
 	MOS6510 ( EventScheduler& scheduler, c64cpubus& bus );
@@ -277,7 +273,7 @@ public:
 	* @param address
 	* @return data byte CPU requested
 	*/
-	sidinline uint8_t cpuRead ( uint16_t addr )					{	return dataBus.cpuRead ( addr );	}
+	sidinline uint8_t cpuRead ( uint16_t addr ) noexcept	{	return dataBus.cpuRead ( addr );	}
 
 	/**
 	* Write data to system environment.
@@ -285,19 +281,19 @@ public:
 	* @param address
 	* @param data
 	*/
-	sidinline void cpuWrite ( uint16_t addr, uint8_t data )		{	dataBus.cpuWrite ( addr, data );	}
+	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) noexcept	{	dataBus.cpuWrite ( addr, data );	}
 
-	void reset ();
+	void reset () noexcept;
 
 	static const char* credits ();
 
-	void setRDY ( bool newRDY );
+	void setRDY ( bool newRDY ) noexcept;
 
 	// Non-standard functions
-	void triggerRST ();
-	void triggerNMI ();
-	void triggerIRQ ();
-	void clearIRQ ();
+	void triggerRST () noexcept;
+	void triggerNMI () noexcept;
+	void triggerIRQ () noexcept;
+	void clearIRQ () noexcept;
 };
 
 }

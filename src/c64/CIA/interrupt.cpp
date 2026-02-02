@@ -27,7 +27,7 @@
 namespace libsidplayfp
 {
 
-void InterruptSource::interrupt ()
+void InterruptSource::interrupt () noexcept
 {
 	if ( ! interruptTriggered () )
 	{
@@ -38,7 +38,7 @@ void InterruptSource::interrupt ()
 	scheduled = false;
 }
 
-void InterruptSource::updateIdr ()
+void InterruptSource::updateIdr () noexcept
 {
 	idr = idrTemp;
 
@@ -49,7 +49,7 @@ void InterruptSource::updateIdr ()
 	}
 }
 
-void InterruptSource::setIrq ()
+void InterruptSource::setIrq () noexcept
 {
 	if ( ! ack0 () )
 	{
@@ -61,7 +61,7 @@ void InterruptSource::setIrq ()
 	}
 }
 
-void InterruptSource::clearIrq ()
+void InterruptSource::clearIrq () noexcept
 {
 	if ( asserted )
 	{
@@ -70,7 +70,7 @@ void InterruptSource::clearIrq ()
 	}
 }
 
-bool InterruptSource::isTriggered ( uint8_t interruptMask )
+bool InterruptSource::isTriggered ( uint8_t interruptMask ) noexcept
 {
 	idr |= interruptMask;
 	idrTemp |= interruptMask;
@@ -90,7 +90,7 @@ bool InterruptSource::isTriggered ( uint8_t interruptMask )
 	return false;
 }
 
-void InterruptSource::set ( uint8_t interruptMask )
+void InterruptSource::set ( uint8_t interruptMask ) noexcept
 {
 	if ( interruptMask & INTERRUPT_REQUEST )
 	{
@@ -107,7 +107,7 @@ void InterruptSource::set ( uint8_t interruptMask )
 	last_set = eventScheduler.getTime ( EVENT_CLOCK_PHI2 );
 }
 
-uint8_t InterruptSource::clear ()
+uint8_t InterruptSource::clear () noexcept
 {
 	last_clear = eventScheduler.getTime ( EVENT_CLOCK_PHI2 );
 

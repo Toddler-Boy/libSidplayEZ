@@ -34,7 +34,7 @@ namespace libsidplayfp
 * and PHI2 to CPU activity. For any clock, PHI1s are before
 * PHI2s.
 */
-using event_phase_t = enum
+using event_phase_t = enum : uint8_t
 {
 	EVENT_CLOCK_PHI1 = 0,
 	EVENT_CLOCK_PHI2 = 1
@@ -69,7 +69,7 @@ private:
 	*
 	* @param event The event to add
 	*/
-	sidinline void schedule ( Event& event )
+	sidinline void schedule ( Event& event ) noexcept
 	{
 		// find the right spot where to tuck this new event
 		Event** scan = &firstEvent;
@@ -95,7 +95,7 @@ public:
 	* @param cycles how many cycles from now to fire
 	* @param phase the phase when to fire the event
 	*/
-	sidinline void schedule ( Event& event, unsigned int cycles, event_phase_t phase )
+	sidinline void schedule ( Event& event, unsigned int cycles, event_phase_t phase ) noexcept
 	{
 		// this strange formulation always selects the next available slot regardless of specified phase.
 		event.triggerTime = currentTime + ( ( currentTime & 1 ) ^ phase ) + ( cycles << 1 );
@@ -108,7 +108,7 @@ public:
 	* @param event the event to add
 	* @param cycles how many cycles from now to fire
 	*/
-	sidinline void schedule ( Event& event, unsigned int cycles )
+	sidinline void schedule ( Event& event, unsigned int cycles ) noexcept
 	{
 		event.triggerTime = currentTime + ( cycles << 1 );
 		schedule ( event );
@@ -119,7 +119,7 @@ public:
 	*
 	* @param event the event to cancel
 	*/
-	sidinline void cancel ( Event& event )
+	sidinline void cancel ( Event& event ) noexcept
 	{
 		auto    scan = &firstEvent;
 
@@ -137,7 +137,7 @@ public:
 	/**
 	* Cancel all pending events and reset time.
 	*/
-	void reset ()
+	void reset () noexcept
 	{
 		firstEvent = nullptr;
 		currentTime = 0;
@@ -146,7 +146,7 @@ public:
 	/**
 	* Fire next event, advance system time to that event.
 	*/
-	sidinline void clock ()
+	sidinline void clock () noexcept
 	{
 		auto&	event = *firstEvent;
 		firstEvent = firstEvent->next;
@@ -160,7 +160,7 @@ public:
 	* @param event the event
 	* @return true when pending
 	*/
-	[[ nodiscard ]] sidinline bool isPending ( Event& event ) const
+	[[ nodiscard ]] sidinline bool isPending ( Event& event ) const noexcept
 	{
 		auto	scan = firstEvent;
 		while ( scan )
@@ -180,14 +180,14 @@ public:
 	* @param phase the phase
 	* @return the time according to specified phase.
 	*/
-	[[ nodiscard ]] sidinline event_clock_t getTime ( event_phase_t phase ) const	{	return ( currentTime + ( phase ^ 1 ) ) >> 1;	}
+	[[ nodiscard ]] sidinline event_clock_t getTime ( event_phase_t phase ) const noexcept {	return ( currentTime + ( phase ^ 1 ) ) >> 1;	}
 
 	/**
 	* Return current clock phase.
 	*
 	* @return The current phase
 	*/
-	[[ nodiscard ]] sidinline event_phase_t phase () const { return static_cast<event_phase_t>( currentTime & 1 ); }
-	[[ nodiscard ]] sidinline event_clock_t remaining ( Event& event ) const { return event.triggerTime - currentTime; }
+	[[ nodiscard ]] sidinline event_phase_t phase () const noexcept { return static_cast<event_phase_t>( currentTime & 1 ); }
+	[[ nodiscard ]] sidinline event_clock_t remaining ( Event& event ) const noexcept { return event.triggerTime - currentTime; }
 };
 }

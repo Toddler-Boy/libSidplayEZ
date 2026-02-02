@@ -42,8 +42,8 @@ private:
 	c64env&	m_env;
 
 protected:
-	void interrupt ( bool state ) override		{		m_env.interruptIRQ ( state );	}
-	void setBA ( bool state ) override			{		m_env.setBA ( state );			}
+	void interrupt ( bool state ) noexcept override		{		m_env.interruptIRQ ( state );	}
+	void setBA ( bool state ) noexcept override			{		m_env.setBA ( state );			}
 
 public:
 	c64vic ( c64env& env )
@@ -52,8 +52,8 @@ public:
 	{
 	}
 
-	sidinline void poke ( uint16_t address, uint8_t value ) override	{	write ( uint8_t ( address ), value );	}
-	sidinline uint8_t peek ( uint16_t address ) override				{	return read ( uint8_t ( address ) );	}
+	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override	{	write ( uint8_t ( address ), value );	}
+	sidinline uint8_t peek ( uint16_t address ) noexcept override				{	return read ( uint8_t ( address ) );	}
 };
 
 }

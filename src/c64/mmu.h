@@ -50,7 +50,7 @@ private:
 	bool	hiram = false;
 	bool	charen = false;
 
-	friend uint8_t readIO ( MMU& self, uint16_t addr );
+	friend uint8_t readIO ( MMU& self, uint16_t addr ) noexcept;
 	using ReadFunc = uint8_t ( * )( MMU& self, uint16_t addr );
 
 	/// CPU read memory mapping in 4k chunks
@@ -80,42 +80,41 @@ private:
 	/// random seed
 	mutable unsigned int seed = 3686734;
 
-private:
-	void setCpuPort ( uint8_t state ) override;
-	uint8_t getLastReadByte () const override;
-	event_clock_t getPhi2Time () const override { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ); }
+	void setCpuPort ( uint8_t state ) noexcept override;
+	uint8_t getLastReadByte () const noexcept override;
+	event_clock_t getPhi2Time () const noexcept override { return eventScheduler.getTime ( EVENT_CLOCK_PHI2 ); }
 
-	void updateMappingPHI2 ();
+	void updateMappingPHI2 () noexcept;
 
 public:
 	MMU ( EventScheduler& eventScheduler, IOBank* ioBank );
 
-	void reset ();
+	void reset () noexcept;
 
 	// ROM banks methods
-	void setKernal ( const uint8_t* rom ) override { kernalRomBank.set ( rom ); }
-	void setBasic ( const uint8_t* rom ) override { basicRomBank.set ( rom ); }
-	void setChargen ( const uint8_t* rom ) override { characterRomBank.set ( rom ); }
+	void setKernal ( const uint8_t* rom ) noexcept override { kernalRomBank.set ( rom ); }
+	void setBasic ( const uint8_t* rom ) noexcept override { basicRomBank.set ( rom ); }
+	void setChargen ( const uint8_t* rom ) noexcept override { characterRomBank.set ( rom ); }
 
 	// RAM access methods
-	uint8_t readMemByte ( uint16_t addr ) override { return ramBank.ram[addr]; }
-	uint16_t readMemWord ( uint16_t addr ) override { return uint16_t ( ramBank.ram[ addr + 1 ] << 8 | ramBank.ram[ addr ] );	}
+	uint8_t readMemByte ( uint16_t addr ) noexcept override { return ramBank.ram[addr]; }
+	uint16_t readMemWord ( uint16_t addr ) noexcept override { return uint16_t ( ramBank.ram[ addr + 1 ] << 8 | ramBank.ram[ addr ] );	}
 
-	void writeMemByte ( uint16_t addr, uint8_t value ) override { ramBank.ram[ addr ] = value; }
-	void writeMemWord ( uint16_t addr, uint16_t value ) override {
+	void writeMemByte ( uint16_t addr, uint8_t value ) noexcept override { ramBank.ram[ addr ] = value; }
+	void writeMemWord ( uint16_t addr, uint16_t value ) noexcept override {
 		ramBank.ram[ addr ] = uint8_t ( value );
 		ramBank.ram[ addr + 1 ] = uint8_t ( value >> 8 );
 	}
 
-	void fillRam ( uint16_t start, uint8_t value, unsigned int size ) override			{	std::fill_n ( ramBank.ram + start, size, value );	}
-	void fillRam ( uint16_t start, const uint8_t* source, unsigned int size ) override	{	std::copy_n ( source, size, ramBank.ram + start );	}
+	void fillRam ( uint16_t start, uint8_t value, unsigned int size ) noexcept override			{	std::fill_n ( ramBank.ram + start, size, value );	}
+	void fillRam ( uint16_t start, const uint8_t* source, unsigned int size ) noexcept override	{	std::copy_n ( source, size, ramBank.ram + start );	}
 
 	// SID specific hacks
-	void installResetHook ( uint16_t addr ) override { kernalRomBank.installResetHook ( addr ); }
+	void installResetHook ( uint16_t addr ) noexcept override { kernalRomBank.installResetHook ( addr ); }
 
-	void installBasicTrap ( uint16_t addr ) override { basicRomBank.installTrap ( addr ); }
+	void installBasicTrap ( uint16_t addr ) noexcept override { basicRomBank.installTrap ( addr ); }
 
-	void setBasicSubtune ( uint8_t tune ) override { basicRomBank.setSubtune ( tune ); }
+	void setBasicSubtune ( uint8_t tune ) noexcept override { basicRomBank.setSubtune ( tune ); }
 
 	/**
 	* Access memory as seen by CPU.
@@ -123,7 +122,7 @@ public:
 	* @param addr the address where to read from
 	* @return value at address
 	*/
-	sidinline uint8_t cpuRead ( uint16_t addr ) { return ( cpuReadMap[ addr >> 12 ] )( *this, addr ); }
+	sidinline uint8_t cpuRead ( uint16_t addr ) noexcept { return ( cpuReadMap[ addr >> 12 ] )( *this, addr ); }
 
 	/**
 	* Access memory as seen by CPU.
@@ -131,7 +130,7 @@ public:
 	* @param addr the address where to write
 	* @param data the value to write
 	*/
-	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) { cpuWriteMap[ addr >> 12 ]->poke ( addr, data ); }
+	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) noexcept { cpuWriteMap[ addr >> 12 ]->poke ( addr, data ); }
 };
 
 }

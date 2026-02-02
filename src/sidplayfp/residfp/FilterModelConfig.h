@@ -110,27 +110,25 @@ protected:
 	FilterModelConfig ( double vvr, double c, double vdd, double vth, double ucox, const Spline::Point* opamp_voltage, int opamp_size );
 	~FilterModelConfig () = default;
 
-	void setUCox ( double new_uCox );
+	void setUCox ( double new_uCox ) noexcept;
 
-	void buildSummerTable ( OpAmp& opAmp );
-	void buildMixerTable ( OpAmp& opampModel, double nRatio );
-	void buildVolumeTable ( OpAmp& opampModel, double nDivisor );
-	void buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] );
+	void buildSummerTable ( OpAmp& opAmp ) noexcept;
+	void buildMixerTable ( OpAmp& opampModel, double nRatio ) noexcept;
+	void buildVolumeTable ( OpAmp& opampModel, double nDivisor ) noexcept;
+	void buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept;
 
 public:
-	[[ nodiscard ]] uint16_t* getVolume () { return &volume[ 0 ][ 0 ]; }
-	[[ nodiscard ]] uint16_t* getResonance () { return &resonance[ 0 ][ 0 ]; }
-	[[ nodiscard ]] uint16_t** getSummer () { return summer; }
-	[[ nodiscard ]] uint16_t** getMixer () { return mixer; }
+	[[ nodiscard ]] uint16_t* getVolume () noexcept { return &volume[ 0 ][ 0 ]; }
+	[[ nodiscard ]] uint16_t* getResonance () noexcept { return &resonance[ 0 ][ 0 ]; }
+	[[ nodiscard ]] uint16_t** getSummer () noexcept { return summer; }
+	[[ nodiscard ]] uint16_t** getMixer () noexcept { return mixer; }
 
-	void setVoiceDCVoltage ( double voltage );
-
-	[[ nodiscard ]] sidinline uint16_t getOpampRev ( int i ) const { return opamp_rev[ i ]; }
-	[[ nodiscard ]] sidinline double getVddt () const { return Vddt; }
-	[[ nodiscard ]] sidinline double getVth () const { return Vth; }
+	[[ nodiscard ]] sidinline uint16_t getOpampRev ( int i ) const noexcept { return opamp_rev[ i ]; }
+	[[ nodiscard ]] sidinline double getVddt () const noexcept { return Vddt; }
+	[[ nodiscard ]] sidinline double getVth () const noexcept { return Vth; }
 
 	// helper functions
-	[[ nodiscard ]] sidinline uint16_t getNormalizedValue ( double value ) const
+	[[ nodiscard ]] sidinline uint16_t getNormalizedValue ( double value ) const noexcept
 	{
 		// This function does not get called in real-time, so we can afford to be a bit more accurate
 		const auto	tmp = N16 * ( value - vmin ) + rndBuffer[ rndIndex++ & 4095 ];
@@ -140,14 +138,14 @@ public:
 	}
 
 	template<int N> 
-	[[ nodiscard ]] sidinline uint16_t getNormalizedCurrentFactor ( double wl ) const
+	[[ nodiscard ]] sidinline uint16_t getNormalizedCurrentFactor ( double wl ) const noexcept
 	{
 		const auto	tmp = ( 1 << N ) * currFactorCoeff * wl;
 		assert ( tmp >= 0.0 && tmp < 65536.0 );
 		return uint16_t ( tmp );
 	}
 
-	[[ nodiscard ]] sidinline uint16_t getNVmin () const
+	[[ nodiscard ]] sidinline uint16_t getNVmin () const noexcept
 	{
 		const auto	tmp = N16 * vmin;
 		assert ( tmp >= 0.0 && tmp < 65536.0 );

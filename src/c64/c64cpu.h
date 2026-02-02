@@ -34,8 +34,8 @@ public:
 	{
 	}
 
-	sidinline uint8_t cpuRead ( uint16_t addr ) 				{	return m_mmu.cpuRead ( addr );	}
-	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) 	{	m_mmu.cpuWrite ( addr, data );	}
+	sidinline uint8_t cpuRead ( uint16_t addr ) noexcept				{	return m_mmu.cpuRead ( addr );	}
+	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) noexcept	{	m_mmu.cpuWrite ( addr, data );	}
 
 private:
 	MMU&	m_mmu;

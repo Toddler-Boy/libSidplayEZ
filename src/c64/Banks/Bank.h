@@ -43,7 +43,7 @@ public:
 	* @param address address to write to
 	* @param value value to write
 	*/
-	sidinline virtual void poke ( uint16_t address, uint8_t value ) = 0;
+	sidinline virtual void poke ( uint16_t address, uint8_t value ) noexcept = 0;
 
 	/**
 	* Bank read. You probably
@@ -53,7 +53,7 @@ public:
 	* @param address value to read from
 	* @return value at address
 	*/
-	sidinline virtual uint8_t peek ( uint16_t address ) = 0;
+	sidinline virtual uint8_t peek ( uint16_t address ) noexcept = 0;
 };
 
 }

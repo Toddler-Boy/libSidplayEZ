@@ -46,12 +46,12 @@ private:
 	uint16_t	last_ta;
 
 protected:
-	void interrupt ( bool state ) override
+	void interrupt ( bool state ) noexcept override
 	{
 		m_env.interruptIRQ ( state );
 	}
 
-	void portB () override
+	void portB () noexcept override
 	{
 		const uint8_t	pb = prb | ~ddrb;
 		// We should call adjustDataPort here
@@ -66,7 +66,7 @@ public:
 	{
 	}
 
-	sidinline void poke ( uint16_t address, uint8_t value ) override
+	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override
 	{
 		const auto	addr = uint8_t ( address );
 		write ( addr, value );
@@ -77,15 +77,15 @@ public:
 				last_ta = timerA.getTimer ();
 	}
 
-	sidinline uint8_t peek ( uint16_t address ) override		{		return read ( get_16lo8 ( address ) );	}
+	sidinline uint8_t peek ( uint16_t address ) noexcept override		{		return read ( get_16lo8 ( address ) );	}
 
-	void reset () override
+	void reset () noexcept override
 	{
 		last_ta = 0;
 		MOS652X::reset ();
 	}
 
-	sidinline uint16_t getTimerA () const { return last_ta; }
+	sidinline uint16_t getTimerA () const noexcept { return last_ta; }
 };
 
 /**
@@ -101,7 +101,7 @@ private:
 	c64env&	m_env;
 
 protected:
-	void interrupt ( bool state ) override
+	void interrupt ( bool state ) noexcept override
 	{
 		if ( state )
 			m_env.interruptNMI ();
@@ -114,8 +114,8 @@ public:
 	{
 	}
 
-	void poke ( uint16_t address, uint8_t value ) override	{	write ( get_16lo8 ( address ), value );	}
-	uint8_t peek ( uint16_t address ) override				{	return read ( get_16lo8 ( address ) );	}
+	void poke ( uint16_t address, uint8_t value ) noexcept override	{	write ( get_16lo8 ( address ), value );	}
+	uint8_t peek ( uint16_t address ) noexcept override				{	return read ( get_16lo8 ( address ) );	}
 };
 
 }

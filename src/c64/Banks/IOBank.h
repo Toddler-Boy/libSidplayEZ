@@ -40,10 +40,10 @@ private:
 	Bank*	map[ 16 ];
 
 public:
-	sidinline void setBank ( int num, Bank* bank )				{	map[ num ] = bank;									}
-	sidinline Bank* getBank ( int num ) const						{	return map[ num ];									}
-	sidinline uint8_t peek ( uint16_t addr ) override				{	return map[ ( addr >> 8 ) & 0xF ]->peek ( addr );	}
-	sidinline void poke ( uint16_t addr, uint8_t data ) override	{	map[ ( addr >> 8 ) & 0xF ]->poke ( addr, data );	}
+	sidinline void setBank ( int num, Bank* bank ) noexcept					{	map[ num ] = bank;									}
+	sidinline Bank* getBank ( int num ) const noexcept						{	return map[ num ];									}
+	sidinline uint8_t peek ( uint16_t addr ) noexcept override				{	return map[ ( addr >> 8 ) & 0xF ]->peek ( addr );	}
+	sidinline void poke ( uint16_t addr, uint8_t data ) noexcept override	{	map[ ( addr >> 8 ) & 0xF ]->poke ( addr, data );	}
 };
 //-----------------------------------------------------------------------------
 

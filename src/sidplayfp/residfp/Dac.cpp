@@ -34,7 +34,7 @@ Dac::Dac ( unsigned int bits, const double _leakage )
 }
 //-----------------------------------------------------------------------------
 
-double Dac::getOutput ( unsigned int input, const bool saturation ) const
+double Dac::getOutput ( unsigned int input, const bool saturation ) const noexcept
 {
 	auto    dacValue = 0.0;
 
@@ -56,7 +56,7 @@ double Dac::getOutput ( unsigned int input, const bool saturation ) const
 }
 //-----------------------------------------------------------------------------
 
-void Dac::kinkedDac ( const bool is6581 )
+void Dac::kinkedDac ( const bool is6581 ) noexcept
 {
 	const auto	dacLength = (unsigned int)( dac.size () );
 

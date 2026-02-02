@@ -68,7 +68,7 @@ public:
 	/**
 	* Set Filter Cutoff resistor ratio.
 	*/
-	sidinline void setFc ( double wl )
+	sidinline void setFc ( double wl ) noexcept
 	{
 		// Normalized current factor, 1 cycle at 1MHz.
 		n_dac = fmc.getNormalizedCurrentFactor<17> ( wl );
@@ -77,7 +77,7 @@ public:
 	/**
 	* Set FC gate voltage multiplier.
 	*/
-	void setV ( double v )
+	void setV ( double v ) noexcept
 	{
 		// Gate voltage is controlled by the switched capacitor voltage divider
 		// Ua = Ue * v = 4.75v  1<v<2
@@ -90,7 +90,7 @@ public:
 		nVgt = fmc.getNormalizedValue ( Vgt );
 	}
 
-	sidinline int solve ( int vi )
+	sidinline int solve ( int vi ) noexcept
 	{
 		// Make sure we're not in subthreshold mode
 		assert ( vx < nVgt );

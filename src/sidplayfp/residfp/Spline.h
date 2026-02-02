@@ -67,7 +67,7 @@ public:
 	/**
 		* Evaluate y and its derivative at given point x.
 		*/
-	Point evaluate ( double x ) const;
+	Point evaluate ( double x ) const noexcept;
 };
 
 } // namespace reSIDfp
