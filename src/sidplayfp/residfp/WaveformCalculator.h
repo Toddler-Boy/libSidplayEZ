@@ -85,7 +85,7 @@ namespace WaveformCalculator
 	*
 	* @return Waveform table
 	*/
-	std::vector<int16_t> buildWaveTable ();
+	std::vector<int16_t> buildWaveTable () noexcept;
 
 	/**
 	* Build pulldown table for use by WaveformGenerator

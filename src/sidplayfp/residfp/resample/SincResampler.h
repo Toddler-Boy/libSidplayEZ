@@ -153,7 +153,7 @@ public:
 
 	[[ nodiscard ]] sidinline int output () const noexcept { return outputValue; }
 
-	void reset ();
+	void reset () noexcept;
 };
 
 } // namespace reSIDfp

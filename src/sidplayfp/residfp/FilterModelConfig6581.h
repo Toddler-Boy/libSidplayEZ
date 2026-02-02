@@ -59,7 +59,7 @@ private:
 	uint16_t	vcr_n_Ids_term[ 1 << 16 ];
 	//@}
 
-	void clFilterVcrIds ();
+	void clFilterVcrIds () noexcept;
 	[[ nodiscard ]] sidinline double getDacZero ( double adjustment ) const noexcept {	return dac_zero + adjustment;	}
 
 	// Voice DC offset LUT
