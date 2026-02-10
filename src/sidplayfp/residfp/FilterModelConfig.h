@@ -23,8 +23,8 @@
 
 #include <cassert>
 
-#include "Spline.h"
 #include "OpAmp.h"
+#include "Spline.h"
 
 namespace reSIDfp
 {
@@ -93,19 +93,17 @@ private:
  	double			rndBuffer[ 4096 ];
  	mutable int		rndIndex = 0;
 
+public:
 	FilterModelConfig ( const FilterModelConfig& ) = delete;
 	FilterModelConfig& operator= ( const FilterModelConfig& ) = delete;
 
 protected:
 	/**
 	* @param vvr voice voltage range
-	* @param vdv voice DC voltage
 	* @param c   capacitor value
 	* @param vdd Vdd
 	* @param vth threshold voltage
 	* @param ucox u*Cox
-	* @param ominv opamp min voltage
-	* @param omaxv opamp max voltage
 	*/
 	FilterModelConfig ( double vvr, double c, double vdd, double vth, double ucox, const Spline::Point* opamp_voltage, int opamp_size );
 	~FilterModelConfig () = default;

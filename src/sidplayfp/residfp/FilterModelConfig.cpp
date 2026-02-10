@@ -65,7 +65,7 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 	}
 
 	// Create lookup table mapping capacitor voltage to op-amp input voltage:
-	Spline s ( scaled_voltage );
+	const Spline	s ( scaled_voltage );
 
 	for ( auto x = 0; x < ( 1 << 16 ); x++ )
 	{
