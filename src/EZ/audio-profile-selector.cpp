@@ -76,8 +76,8 @@ void AudioProfileSelector::setProfiles ( const std::string& csvStr )
 
 void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
 {
-	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> *width );
-	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> *width );
+	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> * width );
+	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> * width );
 
 	constexpr auto isEqual = [] ( const float a, const float b )
 	{
