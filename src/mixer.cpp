@@ -41,7 +41,7 @@ void Mixer::clockChips () noexcept
 void Mixer::resetBufs () noexcept
 {
 	for ( auto chp : m_chips )
-		chp->bufferpos ( 0 );
+		chp->setBufferPos ( 0 );
 }
 //-----------------------------------------------------------------------------
 
@@ -74,6 +74,20 @@ void Mixer::doMix () noexcept
 			out[ i ] += smp16ToFloat ( in[ i ] );
 	};
 
+	// Copy digi buffers
+	for ( auto i = 0; auto chp : m_chips )
+	{
+		// Digi output
+		const auto	buf = chp->getDigiBuffer ();
+		const auto	outBuf = m_digiBuffers[ i++ ] + m_sampleIndex;
+
+		// move digi data to final buffer
+		std::memcpy ( outBuf, buf, toCopy );
+
+		// move the unhandled data to start of buffer, if any
+		std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+	}
+
 	// Render chips
 	if ( ! m_sampleBuffer[ 1 ] )
 	{
@@ -82,7 +96,7 @@ void Mixer::doMix () noexcept
 		//
 		for ( auto chp : m_chips )
 		{
-			const auto	buf = chp->buffer ();
+			const auto	buf = chp->getBuffer ();
 			const auto	outBuf = m_sampleBuffer[ 0 ] + m_sampleIndex;
 
 			if ( chp == m_chips[ 0 ] )
@@ -91,8 +105,10 @@ void Mixer::doMix () noexcept
 				sumBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
-			chp->bufferpos ( samplesLeft );
+			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+
+			// Update sample-position
+			chp->setBufferPos ( samplesLeft );
 		}
 	}
 	else
@@ -104,14 +120,14 @@ void Mixer::doMix () noexcept
 		for ( auto i = 0; i < std::min ( 2, numChips ); ++i )
 		{
 			auto		chp = m_chips[ i ];
-			const auto	buf = chp->buffer ();
+			const auto	buf = chp->getBuffer ();
 			const auto	outBuf = m_sampleBuffer[ i ] + m_sampleIndex;
 
 			convertBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
-			chp->bufferpos ( samplesLeft );
+			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			chp->setBufferPos ( samplesLeft );
 		}
 
 		if ( numChips == 1 )
@@ -120,7 +136,7 @@ void Mixer::doMix () noexcept
 		if ( m_chips.size () == 3 )
 		{
 			auto		chp = m_chips[ 2 ];
-			const auto	buf = chp->buffer ();
+			const auto	buf = chp->getBuffer ();
 			const auto	outBufL = m_sampleBuffer[ 0 ] + m_sampleIndex;
 			const auto	outBufR = m_sampleBuffer[ 1 ] + m_sampleIndex;
 
@@ -134,8 +150,8 @@ void Mixer::doMix () noexcept
 			}
 
 			// move the unhandled data to start of buffer, if any
-			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
-			chp->bufferpos ( samplesLeft );
+			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			chp->setBufferPos ( samplesLeft );
 		}
 	}
 
@@ -144,7 +160,7 @@ void Mixer::doMix () noexcept
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::begin ( float* bufferL, float* bufferR, uint32_t count ) noexcept
+void Mixer::begin ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t count) noexcept
 {
 	// we need a minimum buffer-size, otherwise a crash might occur
 	assert ( count > 100 );
@@ -153,6 +169,7 @@ void Mixer::begin ( float* bufferL, float* bufferR, uint32_t count ) noexcept
 	m_sampleCount = count;
 	m_sampleBuffer[ 0 ] = bufferL;
 	m_sampleBuffer[ 1 ] = bufferR;
+	m_digiBuffers = digiBuffers;
 
 	m_wait = false;
 }

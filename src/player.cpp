@@ -163,7 +163,7 @@ bool Player::loadTune ( SidTune* tune )
 }
 //-----------------------------------------------------------------------------
 
-uint32_t Player::play ( float* bufferL, float* bufferR, uint32_t count )
+uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t count )
 {
 	// Make sure we can actually play
 	assert ( m_tune && "No tune loaded" );
@@ -171,7 +171,7 @@ uint32_t Player::play ( float* bufferL, float* bufferR, uint32_t count )
 	assert ( m_mixer.getSid ( 0 ) && "No SID chip is configured" );
 
 	// Start the player loop
-	m_mixer.begin ( bufferL, bufferR, count );
+	m_mixer.begin ( bufferL, bufferR, digiBuffers, count );
 
 	constexpr auto	CYCLES = 3'000u;
 

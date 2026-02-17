@@ -85,7 +85,7 @@ public:
 	[[ nodiscard ]] const SidInfo& getInfo () const { return m_info; }
 
 	bool loadTune ( SidTune* tune );
-	uint32_t play ( float* bufferL, float* bufferR, uint32_t samples );
+	uint32_t play ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t samples );
 
 	[[ nodiscard ]] int getNumChips () const { return m_mixer.getNumChips (); }
 

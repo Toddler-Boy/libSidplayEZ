@@ -45,6 +45,7 @@ private:
 
 	// Mixer settings
 	float*		m_sampleBuffer[ 2 ] = { nullptr, nullptr };
+	int8_t**	m_digiBuffers = nullptr;
 	uint32_t	m_sampleCount = 0;
 	uint32_t	m_sampleIndex = 0;
 
@@ -70,7 +71,7 @@ public:
 	* @param buffer output buffer
 	* @param count size of the buffer in samples
 	*/
-	void begin ( float* bufferL, float* bufferR, uint32_t count ) noexcept;
+	void begin ( float* bufferL, float* bufferR, int8_t** buffersDigi, uint32_t count ) noexcept;
 
 	/**
 	* Remove all SIDs from the mixer

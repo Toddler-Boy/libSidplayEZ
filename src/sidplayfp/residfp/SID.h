@@ -517,7 +517,7 @@ public:
 	* @param buf audio output buffer
 	* @return number of samples produced
 	*/
-	sidinline int clock ( unsigned int cycles, int16_t* buf, int8_t* volRegBuf = nullptr ) noexcept
+	sidinline int clock ( unsigned int cycles, int16_t* buf, int8_t* volRegBuf ) noexcept
 	{
 		// ageBusValue
 		if ( busValueTtl ) [[ likely ]]
@@ -552,7 +552,6 @@ public:
 		};
 
 		auto    s = 0;
-		auto	vs = 0;
 		while ( cycles ) [[ likely ]]
 		{
 			if ( const auto delta_t = std::min ( nextVoiceSync, cycles ); delta_t > 0 ) [[ likely ]]
@@ -571,12 +570,10 @@ public:
 
 					if ( resampler.input ( output () ) ) [[ unlikely ]]
 					{
-						buf[ s++ ] = resampler.output ();
-						if ( volRegBuf && --volumeIndex < 0 )
-						{
-							volRegBuf[ vs++ ] = lastVolume;
-							volumeIndex = 5;
-						}
+						buf[ s ] = resampler.output ();
+						volRegBuf[ s ] = lastVolume;
+
+						++s;
 					}
 				}
 

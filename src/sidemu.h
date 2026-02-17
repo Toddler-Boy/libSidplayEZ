@@ -66,6 +66,9 @@ protected:
 	// The sample buffer
 	int16_t		m_buffer[ OUTPUTBUFFERSIZE ];
 
+	// The digi buffer
+	int8_t		m_bufferDigi[ OUTPUTBUFFERSIZE ];
+
 	// Current position in buffer
 	int	m_bufferpos = 0;
 
@@ -123,19 +126,24 @@ public:
 	[[ nodiscard ]] virtual bool wasFilterUsed () const noexcept = 0;
 
 	/**
-	* Get the current position in buffer.
+	* Get the current position in buffer
 	*/
 	[[ nodiscard ]] sidinline int bufferpos () const noexcept { return m_bufferpos; }
 
 	/**
-	* Set the position in buffer.
+	* Set the position in buffer
 	*/
-	void bufferpos ( int pos ) noexcept { m_bufferpos = pos; }
+	void setBufferPos ( int pos ) noexcept { m_bufferpos = pos; }
 
 	/**
-	* Get the buffer.
+	* Get the buffer
 	*/
-	[[ nodiscard ]] sidinline int16_t* buffer () noexcept { return &m_buffer[ 0 ]; }
+	[[ nodiscard ]] sidinline int16_t* getBuffer () noexcept { return &m_buffer[ 0 ]; }
+
+	/**
+	* Get the digi-buffer
+	*/
+	[[ nodiscard ]] sidinline int8_t* getDigiBuffer () noexcept { return &m_bufferDigi[ 0 ]; }
 };
 //-----------------------------------------------------------------------------
 
@@ -170,7 +178,7 @@ public:
 		const event_clock_t	cycles = eventScheduler.getTime ( EVENT_CLOCK_PHI1 ) - m_accessClk;
 		m_accessClk += cycles;
 
-		m_bufferpos += m_sid.clock ( (unsigned int)cycles, m_buffer + m_bufferpos );
+		m_bufferpos += m_sid.clock ( (unsigned int)cycles, m_buffer + m_bufferpos, m_bufferDigi + m_bufferpos );
 	}
 
 	void sampling ( float systemfreq, float outputfreq ) noexcept override
