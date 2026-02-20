@@ -9,7 +9,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getProfile ( const char* _path, const char* _filename )
+std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getProfile ( const char* _path, const char* _filename, const int subtune )
 {
 	auto	path = std::string ( _path );
 
@@ -55,6 +55,9 @@ std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getPr
 	// Get filename without extension
 	auto	filename = std::string ( _filename );
 	filename.erase ( filename.length () - 4 );
+
+	// Attach tune-number to filename
+	filename += "#" + std::to_string ( subtune );
 
 	// Find new author if exception matches
 	if ( auto exception = set.exceptions.find ( filename ); exception != set.exceptions.end () )

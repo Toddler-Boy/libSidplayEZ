@@ -140,7 +140,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// per author with the assumption they worked with the same machine their entire career
 	//
 	{
-		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName () );
+		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
 
 		stiEZ.chipProfile = profileName;
 

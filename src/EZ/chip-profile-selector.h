@@ -39,7 +39,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	std::pair<std::string, settings> getProfile ( const char* path, const char* filename );
+	std::pair<std::string, settings> getProfile ( const char* path, const char* filename, const int subtune );
 
 	void setProfiles ( const std::string& csvStr );
 
