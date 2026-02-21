@@ -115,6 +115,8 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// Fill the info struct for this particular tune
 	{
 		// Model(s)
+		stiEZ.model.clear ();
+
 		for ( auto i = 0; i < engine.getNumChips (); ++i )
 		{
 			if ( config.forceSidModel )
