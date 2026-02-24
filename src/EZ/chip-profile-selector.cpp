@@ -92,13 +92,30 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		if ( cwsLevel == "weak" )			setting.cwsLevel = weak;
 		else if ( cwsLevel == "strong" )	setting.cwsLevel = strong;
 
-		const auto	exceptions = csv.get ( i, "exceptions" );
-		if ( ! exceptions.empty () )
+		if ( const auto	exceptions = csv.get ( i, "exceptions" ); ! exceptions.empty () )
 		{
 			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );
 			for ( const auto& exception : exceptionList )
-				if ( auto pair = stringutils::arrayFromTokens ( exception, '=' ); pair.size () == 2 )
-					setting.exceptions[ pair[ 0 ] ] = pair[ 1 ];
+			{
+				if ( const auto file_profile = stringutils::arrayFromTokens ( exception, '=' ); file_profile.size () == 2 )
+				{
+					if ( const auto file_ranges = stringutils::arrayFromTokens ( file_profile[ 0 ], '#' ); file_ranges.size () == 2 )
+					{
+						if ( const auto ranges = stringutils::arrayFromTokens ( file_ranges[ 1 ], '.' ); ! ranges.empty () )
+						{
+							for ( const auto& range : ranges )
+							{
+								const auto	subtune = stringutils::arrayFromTokens ( range, '-' );
+								const auto	subtuneStart = std::stoi ( subtune[ 0 ] );
+								const auto	subtuneEnd = subtune.size () == 2 ? std::stoi ( subtune[ 1 ] ) : subtuneStart;
+
+								for ( auto st = subtuneStart; st <= subtuneEnd; ++st )
+									setting.exceptions[ file_ranges[ 0 ] + "#" + std::to_string ( st ) ] = file_profile[ 1 ];
+							}
+						}
+					}
+				}
+			}
 		}
 
 		chipProfiles[ name ] = setting;

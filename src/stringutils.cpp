@@ -136,7 +136,7 @@ namespace stringutils
 {
 	// Read file into std::string
 	auto	file = std::ifstream ( filename, std::ios::in | std::ios::binary | std::ios::ate );
-	if ( !file.is_open () )
+	if ( ! file.is_open () )
 		return {};
 
 	const auto	size = file.tellg ();
