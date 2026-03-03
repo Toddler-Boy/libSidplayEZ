@@ -688,6 +688,8 @@ public:
 					msb_rising = false;
 					if ( waveform == 0x6 ) [[ unlikely ]]
 						accumulator &= accumulatorMask;
+					else
+						accumulator &= 0x7fffff;
 				}
 			}
 			else
