@@ -117,6 +117,7 @@ public:
 	virtual void filter6581Gain ( double adjustment ) noexcept = 0;
 	virtual void filter6581Digi ( double adjustment ) noexcept = 0;
 	virtual void voice6581DCDrift ( double adjustment ) noexcept = 0;
+	virtual void voiceSawPulseUltra ( bool enable ) noexcept = 0;
 
 	virtual void filter8580Curve ( double filterCurve ) noexcept = 0;
 
@@ -164,11 +165,6 @@ public:
 	{
 		sidemu::reset ( volume );
 
-		if constexpr ( std::is_same_v<FLT, reSIDfp::Filter6581<true>> || std::is_same_v<FLT, reSIDfp::Filter6581<false>> )
-			m_sid.setChipModel ( reSIDfp::MOS6581 );
-		else
-			m_sid.setChipModel ( reSIDfp::MOS8580 );
-
 		m_sid.reset ();
 		m_sid.write ( 0x18, volume );
 	}
@@ -208,7 +204,7 @@ public:
 	void filter6581Gain ( double adjustment ) noexcept override { m_sid.setFilter6581Gain ( adjustment ); }
 	void filter6581Digi ( double adjustment ) noexcept override	{	m_sid.setFilter6581Digi ( adjustment );	}
 	void voice6581DCDrift ( double adjustment ) noexcept override { m_sid.setVoiceDCDrift ( adjustment ); }
-
+	void voiceSawPulseUltra ( bool enable ) noexcept override { m_sid.setSawPulseUltra ( enable ); }
 	void filter8580Curve ( double filterCurve ) noexcept override { m_sid.setFilter8580Curve ( filterCurve ); }
 
 	void setDacLeakage ( const double leakage ) noexcept override { m_sid.setDacLeakage ( leakage ); }

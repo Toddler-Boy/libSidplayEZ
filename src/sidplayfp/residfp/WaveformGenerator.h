@@ -186,6 +186,8 @@ sidinline unsigned int get_noise_writeback ( unsigned int waveform_output ) noex
 *
 * The low 4 waveform bits are zero (grounded).
 */
+
+// Waveform generator templated for 6581 or 8580
 template <bool is6581>
 class WaveformGenerator final
 {
@@ -220,7 +222,8 @@ private:
 	unsigned int waveform_output = 0;
 
 	/// Current accumulator value.
-	unsigned int accumulator = 0x555555;	// Accumulator's even bits are high on powerup
+	unsigned int accumulator = 0x555555;		// Accumulator's even bits are high on powerup
+	unsigned int accumulatorMask = 0x7fffff;	// Mask to be used for 6581 with saw+pulse
 
 	// Fout = (Fn*Fclk/16777216)Hz
 	unsigned int freq = 0;
@@ -412,8 +415,9 @@ private:
 	}
 
 public:
-	void setWaveformModels ( std::vector<int16_t>& models )		{	model_wave = &models;		}
-	void setPulldownModels ( std::vector<int16_t>& models )		{	model_pulldown = &models;	}
+	void setWaveformModels ( std::vector<int16_t>& models )	noexcept	{	model_wave = &models;		}
+	void setPulldownModels ( std::vector<int16_t>& models )	noexcept	{	model_pulldown = &models;	}
+	void setSawPulseMask ( unsigned int mask ) noexcept					{	accumulatorMask = mask;		}
 
 	/**
 	* SID clocking.
@@ -660,7 +664,7 @@ public:
 	* @param ringModulator The oscillator ring-modulating current one.
 	* @return the waveform generator digital output
 	*/
-	sidinline unsigned int output ( const WaveformGenerator& ringModulator ) noexcept
+	[[ nodiscard ]] sidinline unsigned int output ( const WaveformGenerator& ringModulator ) noexcept
 	{
 		// Set output value.
 		if ( waveform ) [[ likely ]]
@@ -681,8 +685,9 @@ public:
 				// when the sawtooth is selected
 				if ( ( waveform & 0x2 ) && ( ( waveform_output & 0x800 ) == 0 ) )
 				{
-					msb_rising = 0;
-					accumulator &= 0x7fffff;
+					msb_rising = false;
+					if ( waveform == 0x6 ) [[ unlikely ]]
+						accumulator &= accumulatorMask;
 				}
 			}
 			else
@@ -741,27 +746,27 @@ public:
 	/**
 	* Read OSC3 value.
 	*/
-	sidinline uint8_t readOSC () const noexcept { return uint8_t ( osc3 >> 4 ); }
+	[[ nodiscard ]] sidinline uint8_t readOSC () const noexcept { return uint8_t ( osc3 >> 4 ); }
 
 	/**
 	* Read accumulator value.
 	*/
-	sidinline unsigned int readAccumulator () const noexcept { return accumulator; }
+	[[ nodiscard ]] sidinline unsigned int readAccumulator () const noexcept { return accumulator; }
 
 	/**
 	* Read freq value.
 	*/
-	sidinline unsigned int readFreq () const noexcept { return freq; }
+	[[ nodiscard ]] sidinline unsigned int readFreq () const noexcept { return freq; }
 
 	/**
 	* Read test value.
 	*/
-	sidinline bool readTest () const noexcept { return test; }
+	[[ nodiscard ]] sidinline bool readTest () const noexcept { return test; }
 
 	/**
 	* Read sync value.
 	*/
-	sidinline bool readSync () const noexcept { return sync; }
+	[[ nodiscard ]] sidinline bool readSync () const noexcept { return sync; }
 };
 
 } // namespace reSIDfp

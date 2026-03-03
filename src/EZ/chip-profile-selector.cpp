@@ -87,11 +87,18 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		setting.fltGain = csv.get ( i, "fltGain", setting.fltGain );
 		setting.digi = csv.get ( i, "digi", setting.digi );
 
-		const auto	cwsLevel = stringutils::toLower ( csv.get ( i, "cwsLevel", "average" ) );
+		// Combined waveform strength level
+		auto	cwsLevel = stringutils::toLower ( csv.get ( i, "cwsLevel", "average" ) );
+
+		// Check for ultra sawPulse setting (indicated by a '+' at the end of the cwsLevel)
+		setting.cwsSawPulseUltra = cwsLevel.back () == '+';
+		if ( setting.cwsSawPulseUltra )
+			cwsLevel.erase ( cwsLevel.length () - 1 );
 
 		if ( cwsLevel == "weak" )			setting.cwsLevel = weak;
 		else if ( cwsLevel == "strong" )	setting.cwsLevel = strong;
 
+		// Exceptions
 		if ( const auto	exceptions = csv.get ( i, "exceptions" ); ! exceptions.empty () )
 		{
 			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );

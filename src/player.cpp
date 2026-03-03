@@ -107,7 +107,7 @@ void Player::initialise ()
 		}
 	};
 
-	constexpr auto	powerOnDelay = 3000;	// SidConfig::MAX_POWER_ON_DELAY - 1 
+	constexpr auto	powerOnDelay = 3000;	// SidConfig::MAX_POWER_ON_DELAY - 1
 
 	// Run for calculated number of cycles
 	warmup ( powerOnDelay );
@@ -163,15 +163,15 @@ bool Player::loadTune ( SidTune* tune )
 }
 //-----------------------------------------------------------------------------
 
-uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t count )
+uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t samples )
 {
 	// Make sure we can actually play
 	assert ( m_tune && "No tune loaded" );
-	assert ( bufferL && count && "You need to provide at least one buffer to render into" );
+	assert ( bufferL && samples && "You need to provide at least one buffer to render into" );
 	assert ( m_mixer.getSid ( 0 ) && "No SID chip is configured" );
 
 	// Start the player loop
-	m_mixer.begin ( bufferL, bufferR, digiBuffers, count );
+	m_mixer.begin ( bufferL, bufferR, digiBuffers, samples );
 
 	constexpr auto	CYCLES = 3'000u;
 
@@ -414,7 +414,7 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 
 void Player::sidParams ( double cpuFreq, int frequency )
 {
-	for ( auto i = 0; i < 3 ; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->sampling ( float ( cpuFreq ), frequency );
 }
@@ -422,7 +422,7 @@ void Player::sidParams ( double cpuFreq, int frequency )
 
 void Player::setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->combinedWaveforms ( cws, threshold );
 }
@@ -430,7 +430,7 @@ void Player::setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float 
 
 void Player::set6581FilterCurve ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Curve ( value );
 }
@@ -438,7 +438,7 @@ void Player::set6581FilterCurve ( const double value )
 
 void Player::set6581FilterRange ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Range ( value );
 }
@@ -446,7 +446,7 @@ void Player::set6581FilterRange ( const double value )
 
 void Player::set6581FilterGain ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Gain ( value );
 }
@@ -454,7 +454,7 @@ void Player::set6581FilterGain ( const double value )
 
 void Player::set6581DigiVolume ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Digi ( value );
 }
@@ -462,7 +462,7 @@ void Player::set6581DigiVolume ( const double value )
 
 void Player::setDacLeakage ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->setDacLeakage ( value );
 }
@@ -470,9 +470,17 @@ void Player::setDacLeakage ( const double value )
 
 void Player::set6581VoiceDCDrift ( const double value )
 {
-	for ( auto i = 0; i < 3; i++ )
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->voice6581DCDrift ( value );
+}
+//-----------------------------------------------------------------------------
+
+void Player::set6581SawPulseUltra ( const bool enable )
+{
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->voiceSawPulseUltra ( enable );
 }
 //-----------------------------------------------------------------------------
 

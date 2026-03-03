@@ -1,8 +1,8 @@
 #include "tinyCSV.h"
 
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "../stringutils.h"
 
@@ -22,7 +22,7 @@ int TinyCSV::parseCSV ( const std::string& csvData )
 	auto	iss = std::istringstream ( csvData );
 	if ( iss.eof () )
 		return 0;
-	
+
 	error = "";
 
 	auto parseLine = [] ( const std::string& row ) -> std::vector<std::string>

@@ -32,6 +32,7 @@ public:
 
 		// Combined waveform strength
 		int			cwsLevel = average;
+		bool		cwsSawPulseUltra = false;
 
 		// Exceptions (selects another authors chip, usually for collaborations)
 		std::unordered_map<std::string, std::string>	exceptions;

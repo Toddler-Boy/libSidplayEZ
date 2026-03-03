@@ -153,6 +153,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		engine.set6581DigiVolume ( chipProfile.digi );
 
 		engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms ( chipProfile.cwsLevel ), 1.0f );
+		engine.set6581SawPulseUltra ( chipProfile.cwsSawPulseUltra );
 	}
 
 	// Override chip-profile for Emulation based SID editors (Cheesecutter, GoatTracker, SidWizard etc.)
@@ -167,7 +168,9 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 				engine.set6581FilterCurve ( 0.5 );
 				engine.set6581FilterGain ( 1.0 );
 				engine.set6581DigiVolume ( 1.0 );
-				engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms::STRONG, 1.0 );
+
+				engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms::AVERAGE, 1.0 );
+				engine.set6581SawPulseUltra ( false );
 			};
 
 			static const std::vector<std::string>	editorsUsingEmulation = {

@@ -45,7 +45,7 @@ private:
 	SidInfoImpl	m_info;				// Tune info
 	SidConfig	m_cfg;				// User Configuration Settings
 
-	sidemu*		m_sidEmu[ 3 ] = { nullptr, nullptr, nullptr };	// emulation of an actual SID chip
+	sidemu*		m_sidEmu[ Mixer::MAX_SIDS ] = { nullptr, nullptr, nullptr };	// emulation of an actual SID chip
 
 	std::string	m_errorString = "N/A";
 
@@ -98,6 +98,7 @@ public:
 
 	void setDacLeakage ( const double value );
 	void set6581VoiceDCDrift ( const double value );
+	void set6581SawPulseUltra ( const bool enable );
 
 	[[ nodiscard ]] uint32_t timeMs () const { return m_c64.getTimeMs () - m_startTime; }				// Time in milliseconds
 

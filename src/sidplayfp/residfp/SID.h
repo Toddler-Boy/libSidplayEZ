@@ -187,9 +187,6 @@ private:
 	// Time until #voiceSync must be run.
 	unsigned int nextVoiceSync;
 
-	// Currently active chip model.
-	ChipModel model;
-
 	// Dac leakage
 	double	dacLeakage = 0.01;
 
@@ -209,7 +206,6 @@ private:
 	*/
 	float	oscDAC[ 4096 ];
 
-private:
 	/**
 	* Calculate the number of cycles according to current parameters
 	* that it takes to reach sync
@@ -286,16 +282,6 @@ public:
 		waveTable = WaveformCalculator::buildWaveTable ();
 
 		reset ();
-	}
-
-	/**
-	* Set chip model.
-	*
-	* @param model chip model to use
-	*/
-	void setChipModel ( ChipModel _model ) noexcept
-	{
-		model = _model;
 
 		recalculateDACs ();
 
@@ -313,7 +299,7 @@ public:
 	/**
 	* Get currently emulated chip model.
 	*/
-	[[ nodiscard ]] ChipModel getChipModel () const noexcept { return model; }
+	[[ nodiscard ]] ChipModel getChipModel () const noexcept { return is6581 ? ChipModel::MOS6581 : ChipModel::MOS8580; }
 
 	/**
 	* Set combined waveforms strength.
@@ -344,6 +330,18 @@ public:
 
 		if constexpr ( is6581 )
 			filter.setVoiceDCDrift ( drift );
+	}
+
+	/**
+	* Set Saw+Pulse-ultra-loud
+	*/
+	void setSawPulseUltra ( const bool enabled ) noexcept
+	{
+		if constexpr ( is6581 )
+		{
+			for ( auto& vce : voice )
+				vce.waveformGenerator.setSawPulseMask ( enabled ? 0xffffff : 0x7fffff );
+		}
 	}
 
 	/**
