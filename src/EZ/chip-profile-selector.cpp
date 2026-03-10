@@ -108,7 +108,7 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 				{
 					if ( const auto file_ranges = stringutils::arrayFromTokens ( file_profile[ 0 ], '#' ); file_ranges.size () == 2 )
 					{
-						if ( const auto ranges = stringutils::arrayFromTokens ( file_ranges[ 1 ], '.' ); ! ranges.empty () )
+						if ( const auto ranges = stringutils::arrayFromTokens ( file_ranges[ 1 ], ',' ); ! ranges.empty () )
 						{
 							for ( const auto& range : ranges )
 							{

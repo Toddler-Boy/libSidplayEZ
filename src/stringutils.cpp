@@ -21,15 +21,15 @@
 #include "stringutils.h"
 
 #include <cstdint>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 
 namespace stringutils
 {
 
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] bool equal ( const char* s1, const char* s2 )
+bool equal ( const char* s1, const char* s2 )
 {
 	if ( s1 == s2 )
 		return true;
@@ -50,7 +50,7 @@ namespace stringutils
 }
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] bool equal ( const char* s1, const char* s2, size_t n )
+bool equal ( const char* s1, const char* s2, size_t n )
 {
 	if ( s1 == s2 || n == 0 )
 		return true;
@@ -71,7 +71,7 @@ namespace stringutils
 }
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] std::string utf8toExtendedASCII ( const std::string& input )
+std::string utf8toExtendedASCII ( const std::string& input )
 {
 	if ( ! input.size () )
 		return {};
@@ -91,7 +91,7 @@ namespace stringutils
 }
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] std::string extendedASCIItoUTF8 ( const char* str )
+std::string extendedASCIItoUTF8 ( const char* str )
 {
 	uint8_t	outBuffer[ 256 ];
 
@@ -115,7 +115,7 @@ namespace stringutils
 }
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] std::vector<std::string> arrayFromTokens ( const std::string& input, const char delimeter )
+std::vector<std::string> arrayFromTokens ( const std::string& input, const char delimeter )
 {
 	std::vector<std::string>	tokens;
 
@@ -132,7 +132,7 @@ namespace stringutils
 }
 //-----------------------------------------------------------------------------
 
-[[ nodiscard ]] std::string loadFile ( const char* filename )
+std::string loadFile ( const char* filename )
 {
 	// Read file into std::string
 	auto	file = std::ifstream ( filename, std::ios::in | std::ios::binary | std::ios::ate );
