@@ -34,6 +34,13 @@ namespace
 	// Convert high-byte and low-byte to 16-bit word.
 	[[ nodiscard ]] sidinline uint16_t get_16 ( uint8_t hi, uint8_t lo ) { return uint16_t ( ( hi << 8 ) | lo ); }
 
+	// Set the low-byte (8 bit) and the high-byte to 16-bit little endian word
+	sidinline void set_little16 ( uint8_t ptr[ 2 ], uint16_t word )
+	{
+		ptr[ 0 ] = uint8_t ( word );
+		ptr[ 1 ] = uint8_t ( word >> 8 );
+	}
+
 	// Set the hi byte (8 bit) in a word (16 bit)
 	sidinline void set_16hi8 ( uint16_t& word, uint8_t byte )		{	word = ( word & 0x00FF ) | uint16_t ( byte << 8 );	}
 
@@ -41,5 +48,5 @@ namespace
 	[[ nodiscard ]] sidinline uint8_t get_16hi8 ( uint16_t word )	{	return uint8_t ( word >> 8 );		}
 
 	// Convert high-byte and low-byte to 16-bit little endian word
-	[[ nodiscard ]] sidinline uint16_t get_little16 ( const uint8_t ptr[ 2 ] )	{	return uint16_t ( ( ptr[ 1 ] << 8 ) | ptr[ 0 ] );	}
+	[[ nodiscard ]] sidinline uint16_t get_little16 ( uint8_t ptr[ 2 ] )	{	return uint16_t ( ( ptr[ 1 ] << 8 ) | ptr[ 0 ] );	}
 }

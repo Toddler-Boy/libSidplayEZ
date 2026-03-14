@@ -399,7 +399,7 @@ bool SidTuneBase::checkRelocInfo ()
 }
 //-----------------------------------------------------------------------------
 
-void SidTuneBase::resolveAddrs ( const uint8_t* c64data )
+void SidTuneBase::resolveAddrs ( uint8_t* c64data )
 {
 	// Originally used as a first attempt at an RSID
 	// style format. Now reserved for future use

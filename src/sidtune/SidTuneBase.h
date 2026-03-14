@@ -210,7 +210,7 @@ protected:
 	*
 	* @param c64data
 	*/
-	void resolveAddrs ( const uint8_t* c64data );
+	void resolveAddrs ( uint8_t* c64data );
 
 	/**
 	* Cache the data of a single-file or two-file sidtune and its
