@@ -370,35 +370,35 @@ public:
 		else
 		{
 			// index 0 = unfiltered, index 1 = filtered
- 			int	Vsum[ 2 ] = { 0, 0 };
- 
- 			// Mix the voices according to the filter mode
- 			{
- 				Vsum[	this->filterModeRouting		   & 1 ]  = fmc6581.getNormalizedVoice ( voice1, env1 );
- 				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
- 				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask;
- 				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
- 			}
- 
- 			// Apply filter
+			int	Vsum[ 2 ] = { 0, 0 };
+
+			// Mix the voices according to the filter mode
+			{
+				Vsum[	this->filterModeRouting		   & 1 ]  = fmc6581.getNormalizedVoice ( voice1, env1 );
+				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
+				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask;
+				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
+			}
+
+			// Apply filter
 			{
 				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
 				this->Vbp = hpIntegrator.solve ( this->Vhp );
 				this->Vlp = bpIntegrator.solve ( this->Vbp );
  			}
- 
- 			// Mix filter outputs
- 			{
- 				int	VfltSum[ 2 ] = { 0, 0 };
- 
- 				VfltSum[ ( this->filterModeRouting >> 4 ) & 1 ]  = this->Vlp;
- 				VfltSum[ ( this->filterModeRouting >> 5 ) & 1 ] += this->Vbp;
- 				VfltSum[ ( this->filterModeRouting >> 6 ) & 1 ] += this->Vhp;
- 
- 				Vsum[ 0 ] += ( VfltSum[ 1 ] * this->filterGain + this->filterOffset ) >> 12;
- 			}
- 
- 			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
+
+			// Mix filter outputs
+			{
+				int	VfltSum[ 2 ] = { 0, 0 };
+
+				VfltSum[ ( this->filterModeRouting >> 4 ) & 1 ]  = this->Vlp;
+				VfltSum[ ( this->filterModeRouting >> 5 ) & 1 ] += this->Vbp;
+				VfltSum[ ( this->filterModeRouting >> 6 ) & 1 ] += this->Vhp;
+
+				Vsum[ 0 ] += ( VfltSum[ 1 ] * this->filterGain + this->filterOffset ) >> 12;
+			}
+
+			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
 		}
 	}
 
