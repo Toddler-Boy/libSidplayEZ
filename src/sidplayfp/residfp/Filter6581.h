@@ -417,11 +417,12 @@ public:
 	/**
 	* Set filter range
 	*
-	* @param adjustment 0 .. 2, where 0 sets center frequency low, 1 is default, 2 is bright. This also affects the range
+	* @param newUCox 1...40, 20 is the default value for 6581
+	* @param newCap 450...2400, 470 is the default value for newer boards, older boards used 2200
 	*/
-	void setFilterRange ( double adjustment ) noexcept
+	void setFilter_uCoxAndCap ( double uCox, double cap ) noexcept
 	{
-		fmc6581.setFilterRange ( adjustment );
+		fmc6581.setFilter_uCoxAndCap ( uCox, cap );
 	}
 
 	/**

@@ -79,18 +79,12 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 };
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig6581::setFilterRange ( double adjustment ) noexcept
+void FilterModelConfig6581::setFilter_uCoxAndCap ( double newUCox, double newCap ) noexcept
 {
-	adjustment = std::clamp ( adjustment, 0.0, 1.0 );
+	newUCox = std::clamp ( newUCox, 1.0, 40.0 );
+	newCap = std::clamp ( newCap, 450.0, 2400.0 );
 
-	// Get the new uCox value, in the range [1,40]
-	const auto	new_uCox = ( 1.0 + 39.0 * adjustment ) * 1e-6;
-
-	// Ignore small changes
-	if ( std::abs ( uCox - new_uCox ) < 1e-12 )
-		return;
-
-	setUCox ( new_uCox );
+	setUCoxAndCap ( newUCox * 1e-6, newCap * 1e-12 );
 
 	clFilterVcrIds ();
 }
@@ -128,7 +122,7 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 {
 	dac.kinkedDac ( true );
 
-	setVoiceDCDrift ( 1.0 );
+	setVoiceDCDrift ( 0.0 );
 
 	// Create lookup tables for gains / summers
 	auto clBuildSummerTable = [ this ]

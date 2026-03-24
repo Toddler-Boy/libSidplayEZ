@@ -598,14 +598,14 @@ public:
 	}
 
 	/**
-	* Set filter range parameter for 6581 model
+	* Set filter uCox and Cap for 6581 model
 	*
-	* @see Filter6581::setFilterRange(double)
+	* @see Filter6581::setFilter_uCoxAndCap(double)
 	*/
-	void setFilter6581Range ( [[ maybe_unused ]] double adjustment ) noexcept
+	void setFilter6581_uCoxAndCap ( [[ maybe_unused ]] double uCox, [[ maybe_unused ]] double cap ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
-			filter.setFilterRange ( adjustment );
+			filter.setFilter_uCoxAndCap ( uCox, cap );
 	}
 
 	/**

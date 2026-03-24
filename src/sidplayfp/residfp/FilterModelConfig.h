@@ -32,9 +32,6 @@ namespace reSIDfp
 class FilterModelConfig
 {
 protected:
-	// Capacitor value.
-	const double C;
-
 	// Transistor parameters.
 	//@{
 	/// Thermal voltage: Ut = kT/q = 8.61734315e-5*T ~ 26mV
@@ -46,12 +43,18 @@ protected:
 	const double Vdd;			//< Positive supply voltage
 	const double Vth;			//< Threshold voltage
 	const double Vddt;			//< Vdd - Vth
-	double uCox;				//< Transconductance coefficient: u*Cox
+
+	double	uCox;				//< Transconductance coefficient: u*Cox
 	//@}
 
+	// Capacitor value.
+	double	C;
+
 	// Derived stuff
-	const double vmin, vmax;
-	const double denorm, norm;
+	const double	vmin;
+	const double	vmax;
+	const double	denorm;
+	const double	norm;
 
 	// Fixed point scaling for 16 bit op-amp output.
 	const double N16;
@@ -108,7 +111,7 @@ protected:
 	FilterModelConfig ( double vvr, double c, double vdd, double vth, double ucox, const Spline::Point* opamp_voltage, int opamp_size );
 	~FilterModelConfig () = default;
 
-	void setUCox ( double new_uCox ) noexcept;
+	void setUCoxAndCap ( double new_uCox, double new_C ) noexcept;
 
 	void buildSummerTable ( OpAmp& opAmp ) noexcept;
 	void buildMixerTable ( OpAmp& opampModel, double nRatio ) noexcept;

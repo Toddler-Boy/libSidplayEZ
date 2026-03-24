@@ -23,7 +23,8 @@ public:
 		std::string	folder;
 
 		// Filter settings
-		double		fltCox = 0.5;
+		double		fltCox = 20.0;
+		double		fltCap = 470.0;
 		double		flt0Dac = 0.4;
 		double		fltGain = 0.92;
 

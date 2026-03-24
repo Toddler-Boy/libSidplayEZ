@@ -113,7 +113,7 @@ public:
 	virtual void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) noexcept = 0;
 
 	virtual void filter6581Curve ( double filterCurve ) noexcept = 0;
-	virtual void filter6581Range ( double adjustment ) noexcept = 0;
+	virtual void filter6581_uCoxAndCap ( double uCox, double cap ) noexcept = 0;
 	virtual void filter6581Gain ( double adjustment ) noexcept = 0;
 	virtual void filter6581Digi ( double adjustment ) noexcept = 0;
 	virtual void voice6581DCDrift ( double adjustment ) noexcept = 0;
@@ -200,7 +200,7 @@ public:
 	}
 
 	void filter6581Curve ( double filterCurve ) noexcept override { m_sid.setFilter6581Curve ( filterCurve ); }
-	void filter6581Range ( double adjustment ) noexcept override { m_sid.setFilter6581Range ( adjustment ); }
+	void filter6581_uCoxAndCap ( double uCox, double cap ) noexcept override { m_sid.setFilter6581_uCoxAndCap ( uCox, cap ); }
 	void filter6581Gain ( double adjustment ) noexcept override { m_sid.setFilter6581Gain ( adjustment ); }
 	void filter6581Digi ( double adjustment ) noexcept override	{	m_sid.setFilter6581Digi ( adjustment );	}
 	void voice6581DCDrift ( double adjustment ) noexcept override { m_sid.setVoiceDCDrift ( adjustment ); }

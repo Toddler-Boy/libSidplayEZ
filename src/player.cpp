@@ -436,11 +436,11 @@ void Player::set6581FilterCurve ( const double value )
 }
 //-----------------------------------------------------------------------------
 
-void Player::set6581FilterRange ( const double value )
+void Player::set6581Filter_uCoxAndCap ( const double uCox, const double cap )
 {
 	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
-			s->filter6581Range ( value );
+			s->filter6581_uCoxAndCap ( uCox, cap );
 }
 //-----------------------------------------------------------------------------
 

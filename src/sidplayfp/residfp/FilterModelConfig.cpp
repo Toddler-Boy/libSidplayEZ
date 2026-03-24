@@ -30,8 +30,7 @@ namespace reSIDfp
 {
 
 FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double vth, double ucox, const Spline::Point* opamp_voltage, int opamp_size )
-	: C ( c )
-	, Vdd ( vdd )
+	: Vdd ( vdd )
 	, Vth ( vth )
 	, Vddt ( Vdd - Vth )
 	, vmin ( opamp_voltage[ 0 ].x )
@@ -50,7 +49,7 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 			buf = unif ( re );
 	}
 
-	setUCox ( ucox );
+	setUCoxAndCap ( ucox, c );
 
 	// Convert op-amp voltage transfer to 16 bit values
 	std::vector<Spline::Point> scaled_voltage ( opamp_size );
@@ -78,9 +77,11 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::setUCox ( double new_uCox ) noexcept
+void FilterModelConfig::setUCoxAndCap ( double new_uCox, double new_C ) noexcept
 {
 	uCox = new_uCox;
+	C = new_C;
+
 	currFactorCoeff = denorm * ( uCox / 2.0 * 1.0e-6 / C );
 }
 //-----------------------------------------------------------------------------
