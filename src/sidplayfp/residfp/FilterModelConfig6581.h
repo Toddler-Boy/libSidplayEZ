@@ -70,7 +70,7 @@ public:
 
 	// Set support-hardware for the filter model.
 	// This is used to adjust the model for different hardware revisions of the C64
-	void setFilter_uCoxAndCap ( double newUCox, double newCap ) noexcept;
+	void setFilter_uCoxAndCap ( double newUCox, bool oldCap ) noexcept;
 
 	void setVoiceDCDrift ( double drift ) noexcept;
 

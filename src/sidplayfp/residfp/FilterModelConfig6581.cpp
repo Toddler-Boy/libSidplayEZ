@@ -79,12 +79,13 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 };
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig6581::setFilter_uCoxAndCap ( double newUCox, double newCap ) noexcept
+void FilterModelConfig6581::setFilter_uCoxAndCap ( double newUCox, bool oldCap ) noexcept
 {
 	newUCox = std::clamp ( newUCox, 1.0, 40.0 );
-	newCap = std::clamp ( newCap, 450.0, 2400.0 );
 
-	setUCoxAndCap ( newUCox * 1e-6, newCap * 1e-12 );
+	const auto	cap = oldCap ? 2200.0 : 470.0;
+
+	setUCoxAndCap ( newUCox * 1e-6, cap * 1e-12 );
 
 	clFilterVcrIds ();
 }

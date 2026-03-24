@@ -146,7 +146,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 		stiEZ.chipProfile = profileName;
 
-		engine.set6581Filter_uCoxAndCap ( chipProfile.fltCox, chipProfile.fltCap );
+		engine.set6581Filter_uCoxAndCap ( 20.0, chipProfile.fltCapOld );
 		engine.set6581FilterCurve ( chipProfile.flt0Dac );
 		engine.set6581FilterGain ( chipProfile.fltGain );
 
@@ -164,7 +164,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{
 				stiEZ.chipProfile = "Editor uses reSID emulation";
 
-				engine.set6581Filter_uCoxAndCap ( 20.0, 470.0 );
+				engine.set6581Filter_uCoxAndCap ( 20.0, false );
 				engine.set6581FilterCurve ( 0.5 );
 				engine.set6581FilterGain ( 1.0 );
 				engine.set6581DigiVolume ( 1.0 );

@@ -391,10 +391,6 @@ public:
 		switch ( offset )
 		{
 			case 0x19: // X value of paddle
-				busValue = 0xff;
-				busValueTtl = modelTTL;
-				break;
-
 			case 0x1a: // Y value of paddle
 				busValue = 0xff;
 				busValueTtl = modelTTL;
@@ -600,12 +596,12 @@ public:
 	/**
 	* Set filter uCox and Cap for 6581 model
 	*
-	* @see Filter6581::setFilter_uCoxAndCap(double)
+	* @see Filter6581::setFilter_uCoxAndCap(double,bool)
 	*/
-	void setFilter6581_uCoxAndCap ( [[ maybe_unused ]] double uCox, [[ maybe_unused ]] double cap ) noexcept
+	void setFilter6581_uCoxAndCap ( [[ maybe_unused ]] double uCox, [[ maybe_unused ]] bool oldCap ) noexcept
 	{
 		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
-			filter.setFilter_uCoxAndCap ( uCox, cap );
+			filter.setFilter_uCoxAndCap ( uCox, oldCap );
 	}
 
 	/**

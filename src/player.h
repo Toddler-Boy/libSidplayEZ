@@ -92,7 +92,7 @@ public:
 	void setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold );
 
 	void set6581FilterCurve ( const double value );
-	void set6581Filter_uCoxAndCap ( const double uCox, const double cap );
+	void set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap );
 	void set6581FilterGain ( const double value );
 	void set6581DigiVolume ( const double value );
 

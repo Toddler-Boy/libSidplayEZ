@@ -418,11 +418,11 @@ public:
 	* Set filter range
 	*
 	* @param newUCox 1...40, 20 is the default value for 6581
-	* @param newCap 450...2400, 470 is the default value for newer boards, older boards used 2200
+	* @param oldCap true/false 450...2400, 470 is the default value for newer boards, older boards used 2200
 	*/
-	void setFilter_uCoxAndCap ( double uCox, double cap ) noexcept
+	void setFilter_uCoxAndCap ( double uCox, bool oldCap ) noexcept
 	{
-		fmc6581.setFilter_uCoxAndCap ( uCox, cap );
+		fmc6581.setFilter_uCoxAndCap ( uCox, oldCap );
 	}
 
 	/**
