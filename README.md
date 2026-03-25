@@ -11,8 +11,8 @@ All future emulation improvements to libsidplayfp will be integrated into this v
 
 Copyright (c) 2000-2001 Simon White  
 Copyright (c) 2007-2010 Antti Lankila  
-Copyright (c) 2010-2025 Leandro Nini <drfiemost@users.sourceforge.net>  
-Copyright (c) 2023-2025 Michael Hartmann  
+Copyright (c) 2010-2026 Leandro Nini <drfiemost@users.sourceforge.net>  
+Copyright (c) 2023-2026 Michael Hartmann  
 
 -----------------------------------------------------------------------------
 
