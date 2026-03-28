@@ -76,30 +76,27 @@ void AudioProfileSelector::setProfiles ( const std::string& csvStr )
 
 void AudioProfileSelector::downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
 {
-	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> * width );
-	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> * width );
-
-	constexpr auto isEqual = [] ( const float a, const float b )
-	{
-		return std::abs ( a - b ) < 1e-6f;
-	};
-
 	// Pure stereo, no down mixing required
-	if ( isEqual ( midGain, 0.0f ) && isEqual ( sideGain, 1.0f ) )
+	if ( width >= ( 1.0f - 1e-6f ) )
 		return;
 
+	constexpr auto	quarterSine = 0.70710678118f;
+
 	// Pure mono
-	if ( isEqual ( midGain, 1.0f ) && isEqual ( sideGain, 0.0f ) )
+	if ( width < 1e-6f )
 	{
 		for ( auto i = 0; i < numSamples; i++ )
 		{
-			const auto	mid = srcDstL[ i ] + srcDstR[ i ];
+			const auto	mid = ( srcDstL[ i ] + srcDstR[ i ] ) * quarterSine;
 
 			srcDstL[ i ] = mid;
 			srcDstR[ i ] = mid;
 		}
 		return;
 	}
+
+	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> * width ) * quarterSine;
+	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> * width ) * quarterSine;
 
 	// Down mix
 	for ( auto i = 0; i < numSamples; i++ )
