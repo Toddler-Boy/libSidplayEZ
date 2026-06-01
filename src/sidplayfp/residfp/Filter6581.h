@@ -387,6 +387,9 @@ public:
 				this->Vlp = bpIntegrator.solve ( this->Vbp );
  			}
 
+			// Leak pre-filter output into unfiltered output
+			Vsum[ 0 ] += Vsum[ 1 ] >> 5;
+
 			// Mix filter outputs
 			{
 				int	VfltSum[ 2 ] = { 0, 0 };
