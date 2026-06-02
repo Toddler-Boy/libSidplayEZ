@@ -367,8 +367,8 @@ public:
 				this->Vlp = bpIntegrator.solve ( this->Vbp );
 			}
 
-			// Leak pre-filter output into unfiltered output
-			Vsum[ 0 ] += Vsum[ 1 ] >> 5;
+			// Leak pre-filter output into unfiltered output (disabled as it causes problems with digi-playback)
+//			Vsum[ 0 ] += Vsum[ 1 ] >> 5;
 
 			// Mix filter outputs
 			{
