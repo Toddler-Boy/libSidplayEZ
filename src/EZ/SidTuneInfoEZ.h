@@ -51,6 +51,7 @@ struct SidTuneInfoEZ
 
 	// e.g. "Martin Galway", "Rob Hubbard", "GoatTracker", etc.
 	std::string		chipProfile;
+	std::string		chipProfileBitmap;
 
 	// Stereo data
 	int				stereoWidth = 0;	// in percent, from 0 to 100

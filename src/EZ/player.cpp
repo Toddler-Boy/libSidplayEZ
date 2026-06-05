@@ -1,7 +1,7 @@
 #include "player.h"
 
-#include "../stringutils.h"
 #include "../sidplayfp/SidTuneInfo.h"
+#include "../stringutils.h"
 
 //-----------------------------------------------------------------------------
 
@@ -158,11 +158,28 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 	// Override chip-profile for Emulation based SID editors (Cheesecutter, GoatTracker, SidWizard etc.)
 	{
-		if ( stiEZ.model[ 0 ] == "6581" && ! stiEZ.playroutineID.empty () )
+		if ( /*stiEZ.model[0] == "6581" &&*/ ! stiEZ.playroutineID.empty () )
 		{
-			auto oldEmulation = [ this ]
+			struct EmuEditors
 			{
-				stiEZ.chipProfile = "Editor uses reSID emulation";
+				std::string	id;
+				std::string	bitmap;
+				std::string	tooltip;
+			};
+
+			static const std::vector<EmuEditors>	editorsUsingEmulation = {
+				{ "CheeseCutter_",		"emu-cheese-cutter",	"CheeseCutter uses reSID emulation" },
+				{ "GoatTracker_V",		"emu-goat-tracker",		"GoatTracker uses reSID emulation" },
+				{ "SidWizard_",			"emu-sid-wizard",		"SidWizard uses reSID emulation" },
+				{ "Hermit/SidWizard_V",	"emu-sid-wizard",		"SidWizard uses reSID emulation" },
+				{ "SidFactory_II/",		"emu-sid-factory",		"SidFactory uses reSID emulation" },
+				{ "DefleMask_",			"emu-defle-mask",		"DefleMask uses reSID emulation" },
+			};
+
+			auto oldEmulation = [ this ] ( const EmuEditors& ed )
+			{
+				stiEZ.chipProfile = ed.tooltip;
+				stiEZ.chipProfileBitmap = ed.bitmap;
 
 				engine.set6581Filter_uCoxAndCap ( 20.0, false );
 				engine.set6581FilterCurve ( 0.5 );
@@ -173,13 +190,9 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 				engine.set6581SawPulseUltra ( false );
 			};
 
-			static const std::vector<std::string>	editorsUsingEmulation = {
-				"CheeseCutter_", "GoatTracker_V", "SidWizard_", "Hermit/SidWizard_V", "SidFactory_II/",
-			};
-
 			for ( const auto& id : editorsUsingEmulation )
-				if ( stiEZ.playroutineID[ 0 ].starts_with ( id ) )
-					oldEmulation ();
+				if ( stiEZ.playroutineID[ 0 ].starts_with ( id.id ) )
+					oldEmulation ( id );
 		}
 	}
 
