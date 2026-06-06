@@ -21,6 +21,8 @@ public:
 	struct settings final
 	{
 		std::string	folder;
+		std::string	bitmap;
+		std::string	tooltip;
 
 		// Filter settings
 		bool		fltCapOld = false;

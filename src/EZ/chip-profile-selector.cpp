@@ -81,6 +81,9 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 
 		settings	setting;
 
+		setting.bitmap = csv.get ( i, "bitmap" );
+		setting.tooltip = csv.get ( i, "comment", name );
+
 		setting.folder = csv.get ( i, "folder" );
 		setting.fltCapOld = stringutils::toLower ( csv.get ( i, "fltCap" ) ) == "old";
 		setting.flt0Dac = csv.get ( i, "flt0Dac", setting.flt0Dac );

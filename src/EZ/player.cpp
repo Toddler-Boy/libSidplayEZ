@@ -145,6 +145,8 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
 
 		stiEZ.chipProfile = profileName;
+		stiEZ.chipProfileBitmap = chipProfile.bitmap;
+		stiEZ.chipProfileTooltip = chipProfile.tooltip;
 
 		engine.set6581Filter_uCoxAndCap ( 20.0, chipProfile.fltCapOld );
 		engine.set6581FilterCurve ( chipProfile.flt0Dac );
@@ -163,23 +165,25 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			struct EmuEditors
 			{
 				std::string	id;
+				std::string	name;
 				std::string	bitmap;
 				std::string	tooltip;
 			};
 
 			static const std::vector<EmuEditors>	editorsUsingEmulation = {
-				{ "CheeseCutter_",		"emu-cheese-cutter",	"CheeseCutter uses reSID emulation" },
-				{ "GoatTracker_V",		"emu-goat-tracker",		"GoatTracker uses reSID emulation" },
-				{ "SidWizard_",			"emu-sid-wizard",		"SidWizard uses reSID emulation" },
-				{ "Hermit/SidWizard_V",	"emu-sid-wizard",		"SidWizard uses reSID emulation" },
-				{ "SidFactory_II/",		"emu-sid-factory",		"SidFactory uses reSID emulation" },
-				{ "DefleMask_",			"emu-defle-mask",		"DefleMask uses reSID emulation" },
+				{ "CheeseCutter_",		"Cheese Cutter",	"emu-cheese-cutter",	"CheeseCutter uses reSID emulation" },
+				{ "GoatTracker_V",		"Goat Tracker",		"emu-goat-tracker",		"GoatTracker uses reSID emulation" },
+				{ "SidWizard_",			"Sid Wizard",		"emu-sid-wizard",		"SidWizard uses reSID emulation" },
+				{ "Hermit/SidWizard_V",	"Sid Wizard",		"emu-sid-wizard",		"SidWizard uses reSID emulation" },
+				{ "SidFactory_II/",		"Sid Factory II",	"emu-sid-factory",		"SidFactory uses reSID emulation" },
+				{ "DefleMask_",			"Defle Mask",		"emu-defle-mask",		"DefleMask uses reSID emulation" },
 			};
 
 			auto oldEmulation = [ this ] ( const EmuEditors& ed )
 			{
-				stiEZ.chipProfile = ed.tooltip;
+				stiEZ.chipProfile = ed.name;
 				stiEZ.chipProfileBitmap = ed.bitmap;
+				stiEZ.chipProfileTooltip = ed.tooltip;
 
 				engine.set6581Filter_uCoxAndCap ( 20.0, false );
 				engine.set6581FilterCurve ( 0.5 );
