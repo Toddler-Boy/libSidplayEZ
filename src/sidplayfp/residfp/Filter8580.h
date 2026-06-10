@@ -349,6 +349,7 @@ public:
 		}
 		else
 		{
+			#if 1
 			// index 0 = unfiltered, index 1 = filtered
 			int	Vsum[ 2 ] = { 0, 0 };
 
@@ -380,6 +381,40 @@ public:
 			}
 
 			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
+			#else
+			const auto	V1 = fmc8580.getNormalizedVoice ( voice1 );
+			const auto	V2 = fmc8580.getNormalizedVoice ( voice2 );
+			const auto	V3 = fmc8580.getNormalizedVoice ( voice3 );
+
+			auto	Vsum = 0;
+			auto	Vmix = 0;
+
+			Vsum += ( this->filterModeRouting & 1 ) ? V1 : this->signalLeak ( V1, this->leakFilter );
+			Vmix += ( this->filterModeRouting & 1 ) ? this->signalLeak ( V1, this->leakMixer ) : V1;
+
+			Vsum += ( this->filterModeRouting & 2 ) ? V2 : this->signalLeak ( V2, this->leakFilter );
+			Vmix += ( this->filterModeRouting & 2 ) ? this->signalLeak ( V2, this->leakMixer ) : V2;
+
+			Vsum += ( this->filterModeRouting & 4 ) ? V3 : this->signalLeak ( V3, this->leakFilter );
+			// Voice 3 is silenced by voice3off if it is not routed through the filter.
+			Vmix += ( this->filterModeRouting & 4 ) ? this->signalLeak ( V3, this->leakMixer ) : ( ( this->filterModeRouting & 0x80 ) ? this->signalLeak ( V3, this->leakV3 ) : V3 );
+
+			Vsum += ( this->filterModeRouting & 8 ) ? this->Ve : this->signalLeak ( this->Ve, this->leakFilter );
+			Vmix += ( this->filterModeRouting & 8 ) ? this->signalLeak ( this->Ve, this->leakMixer ) : this->Ve;
+
+			// Apply filter
+			{
+				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum ];
+				this->Vbp = hpIntegrator.solve ( this->Vhp );
+				this->Vlp = bpIntegrator.solve ( this->Vbp );
+			}
+
+			Vsum += ( this->filterModeRouting & 0x10 ) ? this->Vlp : this->signalLeak ( this->Vlp, this->leakFilter );
+			Vsum += ( this->filterModeRouting & 0x20 ) ? this->Vbp : this->signalLeak ( this->Vbp, this->leakFilter );
+			Vsum += ( this->filterModeRouting & 0x40 ) ? this->Vhp : this->signalLeak ( this->Vhp, this->leakFilter );
+
+			return this->currentVolume[ this->currentMixer[ Vsum ] ];
+			#endif
 		}
 	}
 

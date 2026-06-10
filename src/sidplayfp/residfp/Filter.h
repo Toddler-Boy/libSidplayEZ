@@ -62,6 +62,11 @@ protected:
 	// Filter cutoff frequency
 	unsigned int fc = 0;
 
+	// FIXME just some random numbers
+	double	leakMixer = 0.015;
+	double	leakFilter = 0.01;
+	double	leakV3 = 0.02;
+
 	// Switch voice 3 off
 	int		voice3Mask = UINT_MAX;
 
@@ -87,6 +92,12 @@ protected:
 
 		if constexpr ( useFilter )
 			currentSummer = summer[ Nsum_Nmix >> 4 ];
+	}
+
+	static sidinline int signalLeak ( int input, double leak ) noexcept
+	{
+		auto	leaked = static_cast<int>( leak * ( 1 << 12 ) );
+		return ( ( input - 32767 ) * leaked ) >> 12;
 	}
 
 public:
