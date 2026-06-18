@@ -42,11 +42,16 @@ private:
 	 */
 	static constexpr auto	VOLTAGE_SKEW = 1.01;
 
+	int	voiceDC;
+	int	filterInputDC[ 16 ];	// filterInputDC[i] = popcount(i) * voiceDC, indexed by routing bits 0-3
+
 public:
 	FilterModelConfig8580 ();
 
 public:
 	[[ nodiscard ]] sidinline constexpr double getVref () const noexcept { return Vref * VOLTAGE_SKEW; }
+	[[ nodiscard ]] sidinline int getVoiceDC () const noexcept { return voiceDC; }
+	[[ nodiscard ]] sidinline int getFilterInputDC ( int routingBits ) const noexcept { return filterInputDC[ routingBits ]; }
 
 	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value ) const noexcept
 	{

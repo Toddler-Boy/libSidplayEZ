@@ -125,6 +125,7 @@ public:
 	[[ nodiscard ]] uint16_t** getMixer () noexcept { return mixer; }
 
 	[[ nodiscard ]] sidinline uint16_t getOpampRev ( int i ) const noexcept { return opamp_rev[ i ]; }
+	[[ nodiscard ]] sidinline const uint16_t* getOpampRevPtr () const noexcept { return opamp_rev; }
 	[[ nodiscard ]] sidinline double getVddt () const noexcept { return Vddt; }
 	[[ nodiscard ]] sidinline double getVth () const noexcept { return Vth; }
 

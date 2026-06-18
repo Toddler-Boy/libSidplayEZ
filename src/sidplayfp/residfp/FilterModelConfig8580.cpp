@@ -119,6 +119,7 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 		opamp_voltage_8580,
 		OPAMP_SIZE_8580
 	)
+	, voiceDC ( getNormalizedVoice ( 0.0f ) )
 {
 	// Create lookup tables for gains / summers.
 	auto clBuildSummerTable = [ this ]
@@ -141,6 +142,12 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 		OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
 		buildResonanceTable ( opampModel, resGain );
 	};
+
+	for ( auto i = 0; i < 16; ++i )
+	{
+		const auto bits = ( i & 1 ) + ( ( i >> 1 ) & 1 ) + ( ( i >> 2 ) & 1 ) + ( ( i >> 3 ) & 1 );
+		filterInputDC[ i ] = bits * voiceDC;
+	}
 
 	auto    thdSummer = std::thread ( clBuildSummerTable );
 	auto    thdMixer = std::thread ( clBuildMixerTable );

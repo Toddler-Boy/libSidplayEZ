@@ -64,6 +64,7 @@ private:
 
 	// Voice DC offset LUT
 	double	voiceDC[ 256 ];
+	int		normalizedVoiceDC[ 256 ];	// getNormalizedVoice(0.0f, env) for each envelope value
 
 public:
 	FilterModelConfig6581 ();
@@ -87,6 +88,10 @@ public:
 
 	[[ nodiscard ]] sidinline uint16_t getVcr_nVg ( const int i ) const noexcept {	return vcr_nVg[ i ]; }
 	[[ nodiscard ]] sidinline unsigned int getVcr_n_Ids_term ( const int i ) const noexcept {	return vcr_n_Ids_term[ i ]; }
+	[[ nodiscard ]] sidinline const uint16_t* getVcr_nVgPtr () const noexcept { return vcr_nVg; }
+	[[ nodiscard ]] sidinline const uint16_t* getVcr_n_Ids_termPtr () const noexcept { return vcr_n_Ids_term; }
+
+	[[ nodiscard ]] sidinline int getNormalizedVoiceDC ( unsigned int env ) const noexcept { return normalizedVoiceDC[ env ]; }
 
 	[[ nodiscard ]] sidinline int getNormalizedVoice ( float value, unsigned int env ) const noexcept
 	{

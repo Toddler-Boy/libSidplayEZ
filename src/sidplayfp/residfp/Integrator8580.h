@@ -58,9 +58,12 @@ private:
 
 	const FilterModelConfig8580& fmc;
 
+	const uint16_t* const	opamp_rev;
+
 public:
 	Integrator8580 ( const FilterModelConfig8580& _fmc )
 		: fmc ( _fmc )
+		, opamp_rev ( _fmc.getOpampRevPtr () )
 	{
 		setV ( 1.5 );
 	}
@@ -97,21 +100,24 @@ public:
 
 		// DAC voltages
 		const unsigned int Vgst = nVgt - vx;
-		const unsigned int Vgdt = ( vi < nVgt ) ? nVgt - vi : 0;  // triode/saturation mode
+		const auto	diff = nVgt - vi;
+		const unsigned int Vgdt = unsigned ( diff ) & -unsigned ( diff > 0 );
+//		const unsigned int Vgdt = ( vi < nVgt ) ? nVgt - vi : 0;  // triode/saturation mode
 
 		const unsigned int Vgst_2 = Vgst * Vgst;
 		const unsigned int Vgdt_2 = Vgdt * Vgdt;
 
 		// DAC current, scaled by (1/m)*2^13*m*2^16*m*2^16*2^-15 = m*2^30
-		const auto	n_I_dac = ( n_dac * ( int ( Vgst_2 - Vgdt_2 ) >> 15 ) ) >> 4;
+		const auto	n_I_dac = int ( int64_t ( n_dac ) * int ( Vgst_2 - Vgdt_2 ) >> 19 );
 
 		// Change in capacitor charge.
 		vc += n_I_dac;
 
 		// vx = g(vc)
-		const auto	tmp = ( vc >> 15 ) + ( 1 << 15 );
+//		const auto	tmp = ( vc >> 15 ) + ( 1 << 15 );
+		const auto	tmp = ( vc + ( 1 << 30 ) ) >> 15;
 		assert ( tmp < ( 1 << 16 ) );
-		vx = fmc.getOpampRev ( tmp );
+		vx = opamp_rev[ tmp ];
 
 		// Return vo
 		return vx - ( vc >> 14 );

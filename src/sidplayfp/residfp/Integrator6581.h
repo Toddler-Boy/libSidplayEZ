@@ -167,6 +167,7 @@ private:
 	int vc = 0;
 
 	const double	wlSnake;
+	uint16_t		nSnake;
 
 	#ifdef SLOPE_FACTOR
 		// Slope factor n = 1/k
@@ -180,17 +181,32 @@ private:
 	const uint16_t	nVddt;
 	const uint16_t	nVt;
 	const uint16_t	nVmin;
+	const uint16_t	nVt_nVmin;
 
 	const FilterModelConfig6581& fmc;
+
+	const uint16_t* const	opamp_rev;
+	const uint16_t* const	vcr_nVg;
+	const uint16_t* const	vcr_n_Ids_term;
 
 public:
 	Integrator6581 ( const FilterModelConfig6581& _fmc )
 		: wlSnake ( _fmc.getWL_snake () )
+		, nSnake ( _fmc.getNormalizedCurrentFactor<13> ( _fmc.getWL_snake () ) )
 		, nVddt ( _fmc.getNormalizedValue ( _fmc.getVddt () ) )
 		, nVt ( _fmc.getNormalizedValue ( _fmc.getVth () ) )
 		, nVmin ( _fmc.getNVmin () )
+		, nVt_nVmin ( uint16_t ( _fmc.getNormalizedValue ( _fmc.getVth () ) + _fmc.getNVmin () ) )
 		, fmc ( _fmc )
+		, opamp_rev ( _fmc.getOpampRevPtr () )
+		, vcr_nVg ( _fmc.getVcr_nVgPtr () )
+		, vcr_n_Ids_term ( _fmc.getVcr_n_Ids_termPtr () )
 	{
+	}
+
+	sidinline void refreshSnakeFactor () noexcept
+	{
+		nSnake = fmc.getNormalizedCurrentFactor<13> ( wlSnake );
 	}
 
 	sidinline void setVw ( uint16_t Vw ) noexcept
@@ -215,30 +231,29 @@ public:
 		const unsigned int Vgdt_2 = Vgdt * Vgdt;
 
 		// "Snake" current, scaled by (1/m)*2^13*m*2^16*m*2^16*2^-15 = m*2^30
-		const auto	n_I_snake = fmc.getNormalizedCurrentFactor<13> ( wlSnake ) * ( int ( Vgst_2 - Vgdt_2 ) >> 15 );
+		const auto	n_I_snake = int ( int64_t ( nSnake ) * int ( Vgst_2 - Vgdt_2 ) >> 15 );
 
 		// VCR gate voltage.       // Scaled by m*2^16
 		// Vg = Vddt - sqrt(((Vddt - Vw)^2 + Vgdt^2)/2)
-		const auto	nVg = int ( fmc.getVcr_nVg ( ( nVddt_Vw_2 + ( Vgdt_2 >> 1 ) ) >> 16 ) );
+		const auto	nVg = int ( vcr_nVg[ ( nVddt_Vw_2 + ( Vgdt_2 >> 1 ) ) >> 16 ] );
 
 		#ifdef SLOPE_FACTOR
 			const double nVp = static_cast<double>( nVg - nVt ) / n; // Pinch-off voltage
 			const int kVgt = static_cast<int>( nVp + 0.5 ) - nVmin;
 		#else
-			const int kVgt = ( nVg - nVt ) - nVmin;
+			const int kVgt = nVg - nVt_nVmin;
 		#endif
 
 		// VCR voltages for EKV model table lookup.
 		const int	kVgt_Vs = ( kVgt - vx ) + ( 1 << 15 );
 		assert ( ( kVgt_Vs >= 0 ) && ( kVgt_Vs < ( 1 << 16 ) ) );
-		const int	kVgt_Vd = ( kVgt - vi ) + ( 1 << 15 );
+		const int	kVgt_Vd = kVgt_Vs + ( vx - vi );
 		assert ( ( kVgt_Vd >= 0 ) && ( kVgt_Vd < ( 1 << 16 ) ) );
 
 		// VCR current, scaled by m*2^15*2^15 = m*2^30
-		const auto	If = fmc.getVcr_n_Ids_term ( kVgt_Vs ) << 15;
-		const auto	Ir = fmc.getVcr_n_Ids_term ( kVgt_Vd ) << 15;
-
 		#ifdef SLOPE_FACTOR
+			const auto	If = vcr_n_Ids_term[ kVgt_Vs ] << 15;
+			const auto	Ir = vcr_n_Ids_term[ kVgt_Vd ] << 15;
 			const double iVcr = static_cast<double>( If - Ir );
 			const int n_I_vcr = static_cast<int>( iVcr * n );
 
@@ -249,16 +264,16 @@ public:
 			n = 1.0 + ( gamma / ( 2.0 * sqrt ( Vp + phi + 4.0 * fmc.getUt () ) ) );
 			assert ( ( n > 1.2 ) && ( n < 1.8 ) );
 		#else
-			const int n_I_vcr = If - Ir;
+			const int n_I_vcr = ( int ( vcr_n_Ids_term[ kVgt_Vs ] ) - int ( vcr_n_Ids_term[ kVgt_Vd ] ) ) << 15;
 		#endif
 
 		// Change in capacitor charge.
 		vc += n_I_snake + n_I_vcr;
 
 		// vx = g(vc)
-		const auto	tmp = ( vc >> 15 ) + ( 1 << 15 );
+		const auto	tmp = ( vc + ( 1 << 30 ) ) >> 15;
 		assert ( tmp < ( 1 << 16 ) );
-		vx = fmc.getOpampRev ( tmp );
+		vx = opamp_rev[ tmp ];
 
 		// Return vo
 		return vx - ( vc >> 14 );

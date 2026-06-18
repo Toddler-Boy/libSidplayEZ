@@ -101,7 +101,10 @@ void FilterModelConfig6581::setVoiceDCDrift ( double drift ) noexcept
 	envDac.kinkedDac ( true );
 
 	for ( auto i = 0; i < 256; ++i )
+	{
 		voiceDC[ i ] = 5.0 * VOLTAGE_SKEW + ( drift * 0.2143 * envDac.getOutput ( i ) );
+		normalizedVoiceDC[ i ] = int ( N16 * ( voiceDC[ i ] - vmin ) );
+	}
 }
 //-----------------------------------------------------------------------------
 

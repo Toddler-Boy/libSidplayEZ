@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 * This file is part of libsidplayfp, a SID player engine.
 *
@@ -337,47 +337,49 @@ public:
 
 	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3 ) noexcept
 	{
+		constexpr auto	leakMutedV3 = static_cast<int>( 0.02 * ( 1 << 12 ) );	// muted voice3 transistor leak
+
+		const auto	V3 = fmc8580.getNormalizedVoice ( voice3 );
+		const int	v3FactorArr[ 2 ] = { 1 << 12, leakMutedV3 };
+
 		if constexpr ( ! useFilter )
 		{
- 			// Mixer only
-			const auto	Vsum  = fmc8580.getNormalizedVoice ( voice1 )
- 							  + fmc8580.getNormalizedVoice ( voice2 )
- 							  + ( fmc8580.getNormalizedVoice ( voice3 ) & this->voice3Mask )
-							  + this->Ve;
+			const auto	Vsum = fmc8580.getNormalizedVoice ( voice1 )
+							 + fmc8580.getNormalizedVoice ( voice2 )
+							 + ( ( V3 * v3FactorArr[ this->voice3LeakIdx ] ) >> 12 )
+							 + this->Ve;
 
 			return this->currentVolume[ this->currentMixer[ Vsum ] ];
 		}
 		else
 		{
-			// index 0 = unfiltered, index 1 = filtered
+			constexpr auto	leakMixerInput   = static_cast<int>( 0.04 * ( 1 << 12 ) );	// filter input bleed into mixer
+
+			const auto	routing  = this->filterModeRouting ^ 0x70;
+
+			// index 0 = unfiltered (mixer), index 1 = filtered (filter input)
 			int	Vsum[ 2 ] = { 0, 0 };
 
-			// Mix the voices according to the filter mode
-			{
-				Vsum[	this->filterModeRouting		   & 1 ]  = fmc8580.getNormalizedVoice ( voice1 );
-				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc8580.getNormalizedVoice ( voice2 );
-				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc8580.getNormalizedVoice ( voice3 ) & this->voice3Mask;
-				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
-			}
+			Vsum[   routing        & 1 ]  = fmc8580.getNormalizedVoice ( voice1 );
+			Vsum[ ( routing >> 1 ) & 1 ] += fmc8580.getNormalizedVoice ( voice2 );
+			Vsum[ ( routing >> 2 ) & 1 ] += ( V3 * v3FactorArr[ this->voice3LeakIdx ] ) >> 12;
+			Vsum[ ( routing >> 3 ) & 1 ] += this->Ve;
 
-			// Apply filter
-			{
-				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
-				this->Vbp = hpIntegrator.solve ( this->Vhp );
-				this->Vlp = bpIntegrator.solve ( this->Vbp );
-			}
+			// Leak AC component of filter input into mixer
+			Vsum[ 0 ] += ( ( Vsum[ 1 ] - fmc8580.getFilterInputDC ( routing & 0x0F ) ) * leakMixerInput ) >> 12;
 
-			// Leak pre-filter output into unfiltered output (disabled as it causes problems with digi-playback)
-//			Vsum[ 0 ] += Vsum[ 1 ] >> 5;
+			// Apply filter (local copies prevent aliasing through this-> which forces memory reloads)
+			const auto	lVhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
+			const auto	lVbp = hpIntegrator.solve ( lVhp );
+			const auto	lVlp = bpIntegrator.solve ( lVbp );
+			this->Vhp = lVhp;
+			this->Vbp = lVbp;
+			this->Vlp = lVlp;
 
 			// Mix filter outputs
-			{
-				const auto	fltMd = ( this->filterModeRouting >> 4 ) ^ 0x07;
-
-				Vsum[	fltMd		 & 1 ] += this->Vlp;
-				Vsum[ ( fltMd >> 1 ) & 1 ] += this->Vbp;
-				Vsum[ ( fltMd >> 2 ) & 1 ] += this->Vhp;
-			}
+			Vsum[ ( routing >> 4 ) & 1 ] += lVlp;
+			Vsum[ ( routing >> 5 ) & 1 ] += lVbp;
+			Vsum[ ( routing >> 6 ) & 1 ] += lVhp;
 
 			return this->currentVolume[ this->currentMixer[ Vsum[ 0 ] ] ];
 		}

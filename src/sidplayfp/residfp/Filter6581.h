@@ -357,46 +357,69 @@ public:
 
 	[[ nodiscard ]] sidinline uint16_t clock ( float voice1, float voice2, float voice3, uint8_t env1, uint8_t env2, uint8_t env3 ) noexcept
 	{
+		constexpr int	leakMutedV3 = static_cast<int>( 0.02 * ( 1 << 12 ) );	// muted voice3 transistor leak
+
+		const auto	dc3 = fmc6581.getNormalizedVoiceDC ( env3 );
+		const auto	V3 = fmc6581.getNormalizedVoice ( voice3, env3 );
+		const int	v3FactorArr[ 2 ] = { 1 << 12, leakMutedV3 };
+
 		if constexpr ( ! useFilter )
 		{
-			// Mixer only
-			const auto	Vsum  = fmc6581.getNormalizedVoice ( voice1, env1 )
-							  + fmc6581.getNormalizedVoice ( voice2, env2 )
-							  + ( fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask )
-							  + this->Ve;
+			const auto	Vsum = fmc6581.getNormalizedVoice ( voice1, env1 )
+							 + fmc6581.getNormalizedVoice ( voice2, env2 )
+							 + ( ( V3 * v3FactorArr[ this->voice3LeakIdx ] ) >> 12 )
+							 + this->Ve;
 
 			return this->currentVolume[ this->currentMixer[ Vsum ] ];
 		}
 		else
 		{
-			// index 0 = unfiltered, index 1 = filtered
-			int	Vsum[ 2 ] = { 0, 0 };
+			constexpr int	leakInputInt  = static_cast<int>( 0.06 * ( 1 << 12 ) );	// filter input bleed into mixer
 
-			// Mix the voices according to the filter mode
-			{
-				Vsum[	this->filterModeRouting		   & 1 ]  = fmc6581.getNormalizedVoice ( voice1, env1 );
-				Vsum[ ( this->filterModeRouting >> 1 ) & 1 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
-				Vsum[ ( this->filterModeRouting >> 2 ) & 1 ] += fmc6581.getNormalizedVoice ( voice3, env3 ) & this->voice3Mask;
-				Vsum[ ( this->filterModeRouting >> 3 ) & 1 ] += this->Ve;
-			}
+			const auto	routing = this->filterModeRouting;
+
+			const auto	dc1 = fmc6581.getNormalizedVoiceDC ( env1 );
+			const auto	dc2 = fmc6581.getNormalizedVoiceDC ( env2 );
+//			const auto	dcE = fmc6581.getNormalizedVoiceDC ( 0 );
+
+			// index 0 = unfiltered (mixer), index 1 = filtered (filter input)
+			// filterInputDC is accumulated alongside Vsum to reuse the extracted flt bits
+			int	Vsum[ 2 ] = { 0, 0 };
+			int	filterInputDC = 0;
+
+			const auto	flt1 = routing & 1;
+			Vsum[ flt1 ]  = fmc6581.getNormalizedVoice ( voice1, env1 );
+			filterInputDC += dc1 & -flt1;
+
+			const auto	flt2 = ( routing >> 1 ) & 1;
+			Vsum[ flt2 ] += fmc6581.getNormalizedVoice ( voice2, env2 );
+			filterInputDC += dc2 & -flt2;
+
+			const auto	flt3 = ( routing >> 2 ) & 1;
+			Vsum[ flt3 ] += ( V3 * v3FactorArr[ this->voice3LeakIdx ] ) >> 12;
+			filterInputDC += dc3 & -flt3;
+
+			const auto	fltE = ( routing >> 3 ) & 1;
+			Vsum[ fltE ] += this->Ve;
+//			filterInputDC += dcE & -fltE;	// seems unecessary
+
+			Vsum[ 0 ] += ( ( Vsum[ 1 ] - filterInputDC ) * leakInputInt ) >> 12;
 
 			// Apply filter
-			{
-				this->Vhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
-				this->Vbp = hpIntegrator.solve ( this->Vhp );
-				this->Vlp = bpIntegrator.solve ( this->Vbp );
- 			}
-
-			// Leak pre-filter output into unfiltered output (disabled as it causes problems with digi-playback)
-//			Vsum[ 0 ] += Vsum[ 1 ] >> 5;
+			const auto	lVhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
+			const auto	lVbp = hpIntegrator.solve ( lVhp );
+			const auto	lVlp = bpIntegrator.solve ( lVbp );
+			this->Vhp = lVhp;
+			this->Vbp = lVbp;
+			this->Vlp = lVlp;
 
 			// Mix filter outputs
 			{
 				int	VfltSum[ 2 ] = { 0, 0 };
 
-				VfltSum[ ( this->filterModeRouting >> 4 ) & 1 ]  = this->Vlp;
-				VfltSum[ ( this->filterModeRouting >> 5 ) & 1 ] += this->Vbp;
-				VfltSum[ ( this->filterModeRouting >> 6 ) & 1 ] += this->Vhp;
+				VfltSum[ ( routing >> 4 ) & 1 ]  = lVlp;
+				VfltSum[ ( routing >> 5 ) & 1 ] += lVbp;
+				VfltSum[ ( routing >> 6 ) & 1 ] += lVhp;
 
 				Vsum[ 0 ] += ( VfltSum[ 1 ] * this->filterGain + this->filterOffset ) >> 12;
 			}
@@ -426,6 +449,8 @@ public:
 	void setFilter_uCoxAndCap ( double uCox, bool oldCap ) noexcept
 	{
 		fmc6581.setFilter_uCoxAndCap ( uCox, oldCap );
+		hpIntegrator.refreshSnakeFactor ();
+		bpIntegrator.refreshSnakeFactor ();
 	}
 
 	/**
