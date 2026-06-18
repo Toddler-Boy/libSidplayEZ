@@ -299,6 +299,11 @@ public:
 		, hpIntegrator ( fmc8580 )
 		, bpIntegrator ( fmc8580 )
 	{
+		// The Filter base constructor ran before fmc8580 was constructed, so
+		// getVolume()/getResonance() returned nullptr at that point.  Re-fetch
+		// now that fmc8580 (and its shared tables) are fully initialised.
+		this->volume    = fmc8580.getVolume ();
+		this->resonance = fmc8580.getResonance ();
 		/**
 		* W/L ratio of frequency DAC bit 0, other bits are proportional.
 		* When no bits are selected a resistance with half W/L ratio is selected.

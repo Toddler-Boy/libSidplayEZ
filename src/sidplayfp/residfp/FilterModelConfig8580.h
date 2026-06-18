@@ -21,6 +21,9 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <memory>
+#include <mutex>
+
 #include "FilterModelConfig.h"
 
 namespace reSIDfp
@@ -41,6 +44,12 @@ private:
 	 * Power bricks generate voltages slightly out of spec
 	 */
 	static constexpr auto	VOLTAGE_SKEW = 1.01;
+
+	// ------------------------------------------------------------------
+	// Shared static tables (built once, reused by all instances).
+	// ------------------------------------------------------------------
+	static std::shared_ptr<SharedFilterTables>	s_sharedTables;
+	static std::once_flag						s_tablesOnce;
 
 	int	voiceDC;
 	int	filterInputDC[ 16 ];	// filterInputDC[i] = popcount(i) * voiceDC, indexed by routing bits 0-3

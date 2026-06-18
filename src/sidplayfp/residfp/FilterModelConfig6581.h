@@ -21,11 +21,24 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <memory>
+#include <mutex>
+
 #include "FilterModelConfig.h"
 #include "Dac.h"
 
 namespace reSIDfp
 {
+
+/**
+* Extends SharedFilterTables with the 6581-specific vcr_nVg table, which
+* depends only on the fixed opamp curve and supply voltages.
+*/
+struct SharedFilterTables6581 : public SharedFilterTables
+{
+	uint16_t	vcr_nVg[ 1 << 16 ];
+};
+
 
 /**
 * Calculate parameters for 6581 filter emulation.
@@ -53,18 +66,32 @@ private:
 	// DAC lookup table
 	Dac	dac;
 
-	// VCR - 6581 only.
-	//@{
-	uint16_t	vcr_nVg[ 1 << 16 ];
-	uint16_t	vcr_n_Ids_term[ 1 << 16 ];
-	//@}
+	// ------------------------------------------------------------------
+	// Shared static tables (built once, reused by all instances with the
+	// same configuration).  Protected by s_tablesOnce.
+	// ------------------------------------------------------------------
+	static std::shared_ptr<SharedFilterTables6581>	s_sharedTables;
+	static std::once_flag							s_tablesOnce;
+
+	// Typed alias for the shared block (avoids repeated static_cast).
+	SharedFilterTables6581*	m_tables6581 = nullptr;
+
+	// Points into m_tables6581->vcr_nVg; set after assignSharedTables().
+	const uint16_t*	vcr_nVg_ptr = nullptr;
+
+	// ------------------------------------------------------------------
+	// Per-instance tables (depend on tunable parameters).
+	// ------------------------------------------------------------------
+
+	// VCR drain-current term — rebuilt by setFilter_uCoxAndCap / setVcrSaturation.
+	uint16_t	vcr_n_Ids_term[ 1 << 16 ];	//-V730_NOINIT initialized in constructor
 
 	double	vcrSaturation = 1.0;	// 0.0 = linear VCR, 1.0 = full EKV nonlinearity
 
 	void clFilterVcrIds () noexcept;
 	[[ nodiscard ]] sidinline double getDacZero ( double adjustment ) const noexcept {	return dac_zero + adjustment;	}
 
-	// Voice DC offset LUT
+	// Voice DC offset LUT (depends on drift parameter).
 	double	voiceDC[ 256 ];
 	int		normalizedVoiceDC[ 256 ];	// getNormalizedVoice(0.0f, env) for each envelope value
 
@@ -95,9 +122,9 @@ public:
 	[[ nodiscard ]] uint16_t* getDAC ( double adjustment ) const noexcept;
 	[[ nodiscard ]] double getWL_snake () const noexcept { return WL_snake; }
 
-	[[ nodiscard ]] sidinline uint16_t getVcr_nVg ( const int i ) const noexcept {	return vcr_nVg[ i ]; }
+	[[ nodiscard ]] sidinline uint16_t getVcr_nVg ( const int i ) const noexcept {	return vcr_nVg_ptr[ i ]; }
 	[[ nodiscard ]] sidinline unsigned int getVcr_n_Ids_term ( const int i ) const noexcept {	return vcr_n_Ids_term[ i ]; }
-	[[ nodiscard ]] sidinline const uint16_t* getVcr_nVgPtr () const noexcept { return vcr_nVg; }
+	[[ nodiscard ]] sidinline const uint16_t* getVcr_nVgPtr () const noexcept { return vcr_nVg_ptr; }
 	[[ nodiscard ]] sidinline const uint16_t* getVcr_n_Ids_termPtr () const noexcept { return vcr_n_Ids_term; }
 
 	[[ nodiscard ]] sidinline int getNormalizedVoiceDC ( unsigned int env ) const noexcept { return normalizedVoiceDC[ env ]; }

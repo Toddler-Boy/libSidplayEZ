@@ -107,6 +107,12 @@ constexpr Spline::Point opamp_voltage_8580[ OPAMP_SIZE_8580 ] =
 	{  5.10,  1.30 },
 	{  8.91,  1.30 },  // Approximate end of actual range
 };
+
+// Static shared-table cache: one set of tables for all 8580 instances.
+// s_tablesOnce guarantees thread-safe single build.
+std::shared_ptr<SharedFilterTables>	FilterModelConfig8580::s_sharedTables;
+std::once_flag						FilterModelConfig8580::s_tablesOnce;
+
 //-----------------------------------------------------------------------------
 
 FilterModelConfig8580::FilterModelConfig8580 () :
@@ -121,43 +127,64 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 	)
 	, voiceDC ( getNormalizedVoice ( 0.0f ) )
 {
-	// Create lookup tables for gains / summers.
-	auto clBuildSummerTable = [ this ]
-	{
-		OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
-		buildSummerTable ( opampModel );
-	};
-	auto clBuildMixerTable = [ this ]
-	{
-		OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
-		buildMixerTable ( opampModel, 8.0 / 5.0 );
-	};
-	auto clBuildVolumeTable = [ this ]
-	{
-		OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
-		buildVolumeTable ( opampModel, 16.0 );
-	};
-	auto clBuildResonanceTable = [ this ]
-	{
-		OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
-		buildResonanceTable ( opampModel, resGain );
-	};
-
 	for ( auto i = 0; i < 16; ++i )
 	{
 		const auto bits = ( i & 1 ) + ( ( i >> 1 ) & 1 ) + ( ( i >> 2 ) & 1 ) + ( ( i >> 3 ) & 1 );
 		filterInputDC[ i ] = bits * voiceDC;
 	}
 
-	auto    thdSummer = std::thread ( clBuildSummerTable );
-	auto    thdMixer = std::thread ( clBuildMixerTable );
-	auto    thdVolume = std::thread ( clBuildVolumeTable );
-	auto    thdResonance = std::thread ( clBuildResonanceTable );
+	// Build shared tables exactly once across all instances.
+	// The call_once lambda runs in whichever thread constructs the first instance;
+	// all other threads block until construction is complete, then reuse the result.
+	std::call_once ( s_tablesOnce, [this]
+	{
+		auto newTbls = std::make_shared<SharedFilterTables> ();
 
-	thdSummer.join ();
-	thdMixer.join ();
-	thdVolume.join ();
-	thdResonance.join ();
+		// Wire this instance so that the build helpers write into newTbls.
+		assignSharedTables ( newTbls );
+
+		buildOpAmpRevTable ( opamp_voltage_8580, OPAMP_SIZE_8580 );
+
+		// Create lookup tables for gains / summers.
+		auto clBuildSummerTable = [ this ]
+		{
+			OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
+			buildSummerTable ( opampModel );
+		};
+		auto clBuildMixerTable = [ this ]
+		{
+			OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
+			buildMixerTable ( opampModel, 8.0 / 5.0 );
+		};
+		auto clBuildVolumeTable = [ this ]
+		{
+			OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
+			buildVolumeTable ( opampModel, 16.0 );
+		};
+		auto clBuildResonanceTable = [ this ]
+		{
+			OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
+			buildResonanceTable ( opampModel, resGain );
+		};
+
+		auto    thdSummer = std::thread ( clBuildSummerTable );
+		auto    thdMixer = std::thread ( clBuildMixerTable );
+		auto    thdVolume = std::thread ( clBuildVolumeTable );
+		auto    thdResonance = std::thread ( clBuildResonanceTable );
+
+		thdSummer.join ();
+		thdMixer.join ();
+		thdVolume.join ();
+		thdResonance.join ();
+
+		// Publish to the static cache so subsequent instances can reuse.
+		s_sharedTables = std::move ( newTbls );
+	} );
+
+	// If this instance was not the builder (call_once ran in another thread),
+	// wire up the pointers to the already-built shared tables.
+	if ( ! m_tables )
+		assignSharedTables ( s_sharedTables );
 }
 //-----------------------------------------------------------------------------
 

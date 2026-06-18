@@ -22,12 +22,44 @@
 */
 
 #include <cassert>
+#include <memory>
 
 #include "OpAmp.h"
 #include "Spline.h"
 
 namespace reSIDfp
 {
+
+/**
+* Heap-allocated lookup tables shared across FilterModelConfig instances with
+* identical configuration.  Pure data — no pointer bookkeeping here.
+* FilterModelConfig keeps its own small embedded pointer arrays (mixer[8],
+* summer[5]) that are filled in by assignSharedTables() to point into this
+* block; that keeps the addresses returned by getMixer()/getSummer() stable
+* from the moment the FilterModelConfig object is allocated.
+*/
+struct SharedFilterTables
+{
+	uint16_t	mixer0[ 1 ];
+	uint16_t	mixer1[ 1 << 16 ];
+	uint16_t	mixer2[ 2 << 16 ];
+	uint16_t	mixer3[ 3 << 16 ];
+	uint16_t	mixer4[ 4 << 16 ];
+	uint16_t	mixer5[ 5 << 16 ];
+	uint16_t	mixer6[ 6 << 16 ];
+	uint16_t	mixer7[ 7 << 16 ];
+
+	uint16_t	summer2[ 2 << 16 ];
+	uint16_t	summer3[ 3 << 16 ];
+	uint16_t	summer4[ 4 << 16 ];
+	uint16_t	summer5[ 5 << 16 ];
+	uint16_t	summer6[ 6 << 16 ];
+
+	uint16_t	volume[ 16 ][ 1 << 16 ];
+	uint16_t	resonance[ 16 ][ 1 << 16 ];
+	uint16_t	opamp_rev[ 1 << 16 ];
+};
+
 
 class FilterModelConfig
 {
@@ -64,33 +96,24 @@ protected:
 	// Current factor coefficient for op-amp integrators
 	double currFactorCoeff;
 
-	// Lookup tables for gain and summer op-amps in output stage / filter
-	//@{
-	uint16_t	mixer0[ 1 ];				//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer1[ 1 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer2[ 2 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer3[ 3 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer4[ 4 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer5[ 5 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer6[ 6 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	mixer7[ 7 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
+	// Shared heap-allocated lookup tables.
+	// Owned via shared_ptr so multiple instances with identical config reuse
+	// the same allocation.  Set by derived-class constructor via assignSharedTables().
+	std::shared_ptr<SharedFilterTables>	m_tables;
 
-	uint16_t*	mixer[ 8 ] = { mixer0, mixer1, mixer2, mixer3, mixer4, mixer5, mixer6, mixer7 };
-
-	uint16_t	summer2[ 2 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	summer3[ 3 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	summer4[ 4 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	summer5[ 5 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	summer6[ 6 << 16 ];			//-V730_NOINIT this is initialized in the derived class constructor
-
-	uint16_t*	summer[ 5 ] = { summer2, summer3, summer4, summer5, summer6 };
-
-	uint16_t	volume[ 16 ][1 << 16];		//-V730_NOINIT this is initialized in the derived class constructor
-	uint16_t	resonance[ 16 ][ 1 << 16];	//-V730_NOINIT this is initialized in the derived class constructor
-	//@}
-
-	// Reverse op-amp transfer function
-	uint16_t	opamp_rev[ 1 << 16 ];	//-V730_NOINIT this is initialized in the derived class constructor
+	// Per-instance pointer arrays whose ADDRESSES are stable from the moment
+	// the FilterModelConfig object is allocated.  Their VALUES are filled in
+	// by assignSharedTables() to redirect into m_tables.
+	//
+	// Keeping these as embedded arrays (not a raw uint16_t**) is essential:
+	// Filter's base-class constructor calls getMixer()/getSummer() while the
+	// derived FilterModelConfig subobject is still uninitialised (it is a
+	// member that comes after the base class in the initialiser list of
+	// Filter6581/Filter8580).  Returning the address of an embedded array is
+	// safe even before construction; returning the value of a scalar pointer
+	// member would be garbage at that point.
+	uint16_t*	mixer[ 8 ]  = {};	// zero-initialised; filled by assignSharedTables()
+	uint16_t*	summer[ 5 ] = {};	// zero-initialised; filled by assignSharedTables()
 
 private:
  	double			rndBuffer[ 4096 ];
@@ -111,6 +134,14 @@ protected:
 	FilterModelConfig ( double vvr, double c, double vdd, double vth, double ucox, const Spline::Point* opamp_voltage, int opamp_size );
 	~FilterModelConfig () = default;
 
+	// Transfer ownership of a SharedFilterTables block and wire up the
+	// mixer/summer pointer arrays.  Must be called before any build method.
+	void assignSharedTables ( std::shared_ptr<SharedFilterTables> tables ) noexcept;
+
+	// Build the opamp_rev table into m_tables.  Extracted from the original
+	// base constructor so that derived classes can call it after assignSharedTables().
+	void buildOpAmpRevTable ( const Spline::Point* opamp_voltage, int opamp_size ) noexcept;
+
 	void setUCoxAndCap ( double new_uCox, double new_C ) noexcept;
 
 	void buildSummerTable ( OpAmp& opAmp ) noexcept;
@@ -119,13 +150,17 @@ protected:
 	void buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept;
 
 public:
-	[[ nodiscard ]] uint16_t* getVolume () noexcept { return &volume[ 0 ][ 0 ]; }
-	[[ nodiscard ]] uint16_t* getResonance () noexcept { return &resonance[ 0 ][ 0 ]; }
+	// Returns null if called before assignSharedTables() (e.g. from Filter's base
+	// constructor while the FilterModelConfig subobject is still uninitialised).
+	// Filter6581/8580 re-fetch these into their protected base members once the
+	// fmc member is fully constructed.
+	[[ nodiscard ]] uint16_t* getVolume () noexcept { return m_tables ? &m_tables->volume[ 0 ][ 0 ] : nullptr; }
+	[[ nodiscard ]] uint16_t* getResonance () noexcept { return m_tables ? &m_tables->resonance[ 0 ][ 0 ] : nullptr; }
 	[[ nodiscard ]] uint16_t** getSummer () noexcept { return summer; }
 	[[ nodiscard ]] uint16_t** getMixer () noexcept { return mixer; }
 
-	[[ nodiscard ]] sidinline uint16_t getOpampRev ( int i ) const noexcept { return opamp_rev[ i ]; }
-	[[ nodiscard ]] sidinline const uint16_t* getOpampRevPtr () const noexcept { return opamp_rev; }
+	[[ nodiscard ]] sidinline uint16_t getOpampRev ( int i ) const noexcept { return m_tables->opamp_rev[ i ]; }
+	[[ nodiscard ]] sidinline const uint16_t* getOpampRevPtr () const noexcept { return m_tables->opamp_rev; }
 	[[ nodiscard ]] sidinline double getVddt () const noexcept { return Vddt; }
 	[[ nodiscard ]] sidinline double getVth () const noexcept { return Vth; }
 
@@ -139,7 +174,7 @@ public:
  		return uint16_t ( tmp );
 	}
 
-	template<int N> 
+	template<int N>
 	[[ nodiscard ]] sidinline uint16_t getNormalizedCurrentFactor ( double wl ) const noexcept
 	{
 		const auto	tmp = ( 1 << N ) * currFactorCoeff * wl;

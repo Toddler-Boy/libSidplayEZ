@@ -345,6 +345,12 @@ public:
 		, hpIntegrator ( fmc6581 )
 		, bpIntegrator ( fmc6581 )
 	{
+		// The Filter base constructor ran before fmc6581 was constructed, so
+		// getVolume()/getResonance() returned nullptr at that point.  Re-fetch
+		// now that fmc6581 (and its shared tables) are fully initialised.
+		this->volume    = fmc6581.getVolume ();
+		this->resonance = fmc6581.getResonance ();
+
 		updatedCenterFrequency ();
 
 		input ( 0 );

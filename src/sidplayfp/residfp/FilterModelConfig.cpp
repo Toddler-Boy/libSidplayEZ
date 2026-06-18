@@ -51,6 +51,38 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 
 	setUCoxAndCap ( ucox, c );
 
+	// opamp_rev and all lookup tables are built by derived-class constructors
+	// after they have created and assigned a SharedFilterTables instance.
+}
+//-----------------------------------------------------------------------------
+
+void FilterModelConfig::assignSharedTables ( std::shared_ptr<SharedFilterTables> tables ) noexcept
+{
+	m_tables = std::move ( tables );
+
+	// Fill the embedded pointer arrays to redirect into the shared data block.
+	// The arrays themselves live inside this object, so their addresses remain
+	// stable regardless of when assignSharedTables() is called relative to
+	// other construction steps — getMixer()/getSummer() are always safe.
+	mixer[ 0 ] = m_tables->mixer0;
+	mixer[ 1 ] = m_tables->mixer1;
+	mixer[ 2 ] = m_tables->mixer2;
+	mixer[ 3 ] = m_tables->mixer3;
+	mixer[ 4 ] = m_tables->mixer4;
+	mixer[ 5 ] = m_tables->mixer5;
+	mixer[ 6 ] = m_tables->mixer6;
+	mixer[ 7 ] = m_tables->mixer7;
+
+	summer[ 0 ] = m_tables->summer2;
+	summer[ 1 ] = m_tables->summer3;
+	summer[ 2 ] = m_tables->summer4;
+	summer[ 3 ] = m_tables->summer5;
+	summer[ 4 ] = m_tables->summer6;
+}
+//-----------------------------------------------------------------------------
+
+void FilterModelConfig::buildOpAmpRevTable ( const Spline::Point* opamp_voltage, int opamp_size ) noexcept
+{
 	// Convert op-amp voltage transfer to 16 bit values
 	std::vector<Spline::Point> scaled_voltage ( opamp_size );
 
@@ -72,7 +104,7 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 		// When interpolating outside range the first elements may be negative
 		const auto	tmp = out.x > 0.0 ? out.x : 0.0;
 		assert ( tmp < 65535.5 );
-		opamp_rev[ x ] = uint16_t ( tmp + 0.5 );
+		m_tables->opamp_rev[ x ] = uint16_t ( tmp + 0.5 );
 	}
 }
 //-----------------------------------------------------------------------------
@@ -159,7 +191,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) 
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16; // vmin .. vmax
-			volume[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ) );
+			m_tables->volume[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ) );
 		}
 	}
 }
@@ -177,7 +209,7 @@ void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double re
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16;	// vmin .. vmax
-			resonance[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ) );
+			m_tables->resonance[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ) );
 		}
 	}
 }

@@ -77,6 +77,12 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 	{ 10.00,  0.81 },
 	{ 10.31,  0.81 },  // Approximate end of actual range
 };
+
+// Static shared-table cache: one set of tables for all 6581 instances with
+// default configuration.  s_tablesOnce guarantees thread-safe single build.
+std::shared_ptr<SharedFilterTables6581>	FilterModelConfig6581::s_sharedTables;
+std::once_flag							FilterModelConfig6581::s_tablesOnce;
+
 //-----------------------------------------------------------------------------
 
 void FilterModelConfig6581::setFilter_uCoxAndCap ( double newUCox, bool oldCap ) noexcept
@@ -128,60 +134,89 @@ FilterModelConfig6581::FilterModelConfig6581 ()
 
 	setVoiceDCDrift ( 0.0 );
 
-	// Create lookup tables for gains / summers
-	auto clBuildSummerTable = [ this ]
+	// Build shared tables exactly once across all instances.
+	// The call_once lambda runs in whichever thread constructs the first instance;
+	// all other threads block until construction is complete, then reuse the result.
+	std::call_once ( s_tablesOnce, [this]
 	{
-		OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
-		buildSummerTable ( opampModel );
-	};
-	auto clBuildMixerTable = [ this ]
-	{
-		OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
-		buildMixerTable ( opampModel, 8.0 / 6.0 );
-	};
-	auto clBuildVolumeTable = [ this ]
-	{
-		OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
-		buildVolumeTable ( opampModel, 12.0 );
-	};
-	auto clBuildResonanceTable = [ this ]
-	{
-		OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
+		auto newTbls = std::make_shared<SharedFilterTables6581> ();
 
-		// build temp n table
-		double	resonance_n[ 16 ];
-		for ( auto n8 = 0; n8 < 16; n8++ )
-			resonance_n[ n8 ] = ( ~n8 & 0xF ) / 8.0;
+		// Wire this instance to newTbls so that the build helpers can write
+		// through the mixer/summer pointer arrays in the base class.
+		assignSharedTables ( newTbls );
+		m_tables6581 = newTbls.get ();
+		vcr_nVg_ptr  = newTbls->vcr_nVg;
 
-		buildResonanceTable ( opampModel, resonance_n );
-	};
-	auto clFilterVcrVg = [ this ]
-	{
-		const auto  nVddt = N16 * ( Vddt - vmin );
+		buildOpAmpRevTable ( opamp_voltage_6581, OPAMP_SIZE_6581 );
 
-		for ( auto i = 0u; i < ( 1 << 16 ); i++ )
+		// Create lookup tables for gains / summers
+		auto clBuildSummerTable = [ this ]
 		{
-			// The table index is right-shifted 16 times in order to fit in
-			// 16 bits; the argument to sqrt is thus multiplied by (1 << 16).
-			const auto  tmp = nVddt - std::sqrt ( double ( i << 16 ) );
-			assert ( tmp > -0.5 && tmp < 65535.5 );
-			vcr_nVg[ i ] = uint16_t ( tmp + 0.5 );
-		}
-	};
+			OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
+			buildSummerTable ( opampModel );
+		};
+		auto clBuildMixerTable = [ this ]
+		{
+			OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
+			buildMixerTable ( opampModel, 8.0 / 6.0 );
+		};
+		auto clBuildVolumeTable = [ this ]
+		{
+			OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
+			buildVolumeTable ( opampModel, 12.0 );
+		};
+		auto clBuildResonanceTable = [ this ]
+		{
+			OpAmp   opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
 
-	auto	thdSummer = std::thread ( clBuildSummerTable );
-	auto	thdMixer = std::thread ( clBuildMixerTable );
-	auto	thdVolume = std::thread ( clBuildVolumeTable );
-	auto	thdResonance = std::thread ( clBuildResonanceTable );
-	auto	thdFilterVcrVg = std::thread ( clFilterVcrVg );
-	auto	thdFilterVcrIds = std::thread ( [ this ] { clFilterVcrIds (); } );
+			// build temp n table
+			double	resonance_n[ 16 ];
+			for ( auto n8 = 0; n8 < 16; n8++ )
+				resonance_n[ n8 ] = ( ~n8 & 0xF ) / 8.0;
 
-	thdSummer.join ();
-	thdMixer.join ();
-	thdVolume.join ();
-	thdResonance.join ();
-	thdFilterVcrVg.join ();
-	thdFilterVcrIds.join ();
+			buildResonanceTable ( opampModel, resonance_n );
+		};
+		auto clFilterVcrVg = [ this ]
+		{
+			const auto  nVddt = N16 * ( Vddt - vmin );
+
+			for ( auto i = 0u; i < ( 1 << 16 ); i++ )
+			{
+				// The table index is right-shifted 16 times in order to fit in
+				// 16 bits; the argument to sqrt is thus multiplied by (1 << 16).
+				const auto  tmp = nVddt - std::sqrt ( double ( i << 16 ) );
+				assert ( tmp > -0.5 && tmp < 65535.5 );
+				m_tables6581->vcr_nVg[ i ] = uint16_t ( tmp + 0.5 );
+			}
+		};
+
+		auto	thdSummer = std::thread ( clBuildSummerTable );
+		auto	thdMixer = std::thread ( clBuildMixerTable );
+		auto	thdVolume = std::thread ( clBuildVolumeTable );
+		auto	thdResonance = std::thread ( clBuildResonanceTable );
+		auto	thdFilterVcrVg = std::thread ( clFilterVcrVg );
+
+		thdSummer.join ();
+		thdMixer.join ();
+		thdVolume.join ();
+		thdResonance.join ();
+		thdFilterVcrVg.join ();
+
+		// Publish to the static cache so subsequent instances can reuse.
+		s_sharedTables = std::move ( newTbls );
+	} );
+
+	// If this instance was not the builder (call_once ran in another thread),
+	// wire up the pointers to the already-built shared tables.
+	if ( ! m_tables )
+	{
+		assignSharedTables ( s_sharedTables );
+		m_tables6581 = static_cast<SharedFilterTables6581*> ( m_tables.get () );
+		vcr_nVg_ptr  = m_tables6581->vcr_nVg;
+	}
+
+	// vcr_n_Ids_term depends on uCox, C, and vcrSaturation — always per-instance.
+	clFilterVcrIds ();
 }
 //-----------------------------------------------------------------------------
 
