@@ -28,6 +28,7 @@ public:
 		bool		fltCapOld = false;
 		double		flt0Dac = 0.4;
 		double		fltGain = 0.92;
+		double		fltSaturation = 1.0;
 
 		// Digi value
 		double		digi = 1.0;

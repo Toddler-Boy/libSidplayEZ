@@ -59,6 +59,8 @@ private:
 	uint16_t	vcr_n_Ids_term[ 1 << 16 ];
 	//@}
 
+	double	vcrSaturation = 1.0;	// 0.0 = linear VCR, 1.0 = full EKV nonlinearity
+
 	void clFilterVcrIds () noexcept;
 	[[ nodiscard ]] sidinline double getDacZero ( double adjustment ) const noexcept {	return dac_zero + adjustment;	}
 
@@ -72,6 +74,13 @@ public:
 	// Set support-hardware for the filter model.
 	// This is used to adjust the model for different hardware revisions of the C64
 	void setFilter_uCoxAndCap ( double newUCox, bool oldCap ) noexcept;
+
+	/**
+	* Set VCR saturation amount. Blends vcr_n_Ids_term between the full EKV
+	* log²(1+eˣ) curve (1.0) and a linear approximation tangent at x=0 (0.0).
+	* Rebuilds the table; not intended for per-sample use.
+	*/
+	void setVcrSaturation ( double saturation ) noexcept;
 
 	void setVoiceDCDrift ( double drift ) noexcept;
 

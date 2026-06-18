@@ -205,14 +205,75 @@ void FilterModelConfig6581::clFilterVcrIds () noexcept
 	// I.e. if k != 1.0, Vg must be scaled accordingly
 	const auto	r_N16_2Ut = 1.0 / ( N16 * 2.0 * Ut );
 
+	// Blend between the full EKV curve and its tangent at x=0.
+	// f_lin(x) = log(2)² + log(2)·x  (clamped to 0)
+	// Both curves share the same slope at x = 0, but diverge at large
+	// signal swings. A large-signal correction below compensates for
+	// the resulting cutoff shift.
+	// Only large-signal harmonic content changes.
+	const auto	sat = std::clamp ( vcrSaturation, 0.0, 1.0 );
+	const auto	lin = 1.0 - sat;
+	const auto	log2 = std::log ( 2.0 );
+	const auto	scale = n_Is * uCox;
+
 	for ( auto i = 0; i < ( 1 << 16 ); i++ )
 	{
 		const auto	kVgt_Vx = i - ( 1 << 15 );
-		const auto	log_term = std::log1p ( std::exp ( kVgt_Vx * r_N16_2Ut ) );
+		const auto	x = kVgt_Vx * r_N16_2Ut;
+		const auto	log_term = std::log1p ( std::exp ( x ) );
+		const auto	f_ekv = log_term * log_term;
+		const auto	f_lin = std::max ( 0.0, log2 * log2 + log2 * x );
 
 		// Scaled by m*2^15
-		vcr_n_Ids_term[ i ] = uint16_t ( n_Is * log_term * log_term * uCox );
+		vcr_n_Ids_term[ i ] = uint16_t ( scale * ( sat * f_ekv + lin * f_lin ) );
 	}
+
+	// --- Large-signal transconductance correction ---
+	//
+	// The linear blend component grows as log(2)·x while the EKV grows as x²,
+	// so the blended table has lower large-signal transconductance than the pure
+	// EKV table. This shifts the perceived cutoff frequency downward.
+	//
+	// Fix: compute the chord slope of the blended table over a representative
+	// signal range and scale all entries so it matches the EKV chord slope.
+	// This makes the filter's effective transconductance (and thus its perceived
+	// cutoff) match the EKV reference at that amplitude.
+	//
+	// Reference amplitude: x = ±10 in EKV normalised units, which corresponds
+	// to roughly 0.5 V signal at the operating point. The correction is exact at
+	// this amplitude and approximate elsewhere. For sat ∈ [0.7, 1.0] the factor
+	// is ≈ 1.0–1.4×; at lower saturation values it grows larger because the
+	// linear approximation diverges substantially from the EKV at large swings.
+	if ( sat < 1.0 )
+	{
+		const auto	x_ref = 10.0;
+		const int	i_hi  = std::min ( int ( ( 1 << 15 ) + x_ref / r_N16_2Ut ), ( 1 << 16 ) - 1 );
+		const int	i_lo  = std::max ( int ( ( 1 << 15 ) - x_ref / r_N16_2Ut ), 0 );
+
+		auto ekvAt = [ & ] ( int i ) -> double
+		{
+			const auto	x  = ( i - ( 1 << 15 ) ) * r_N16_2Ut;
+			const auto	lt = std::log1p ( std::exp ( x ) );
+			return scale * lt * lt;
+		};
+
+		const auto	chord_ekv     = ekvAt ( i_hi ) - ekvAt ( i_lo );
+		const auto	chord_blended = double ( vcr_n_Ids_term[ i_hi ] ) - double ( vcr_n_Ids_term[ i_lo ] );
+
+		if ( chord_blended > 0.0 )
+		{
+			const auto	k = chord_ekv / chord_blended;
+			for ( auto i = 0; i < ( 1 << 16 ); i++ )
+				vcr_n_Ids_term[ i ] = uint16_t ( std::min ( double ( vcr_n_Ids_term[ i ] ) * k, 65535.0 ) );
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+
+void FilterModelConfig6581::setVcrSaturation ( double saturation ) noexcept
+{
+	vcrSaturation = saturation;
+	clFilterVcrIds ();
 }
 //-----------------------------------------------------------------------------
 

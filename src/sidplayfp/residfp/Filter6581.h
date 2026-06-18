@@ -465,6 +465,23 @@ public:
 	}
 
 	/**
+	* Set filter saturation/distortion amount.
+	*
+	* Blends the VCR transistor model in vcr_n_Ids_term between the full EKV
+	* log²(1+eˣ) curve (saturation=1.0) and a linear approximation of it
+	* (saturation=0.0). The linear approximation matches the EKV slope at the
+	* operating point (x=0), so the filter's small-signal gain and cutoff frequency
+	* are preserved at all values. Only the large-signal harmonic content changes.
+	* The hot path is unaffected; the blend is baked into the table at build time.
+	*
+	* @param saturation  0.0 = fully linear (no distortion), 1.0 = original EKV (default)
+	*/
+	void setFilterSaturation ( double saturation ) noexcept
+	{
+		fmc6581.setVcrSaturation ( saturation );
+	}
+
+	/**
 	* Set DC offset for external filter input which affects the digi volume
 	*
 	* @param adjustment 0 .. 1

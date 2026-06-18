@@ -88,6 +88,7 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		setting.fltCapOld = stringutils::toLower ( csv.get ( i, "fltCap" ) ) == "old";
 		setting.flt0Dac = csv.get ( i, "flt0Dac", setting.flt0Dac );
 		setting.fltGain = csv.get ( i, "fltGain", setting.fltGain );
+		setting.fltSaturation = csv.get ( i, "fltSat", setting.fltSaturation );
 		setting.digi = csv.get ( i, "digi", setting.digi );
 
 		// Combined waveform strength level

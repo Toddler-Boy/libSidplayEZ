@@ -452,6 +452,14 @@ void Player::set6581FilterGain ( const double value )
 }
 //-----------------------------------------------------------------------------
 
+void Player::set6581FilterSaturation ( const double value )
+{
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->filter6581Saturation ( value );
+}
+//-----------------------------------------------------------------------------
+
 void Player::set6581DigiVolume ( const double value )
 {
 	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )

@@ -616,6 +616,17 @@ public:
 	}
 
 	/**
+	* Set filter saturation/distortion drive for 6581 model.
+	*
+	* @see Filter6581::setFilterSaturation(double)
+	*/
+	void setFilter6581Saturation ( [[ maybe_unused ]] double saturation ) noexcept
+	{
+		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
+			filter.setFilterSaturation ( saturation );
+	}
+
+	/**
 	* Set filter digi volume for 6581 model
 	*
 	* @see Filter6581::setDigitVolume(double)
