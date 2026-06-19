@@ -26,15 +26,22 @@
 #include "sidplayfp/SidTune.h"
 #include "sidplayfp/SidTuneInfo.h"
 
-#include "sidemu.h"
 #include "psiddrv.h"
 #include "romCheck.h"
+#include "sidemu.h"
 
 namespace libsidplayfp
 {
 
 Player::Player ()
 {
+	// Warm-up the tables
+	{
+		auto t6581 = std::thread ( [] { reSIDfp::FilterModelConfig6581 warmup; } );
+		{ reSIDfp::FilterModelConfig8580 warmup; }
+		t6581.join ();
+	}
+
 	// We need at least some minimal interrupt handling
 	m_c64.getMemInterface ().setKernal ( nullptr );
 
