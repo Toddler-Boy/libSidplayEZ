@@ -1,9 +1,11 @@
 #pragma once
 
 #include "../player.h"
+
 #include "audio-profile-selector.h"
 #include "chip-profile-selector.h"
 #include "override-selector.h"
+
 #include "sidid.h"
 #include "SidTuneInfoEZ.h"
 

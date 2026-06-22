@@ -145,8 +145,6 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
 
 		stiEZ.chipProfile = profileName;
-		stiEZ.chipProfileBitmap = chipProfile.bitmap;
-		stiEZ.chipProfileTooltip = chipProfile.tooltip;
 
 		engine.set6581Filter_uCoxAndCap ( 20.0, chipProfile.fltCapOld );
 		engine.set6581FilterCurve ( chipProfile.flt0Dac );
@@ -161,30 +159,27 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 	// Override chip-profile for Emulation based SID editors (Cheesecutter, GoatTracker, SidWizard etc.)
 	{
-		if ( /*stiEZ.model[0] == "6581" &&*/ ! stiEZ.playroutineID.empty () )
+		if ( ! stiEZ.playroutineID.empty () )
 		{
 			struct EmuEditors
 			{
-				std::string	id;
-				std::string	name;
-				std::string	bitmap;
-				std::string	tooltip;
+				std::string			id;
+				SidEmuEditorType	type;
 			};
 
-			static const std::vector<EmuEditors>	editorsUsingEmulation = {
-				{ "CheeseCutter_",		"Cheese Cutter",	"emu-cheese-cutter",	"CheeseCutter uses reSID emulation" },
-				{ "GoatTracker_V",		"Goat Tracker",		"emu-goat-tracker",		"GoatTracker uses reSID emulation" },
-				{ "SidWizard_",			"Sid Wizard",		"emu-sid-wizard",		"SidWizard uses reSID emulation" },
-				{ "Hermit/SidWizard_V",	"Sid Wizard",		"emu-sid-wizard",		"SidWizard uses reSID emulation" },
-				{ "SidFactory_II/",		"Sid Factory II",	"emu-sid-factory",		"SidFactory uses reSID emulation" },
-				{ "DefleMask_",			"Defle Mask",		"emu-defle-mask",		"DefleMask uses reSID emulation" },
+			static const std::vector<EmuEditors> editorsUsingEmulation = {
+				{ "CheeseCutter_",      SidEmuEditorType::CheeseCutter  },
+				{ "GoatTracker_V",      SidEmuEditorType::GoatTracker   },
+				{ "SidWizard_",         SidEmuEditorType::SidWizard     },
+				{ "Hermit/SidWizard_V", SidEmuEditorType::SidWizard     },
+				{ "SidFactory/",        SidEmuEditorType::SidFactoryI   },
+				{ "SidFactory_II/",     SidEmuEditorType::SidFactoryII  },
+				{ "DefleMask_",         SidEmuEditorType::DefleMask     },
 			};
 
 			auto oldEmulation = [ this ] ( const EmuEditors& ed )
 			{
-				stiEZ.chipProfile = ed.name;
-				stiEZ.chipProfileBitmap = ed.bitmap;
-				stiEZ.chipProfileTooltip = ed.tooltip;
+				stiEZ.sidEmuType = ed.type;
 
 				engine.set6581Filter_uCoxAndCap ( 20.0, false );
 				engine.set6581FilterCurve ( 0.5 );
