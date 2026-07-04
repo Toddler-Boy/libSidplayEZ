@@ -129,7 +129,7 @@ void libsidplayEZ::declick ( std::span<float> _source, const int _sampleRate )
 
  		// fade in (5ms)
  		const auto	fadeInStart = std::max ( 0, songStart - int ( _sampleRate * 0.005f ) );
- 
+
  		if ( fadeInStart )
  			std::fill_n ( _source.begin (), fadeInStart, 0.0f );
 
