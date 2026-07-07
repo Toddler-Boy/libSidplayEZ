@@ -627,6 +627,17 @@ public:
 	}
 
 	/**
+	* Set filter bandpass width offset for 6581 model.
+	*
+	* @see Filter6581::setBandpassWidthOffset(double)
+	*/
+	void setFilter6581BandpassWidthOffset ( [[ maybe_unused ]] double offset ) noexcept
+	{
+		if constexpr ( std::is_same_v<FLT, Filter6581<true>> )
+			filter.setBandpassWidthOffset ( offset );
+	}
+
+	/**
 	* Set filter digi volume for 6581 model
 	*
 	* @see Filter6581::setDigitVolume(double)

@@ -82,6 +82,7 @@ constexpr Spline::Point opamp_voltage_6581[ OPAMP_SIZE_6581 ] =
 // default configuration.  s_tablesOnce guarantees thread-safe single build.
 std::shared_ptr<SharedFilterTables6581>	FilterModelConfig6581::s_sharedTables;
 std::once_flag							FilterModelConfig6581::s_tablesOnce;
+double									FilterModelConfig6581::s_bandpassWidthOffset = 0.0;
 
 //-----------------------------------------------------------------------------
 
@@ -309,6 +310,35 @@ void FilterModelConfig6581::setVcrSaturation ( double saturation ) noexcept
 {
 	vcrSaturation = saturation;
 	clFilterVcrIds ();
+}
+//-----------------------------------------------------------------------------
+
+void FilterModelConfig6581::setBandpassWidthOffset ( double offset ) noexcept
+{
+	offset = std::max ( 0.0, offset );
+
+	// The resonance table is shared and persists across tune loads, so early-out
+	// on the offset it already reflects — most tunes leave this at the default
+	// and would otherwise rebuild the table needlessly on every load. A tiny delta
+	// is inaudible, so treat near-equal offsets as unchanged.
+	if ( std::fabs ( offset - s_bandpassWidthOffset ) < 1e-6 )
+		return;
+
+	s_bandpassWidthOffset = offset;
+
+	// Rebuild the resonance table with a constant floor added to the feedback
+	// coefficient (≈ 1/Q). More feedback means more damping, a wider band with
+	// lower resonance. This also widens the maximum-resonance register
+	// (whose feedback is 0), modelling weak chips whose resonance never
+	// narrowed much. Writes into the shared resonance block, so it affects every
+	// instance sharing these tables: a global control.
+	OpAmp	opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_6581 ), std::end ( opamp_voltage_6581 ) ), Vddt, vmin, vmax );
+
+	double	resonance_n[ 16 ];
+	for ( auto n8 = 0; n8 < 16; n8++ )
+		resonance_n[ n8 ] = ( ~n8 & 0xF ) / 8.0 + offset;
+
+	buildResonanceTable ( opampModel, resonance_n );
 }
 //-----------------------------------------------------------------------------
 

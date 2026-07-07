@@ -95,6 +95,7 @@ public:
 	void set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap );
 	void set6581FilterGain ( const double value );
 	void set6581FilterSaturation ( const double value );
+	void set6581FilterBandpassWidthOffset ( const double value );
 	void set6581DigiVolume ( const double value );
 
 	void setDacLeakage ( const double value );

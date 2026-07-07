@@ -488,6 +488,28 @@ public:
 	}
 
 	/**
+	* Set bandpass width offset.
+	*
+	* The filter is a two-integrator loop whose resonance feedback is the 1/Q
+	* term, so bandwidth ≈ f0 * (feedback + offset). This adds a constant floor
+	* to that feedback across all 16 resonance registers, widening the band and
+	* lowering resonance. Crucially it also widens the maximum-resonance setting
+	* (register 15, whose feedback is 0) modelling weak/"broken" 6581 chips
+	* whose resonance never narrowed much.
+	* Bandwidth and resonance are the same parameter in this topology, so
+	* widening necessarily lowers the LP/HP resonance peak.
+	*
+	* Rebuilds the shared resonance table, so this is a config-time control (not
+	* per-sample) and affects all instances sharing the tables.
+	*
+	* @param offset  0 = default; e.g. at 1 kHz cutoff, offset 1.0 ≈ +1 kHz bandwidth
+	*/
+	void setBandpassWidthOffset ( double offset ) noexcept
+	{
+		fmc6581.setBandpassWidthOffset ( offset );
+	}
+
+	/**
 	* Set DC offset for external filter input which affects the digi volume
 	*
 	* @param adjustment 0 .. 1
