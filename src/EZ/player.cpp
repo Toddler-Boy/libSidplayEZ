@@ -30,11 +30,12 @@ bool Player::loadSidFile ( const char* filename )
 	stiEZ = {};
 
 	tune.load ( filename );
-	stiEZ.md5 = tune.createMD5New ();
 
 	auto	info = tune.getInfo ();
 	if ( ! info )
 		return false;
+
+	stiEZ.md5 = tune.createMD5New ();
 
 	tuneOverride = overrideSelector.getOverride ( info->path (), info->dataFileName () );
 
@@ -142,9 +143,10 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// per author with the assumption they worked with the same machine their entire career
 	//
 	{
-		const auto [ profileName, chipProfile ] = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
+		const auto chipProfile = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
 
-		stiEZ.chipProfile = profileName;
+		stiEZ.chipProfile = chipProfile.name;
+		stiEZ.chipProfileIsApproved = chipProfile.isApproved;
 
 		engine.set6581Filter_uCoxAndCap ( 20.0, chipProfile.fltCapOld );
 		engine.set6581FilterCurve ( chipProfile.flt0Dac );
@@ -164,23 +166,23 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		{
 			struct EmuEditors
 			{
-				std::string			id;
-				SidEmuEditorType	type;
+				std::string	id;
+				std::string	name;
 			};
 
 			static const std::vector<EmuEditors> editorsUsingEmulation = {
-				{ "CheeseCutter_",      SidEmuEditorType::CheeseCutter  },
-				{ "GoatTracker_V",      SidEmuEditorType::GoatTracker   },
-				{ "SidWizard_",         SidEmuEditorType::SidWizard     },
-				{ "Hermit/SidWizard_V", SidEmuEditorType::SidWizard     },
-				{ "SidFactory/",        SidEmuEditorType::SidFactoryI   },
-				{ "SidFactory_II/",     SidEmuEditorType::SidFactoryII  },
-				{ "DefleMask_",         SidEmuEditorType::DefleMask     },
+				{ "CheeseCutter_",      "CheeseCutter"	},
+				{ "GoatTracker_V",      "GoatTracker"	},
+				{ "SidWizard_",         "SidWizard"		},
+				{ "Hermit/SidWizard_V", "SidWizard"		},
+				{ "SidFactory/",        "SidFactory"	},
+				{ "SidFactory_II/",     "SidFactory II"	},
+				{ "DefleMask_",         "DefleMask"		},
 			};
 
 			auto oldEmulation = [ this ] ( const EmuEditors& ed )
 			{
-				stiEZ.sidEmuType = ed.type;
+				stiEZ.chipProfile = "emu-" + ed.name;
 
 				engine.set6581Filter_uCoxAndCap ( 20.0, false );
 				engine.set6581FilterCurve ( 0.5 );

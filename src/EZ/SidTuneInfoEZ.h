@@ -25,16 +25,6 @@
 
 //-----------------------------------------------------------------------------
 
-enum SidEmuEditorType : int8_t
-{
-	CheeseCutter,
-	GoatTracker,
-	SidWizard,
-	SidFactoryI,
-	SidFactoryII,
-	DefleMask,
-};
-
 struct SidTuneInfoEZ
 {
 	// All strings are stored as UTF8
@@ -61,7 +51,7 @@ struct SidTuneInfoEZ
 
 	// e.g. "Martin Galway", "Rob Hubbard", "GoatTracker", etc.
 	std::string			chipProfile;
-	SidEmuEditorType	sidEmuType;
+	bool				chipProfileIsApproved = false;
 
 	// Stereo data
 	int				stereoWidth = 0;	// in percent, from 0 to 100

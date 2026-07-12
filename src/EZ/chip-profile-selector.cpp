@@ -9,7 +9,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getProfile ( const char* _path, const char* _filename, const int subtune )
+ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _path, const char* _filename, const int subtune )
 {
 	auto	path = std::string ( _path );
 
@@ -50,7 +50,7 @@ std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getPr
 
 	// No exceptions, return profile
 	if ( set.exceptions.empty () )
-		return std::make_pair ( bestProfile, set );
+		return set;
 
 	// Get filename without extension
 	auto	filename = std::string ( _filename );
@@ -61,10 +61,16 @@ std::pair<std::string, ChipProfileSelector::settings> ChipProfileSelector::getPr
 
 	// Find new author if exception matches
 	if ( auto exception = set.exceptions.find ( filename ); exception != set.exceptions.end () )
-		return std::make_pair ( exception->second, chipProfiles.at ( exception->second ) );
+	{
+		if ( chipProfiles.contains ( exception->second ) )
+			return chipProfiles.at ( exception->second );
+
+		// Exception points to non-existing profile)
+		assert ( false );
+	}
 
 	// No exception matched, return best profile
-	return std::make_pair ( bestProfile, set );
+	return set;
 }
 //-----------------------------------------------------------------------------
 
@@ -77,14 +83,12 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 	const auto	rows = csv.parseCSV ( csvStr );
 	for ( auto i = 0; i < rows; ++i )
 	{
-		const auto	name = csv.get ( i, "name" );
-
 		settings	setting;
 
-		setting.bitmap = csv.get ( i, "bitmap" );
-		setting.tooltip = csv.get ( i, "comment", name );
-
+		setting.name = csv.get ( i, "name" );
 		setting.folder = csv.get ( i, "folder" );
+		setting.isApproved = stringutils::toLower ( csv.get ( i, "status" ) ).contains ( "approved" );
+
 		setting.fltCapOld = stringutils::toLower ( csv.get ( i, "fltCap" ) ) == "old";
 		setting.flt0Dac = csv.get ( i, "flt0Dac", setting.flt0Dac );
 		setting.fltGain = csv.get ( i, "fltGain", setting.fltGain );
@@ -130,7 +134,7 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 			}
 		}
 
-		chipProfiles[ name ] = setting;
+		chipProfiles[ setting.name ] = setting;
 	}
 }
 //-----------------------------------------------------------------------------

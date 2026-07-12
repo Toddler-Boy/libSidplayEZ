@@ -20,9 +20,11 @@ public:
 
 	struct settings final
 	{
+		std::string	name;
 		std::string	folder;
-		std::string	bitmap;
-		std::string	tooltip;
+
+		// Status (approved or best-guess)
+		bool		isApproved = false;
 
 		// Filter settings
 		bool		fltCapOld = false;
@@ -44,7 +46,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	std::pair<std::string, settings> getProfile ( const char* path, const char* filename, const int subtune );
+	settings getProfile ( const char* path, const char* filename, const int subtune );
 
 	void setProfiles ( const std::string& csvStr );
 
