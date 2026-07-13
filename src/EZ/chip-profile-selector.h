@@ -36,6 +36,9 @@ public:
 		// Digi value
 		double		digi = 1.0;
 
+		// 6581 charge-leakage rate (1.0 = R4-class/warm chip, ~10 = R3-class/warm, lower = colder)
+		double		leakageRate = 1.0;
+
 		// Combined waveform strength
 		int			cwsLevel = average;
 		bool		cwsSawPulseUltra = false;

@@ -156,6 +156,8 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 		engine.set6581DigiVolume ( chipProfile.digi );
 
+		engine.set6581LeakageRate ( chipProfile.leakageRate );
+
 		engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms ( chipProfile.cwsLevel ), 1.0f );
 		engine.set6581SawPulseUltra ( chipProfile.cwsSawPulseUltra );
 	}
@@ -190,6 +192,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 				engine.set6581FilterSaturation ( 1.0 );
 				engine.set6581FilterBandpassWidthOffset ( 0.0 );
 				engine.set6581DigiVolume ( 1.0 );
+				engine.set6581LeakageRate ( 1.0 );
 
 				engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms::AVERAGE, 1.0 );
 				engine.set6581SawPulseUltra ( false );

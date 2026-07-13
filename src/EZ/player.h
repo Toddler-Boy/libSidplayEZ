@@ -43,6 +43,7 @@ public:
 
 	void setDacLeakage ( const double leakage )		{ engine.setDacLeakage ( leakage ); }
 	void set6581VoiceDrift ( const double drift )	{ engine.set6581VoiceDCDrift ( drift ); }
+	void set6581LeakageRate ( const double rate )	{ engine.set6581LeakageRate ( rate ); }
 
 	[[ nodiscard ]] unsigned int getEmulatedTimeMs () const { return engine.timeMs (); }
 

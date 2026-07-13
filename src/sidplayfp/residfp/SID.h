@@ -345,6 +345,23 @@ public:
 	}
 
 	/**
+	* Set the 6581 charge-leakage rate.
+	*
+	* Speed multiplier for the modeled charge leakage: 1.0 = R4-class/warm (default),
+	* ~10 = R3-class/warm, lower = colder chip. No-op for the 8580.
+	*
+	* @see WaveformGenerator::setLeakageRate(double)
+	*/
+	void setLeakageRate ( const double rate ) noexcept
+	{
+		if constexpr ( is6581 )
+		{
+			for ( auto& vce : voice )
+				vce.waveformGenerator.setLeakageRate ( rate );
+		}
+	}
+
+	/**
 	* SID reset.
 	*/
 	void reset () noexcept

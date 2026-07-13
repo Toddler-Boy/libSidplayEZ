@@ -507,6 +507,14 @@ void Player::set6581SawPulseUltra ( const bool enable )
 }
 //-----------------------------------------------------------------------------
 
+void Player::set6581LeakageRate ( const double value )
+{
+	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->voice6581LeakageRate ( value );
+}
+//-----------------------------------------------------------------------------
+
 bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 {
 	if ( auto s = m_mixer.getSid ( sidNum ) )

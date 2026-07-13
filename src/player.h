@@ -101,6 +101,7 @@ public:
 	void setDacLeakage ( const double value );
 	void set6581VoiceDCDrift ( const double value );
 	void set6581SawPulseUltra ( const bool enable );
+	void set6581LeakageRate ( const double value );
 
 	[[ nodiscard ]] uint32_t timeMs () const { return m_c64.getTimeMs () - m_startTime; }				// Time in milliseconds
 

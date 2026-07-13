@@ -21,6 +21,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <algorithm>
 #include <vector>
 
 #include "../../EZ/config.h"
@@ -240,6 +241,29 @@ private:
 	// The wave signal TTL when no waveform is selected.
 	unsigned int floating_output_ttl = 0;
 
+	/*
+	* 6581 charge-leakage model (see the comment block in writeCONTROL_REG() for the full story).
+	*
+	* leakageRate is a speed multiplier applied to the four charge-leakage timings modeled in this
+	* class: effective_time = reference_time / leakageRate. It only affects the 6581; the 8580 keeps
+	* its own fixed constants. Recomputed into the plain-integer members below by setLeakageRate() so
+	* the per-cycle hot paths never divide.
+	*/
+	double leakageRate = 1.0;
+
+	// Reference leakage timings at leakageRate == 1.0 (R4-class / warm chip), in cycles.
+	static constexpr double	LEAKAGE_TTL_6581     = 1000000.0;	// ~1s    hold before floating DAC output decays
+	static constexpr double	LEAKAGE_RESET_6581   = 2150000.0;	// ~2.15s test-bit hold before shift register resets
+	static constexpr double	LEAKAGE_FADE_6581    = 38000.0;		// re-arm interval between floating DAC decay steps
+	static constexpr double	LEAKAGE_SR_FADE_6581 = 241000.0;	// re-arm interval between shift-register bit-fade steps
+																//   (8580 314300 * R4/8580 SR ratio 2.15/2.8 ~= 0.77)
+
+	// Effective (rate-scaled) leakage timings. 6581 only; recomputed by setLeakageRate().
+	unsigned int leakage_ttl     = (unsigned int)LEAKAGE_TTL_6581;
+	unsigned int leakage_reset   = (unsigned int)LEAKAGE_RESET_6581;
+	unsigned int leakage_fade    = (unsigned int)LEAKAGE_FADE_6581;
+	unsigned int leakage_sr_fade = (unsigned int)LEAKAGE_SR_FADE_6581;
+
 	/// The control register bits. Gate is handled by EnvelopeGenerator.
 	//@{
 	bool test = false;
@@ -407,17 +431,49 @@ private:
 		shift_register |= shift_register >> 1;
 		shift_register |= 0x400000;
 
-		constexpr auto	SHIFT_REGISTER_FADE_6581R3 = 15000u;	// ~210ms
+		// Re-arm interval between shift-register bit-fade steps. Same physical charge-leakage effect
+		// as the other three leakage timings; see setLeakageRate(). 6581: leakage_sr_fade is the
+		// rate-scaled reference (~241000 at leakageRate 1.0, ~15000-class near rate 10).
 		constexpr auto	SHIFT_REGISTER_FADE_8580R5 = 314300u;	// ~2.8s
 
 		if ( shift_register != 0x7fffff )
-			shift_register_reset = is6581 ? SHIFT_REGISTER_FADE_6581R3 : SHIFT_REGISTER_FADE_8580R5;
+			shift_register_reset = is6581 ? leakage_sr_fade : SHIFT_REGISTER_FADE_8580R5;
 	}
 
 public:
 	void setWaveformModels ( std::vector<int16_t>& models )	noexcept	{	model_wave = &models;		}
 	void setPulldownModels ( std::vector<int16_t>& models )	noexcept	{	model_pulldown = &models;	}
 	void setSawPulseMask ( unsigned int mask ) noexcept					{	accumulatorMask = mask;		}
+
+	/**
+	* Set the 6581 charge-leakage rate.
+	*
+	* Speed multiplier for the four charge-leakage timings modeled in this class (floating DAC hold
+	* TTL, floating DAC fade re-arm, shift-register reset, and shift-register bit-fade re-arm).
+	* Effective time = reference_time / rate.
+	*   rate == 1.0  -> R4-class / warm chip (the default; leaks ~10x slower than the old R3 model)
+	*   rate ~= 10.0 -> R3-class / warm chip (reproduces the old fixed 6581R3 behavior within tolerance)
+	*   rate  < 1.0  -> colder chip (leaks even slower)
+	* No-op for the 8580, which keeps its own fixed constants. Safe to change at runtime without reset.
+	*/
+	void setLeakageRate ( double rate ) noexcept
+	{
+		if constexpr ( is6581 )
+		{
+			// Clamp to a sane range.
+			rate = std::clamp ( rate, 0.1, 20.0 );
+
+			leakageRate = rate;
+
+			// Recompute the effective timings once here so the per-cycle hot paths only ever
+			// touch plain integer members (no division). Worst case (rate 0.1) is ~21.5M cycles,
+			// which fits comfortably in an unsigned int.
+			leakage_ttl     = (unsigned int)( LEAKAGE_TTL_6581     / rate );
+			leakage_reset   = (unsigned int)( LEAKAGE_RESET_6581   / rate );
+			leakage_fade    = (unsigned int)( LEAKAGE_FADE_6581    / rate );
+			leakage_sr_fade = (unsigned int)( LEAKAGE_SR_FADE_6581 / rate );
+		}
+	}
 
 	/**
 	* SID clocking.
@@ -567,21 +623,34 @@ public:
 			no_pulse = ( waveform & 0x4 ) != 0 ? 0x000 : 0xfff;
 
 			/**
-			* Number of cycles after which the waveform output fades to 0 when setting the waveform register to 0
-			* Values measured on warm chips (6581R3/R4 and 8580R5) checking OSC3
-			* Times vary wildly with temperature and may differ from chip to chip so the numbers here represent only the big difference between the old and new models
+			* Number of cycles after which the waveform output fades to 0 when setting the waveform register to 0.
+			*
+			* This is one of four timings that all model the same physical effect: charge slowly leaking away
+			* on the 6581. The other three are the shift-register reset time (test-bit handling further down in
+			* this function), the floating-DAC fade re-arm interval (in output()), and the shift-register
+			* bit-fade re-arm interval (in shiftregBitfade()). All four were originally hardcoded to values
+			* measured on warm 6581R3 chips.
+			*
+			* As the existing maintainer note put it, these times "vary wildly with temperature and may differ
+			* from chip to chip". 6581R4-class chips in particular leak roughly 10x slower than R3 (close to the
+			* 8580 values). To capture that spread the four 6581 timings are now driven by a single runtime
+			* multiplier (see setLeakageRate()) instead of fixed constants: the reference values are the slow
+			* R4/warm-chip timings at leakageRate == 1.0 (the new default), while a higher rate (~10) reproduces
+			* the old fast R3 behavior and a lower rate models an even colder/slower chip. The 8580 is unaffected
+			* and keeps its own fixed constants.
+			*
+			* Values measured on warm chips (6581R3/R4 and 8580R5) checking OSC3.
 			*
 			* See [VICE Bug #290](http://sourceforge.net/p/vice-emu/bugs/290/)
 			* and [VICE Bug #1128](http://sourceforge.net/p/vice-emu/bugs/1128/)
 			*/
-			constexpr auto	FLOATING_OUTPUT_TTL_6581R3 = 54000u;	// ~95ms
-			//constexpr auto	FLOATING_OUTPUT_TTL_6581R4 = 1000000u;	// ~1s
 			constexpr auto	FLOATING_OUTPUT_TTL_8580R5 = 800000u;	// ~1s
 
 			// Change to floating DAC input.
 			// Reset fading time for floating DAC input.
+			// 6581: leakage_ttl is the rate-scaled reference (~1s at leakageRate 1.0, ~95ms near rate 10).
 			if ( waveform == 0 )
-				floating_output_ttl = is6581 ? FLOATING_OUTPUT_TTL_6581R3 : FLOATING_OUTPUT_TTL_8580R5;
+				floating_output_ttl = is6581 ? leakage_ttl : FLOATING_OUTPUT_TTL_8580R5;
 		}
 
 		if ( test != test_prev ) [[ unlikely ]]
@@ -598,16 +667,17 @@ public:
 				shift_latch = shift_register;
 
 				/**
-				* Number of cycles after which the shift register is reset when the test bit is set
-				* Values measured on warm chips (6581R3/R4 and 8580R5) checking OSC3
-				* Times vary wildly with temperature and may differ from chip to chip so the numbers here represent only the big difference between the old and new models
+				* Number of cycles after which the shift register is reset when the test bit is set.
+				*
+				* Same physical charge-leakage effect as the floating-DAC TTL above; see that comment and
+				* setLeakageRate(). The 6581 reference (leakage_reset, ~2.15s at leakageRate 1.0) is the slow
+				* R4-class value; ~10x rate reproduces the old ~210ms R3 timing.
+				* Values measured on warm chips (6581R3/R4 and 8580R5) checking OSC3.
 				*/
-				constexpr auto	SHIFT_REGISTER_RESET_6581R3 = 50000u;	// ~210ms
-				//constexpr auto	SHIFT_REGISTER_RESET_6581R4	= 2150000u;	// ~2.15s
 				constexpr auto	SHIFT_REGISTER_RESET_8580R5 = 986000u;	// ~2.8s
 
 				// Set reset time for shift register.
-				shift_register_reset = is6581 ? SHIFT_REGISTER_RESET_6581R3 : SHIFT_REGISTER_RESET_8580R5;
+				shift_register_reset = is6581 ? leakage_reset : SHIFT_REGISTER_RESET_8580R5;
 			}
 			else
 			{
@@ -717,13 +787,15 @@ public:
 			// Age floating DAC input.
 			if ( floating_output_ttl && ( --floating_output_ttl == 0 ) ) [[ unlikely ]]
 			{
-				constexpr auto	FLOATING_OUTPUT_FADE_6581R3 = 1400u;
+				// Re-arm interval between decay steps. Same charge-leakage effect as the floating-DAC
+				// hold TTL and shift-register reset; see setLeakageRate(). 6581: leakage_fade is the
+				// rate-scaled reference (~38000 at leakageRate 1.0, ~1400-class near rate 10).
 				constexpr auto	FLOATING_OUTPUT_FADE_8580R5 = 50000u;
 
 				waveform_output &= waveform_output >> 1;
 				osc3 = waveform_output;
 				if ( waveform_output )
-					floating_output_ttl = is6581 ? FLOATING_OUTPUT_FADE_6581R3 : FLOATING_OUTPUT_FADE_8580R5;
+					floating_output_ttl = is6581 ? leakage_fade : FLOATING_OUTPUT_FADE_8580R5;
 			}
 		}
 

@@ -95,6 +95,7 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		setting.fltSaturation = csv.get ( i, "fltSat", setting.fltSaturation );
 		setting.fltBandpassWidthOffset = csv.get ( i, "fltBpw", setting.fltBandpassWidthOffset );
 		setting.digi = csv.get ( i, "digi", setting.digi );
+		setting.leakageRate = csv.get ( i, "leakage", setting.leakageRate );
 
 		// Combined waveform strength level
 		auto	cwsLevel = stringutils::toLower ( csv.get ( i, "cwsLevel", "average" ) );
