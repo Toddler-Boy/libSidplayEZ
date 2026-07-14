@@ -1,11 +1,11 @@
-#include <numbers>
 #include <cmath>
+#include <numbers>
 
-#include "realFFT.h"
+#include "dsp-realFFT.h"
 
 //-----------------------------------------------------------------------------
 
-namespace libsidplayEZ::realFFT
+namespace libsidplayEZ::dsp::realFFT
 {
 
 void split ( std::span<float> data )
@@ -38,7 +38,7 @@ void split ( std::span<float> data )
 	}
 	/*----------------------*/
 
-	//length two butterflies	
+	//length two butterflies
 	i0 = 0;
 	id = 4;
 	do

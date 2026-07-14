@@ -1,11 +1,11 @@
 #pragma once
 
-#include <span>
 #include <cmath>
+#include <span>
 
 //-----------------------------------------------------------------------------
 
-namespace libsidplayEZ::realFFT
+namespace libsidplayEZ::dsp::realFFT
 {
 	void split ( std::span<float> data );
 

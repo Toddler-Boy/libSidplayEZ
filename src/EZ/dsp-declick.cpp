@@ -1,16 +1,15 @@
 #include <algorithm>
-#include <cmath>
 #include <bit>
+#include <cmath>
 #include <numbers>
 #include <vector>
 
-#include "declick.h"
-
-#include "realFFT.h"
+#include "dsp-declick.h"
+#include "dsp-realFFT.h"
 
 //-----------------------------------------------------------------------------
 
-void libsidplayEZ::declick ( std::span<float> _source, const int _sampleRate )
+void libsidplayEZ::dsp::declick ( std::span<float> _source, const int _sampleRate )
 {
 	//
 	// The basic algorithm is to convert up to 1 second of audio into FFT data and then skip forward

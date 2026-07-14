@@ -24,8 +24,6 @@ public:
 	settings getProfile ( const char* path, const char* filename );
 	void setProfiles ( const std::string& csvStr );
 
-	static void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width );
-
 private:
 	profileMap	stereoProfiles;
 };
