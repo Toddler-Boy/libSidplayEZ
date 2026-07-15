@@ -114,7 +114,7 @@ void Player::initialise ()
 		}
 	};
 
-	constexpr auto	powerOnDelay = 3000;	// SidConfig::MAX_POWER_ON_DELAY - 1
+	constexpr auto	powerOnDelay = 5000;
 
 	// Run for calculated number of cycles
 	warmup ( powerOnDelay );
@@ -142,22 +142,26 @@ void Player::initialise ()
 		while ( mem.readMemByte ( handshakeAddr ) == 0 )
 			warmup ( 1000 );
 
-		// Wait a bit until volume clicks are gone
-		warmup ( 1000 );
+		// Let the INIT routine's own volume-register pokes settle before capture. These
+		// writes happen here, BEFORE the start-up declick is armed (below), so the declick
+		// can't settle them - their ring must decay naturally through the ~1.6 Hz DC-blocker,
+		// which needs a few hundred ms. Too short a wait leaves soft micro-pops at capture
+		// start; this settle budget is the knob for that.
+		warmup ( powerOnDelay );
 
 		// Set the handshake to continue
 		mem.writeMemByte ( handshakeAddr, 2 );
-
-		// Only tunes that return from init reach here. Open the start-up declick
-		// window so the external filter absorbs the volume-register steps these tunes
-		// make at the beginning (init leaves volume 0, first play sets 15, some toggle
-		// it repeatedly) instead of ringing them into pops. Deliberately NOT done for
-		// non-returning (digi/BASIC) tunes, whose $d418 writes are the actual audio
-		// and must pass through untouched.
-		for ( auto& s : m_sidEmu )
-			if ( s )
-				s->armStartupDeclick ();
 	}
+
+	// Open the start-up declick window so the external filter absorbs the volume/filter
+	// register steps a tune makes at the beginning (init leaves volume 0, first play sets
+	// 15, some toggle it repeatedly) instead of ringing them into pops. Armed for every
+	// tune, handshake or not: the declick settles the whole start-up burst but releases the
+	// instant a write stream proves itself a sustained digi, so even non-returning
+	// (digi/BASIC) tunes - whose $d418 writes are the actual audio - are safe to arm.
+	for ( auto& s : m_sidEmu )
+		if ( s )
+			s->armStartupDeclick ();
 
 	m_startTime = m_c64.getTimeMs ();
 }

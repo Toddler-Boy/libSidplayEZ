@@ -195,17 +195,39 @@ private:
 	// which under the leaky-envelope model never reach zero). Gate defaults to 0, so a
 	// set bit unambiguously means a note is starting - no previous-state compare needed.
 	// The declick stays active for a guaranteed minimum, then until that first trigger,
-	// up to a safety cap. Real music's volume/filter dynamics and $d418 digis then pass
-	// untouched. Never armed for non-returning (digi/BASIC) tunes, whose volume writes
-	// are the actual audio. See ExternalFilter::settle and armStartupDeclick().
+	// up to a safety cap. Real music's volume/filter dynamics then pass untouched.
+	//
+	// Digi safety (settle-all, latch off on a sustained stream): a settle re-seats the
+	// DC-blocker, absorbing a volume/filter write's DC step. EVERY write is settled while
+	// active - a start-up burst must be absorbed as a group, because settling only a subset
+	// re-seats the blocker to one write's level and then rings *worse* on the writes left
+	// through (skipping 15->0 after settling ->15 steps from the raised seat). A normal tune
+	// pokes the volume a handful of times (this file writes 15,0,7 within the first frame)
+	// then leaves it - those few writes are all settled and the pop is gone. A volume-register
+	// digi (Mahoney-style, $d418 at audio rate) instead writes forever: once
+	// STARTUP_DECLICK_DIGI_RUN consecutive *rapid* writes are seen it is taken as a digi and
+	// the whole declick releases, so the stream passes through intact (only its first few ms
+	// were settled). This makes the declick safe to arm for every tune, including the
+	// non-returning (digi/BASIC) ones. See ExternalFilter::settle and armStartupDeclick().
 	bool	startupDeclickActive = false;
 	bool	startupDeclickPending = false;
 	bool	startupDeclickNoteSeen = false;		// a gate bit was set while active
 	int		startupDeclickMinCycles = 0;		// guaranteed-active countdown
 	int		startupDeclickCapCycles = 0;		// safety-cap countdown
+	int		startupDeclickWriteGate = 0;		// >0 => the previous vol/filter write was rapid (recent)
+	int		startupDeclickRapidRun = 0;			// consecutive rapid vol/filter writes seen
 
 	static constexpr int	STARTUP_DECLICK_MIN_CYCLES =	  100'000;	// ~100 ms guaranteed
 	static constexpr int	STARTUP_DECLICK_MAX_CYCLES = 15'000'000;	// ~15 s hard cap
+
+	// A vol/filter write within this many cycles of the previous one counts as "rapid".
+	// ~8 ms sits between frame-rate writes (<= 60 Hz, gap >= 16400 cyc: single pokes and
+	// fades, each settled on its own) and digi sample rates (>= ~1 kHz, gap <= ~1000 cyc).
+	static constexpr int	STARTUP_DECLICK_RAPID_GAP_CYCLES = 8'000;
+
+	// A run of this many consecutive rapid writes is taken as a sustained digi stream and
+	// releases the declick. A normal tune's start-up pokes number a handful, well under this.
+	static constexpr int	STARTUP_DECLICK_DIGI_RUN = 16;
 
 	// Time to live for the last written value
 	int	busValueTtl;
@@ -344,6 +366,39 @@ private:
 		voice[ idx ].writeCONTROL_REG ( value );
 	}
 
+	/**
+	* Handle a volume/filter ($d418/$d417) write for the start-up declick.
+	*
+	* While the declick is active, re-settle the external filter on EVERY write, so a
+	* start-up burst of pokes is absorbed as a group (settling only a subset re-seats the
+	* DC-blocker and rings worse - see the field comments). Meanwhile count consecutive
+	* rapid writes: a long run is a volume-register digi, whose $d418 writes are the audio,
+	* so the whole declick releases and the stream passes through un-settled.
+	* See startupDeclickRapidRun.
+	*/
+	sidinline void declickVolFilterWrite () noexcept
+	{
+		if ( ! startupDeclickActive ) [[ likely ]]
+			return;
+
+		// Track the run of consecutive rapid writes; a sustained run means a digi -> release.
+		if ( startupDeclickWriteGate > 0 )
+		{
+			if ( ++startupDeclickRapidRun >= STARTUP_DECLICK_DIGI_RUN ) [[ unlikely ]]
+			{
+				startupDeclickActive = false;		// confirmed digi: stop declicking entirely
+				return;
+			}
+		}
+		else
+		{
+			startupDeclickRapidRun = 0;
+		}
+
+		startupDeclickWriteGate = STARTUP_DECLICK_RAPID_GAP_CYCLES;
+		startupDeclickPending = true;				// settle this write
+	}
+
 public:
 	SID ()
 	{
@@ -451,6 +506,8 @@ public:
 		startupDeclickNoteSeen = false;
 		startupDeclickMinCycles = 0;
 		startupDeclickCapCycles = 0;
+		startupDeclickWriteGate = 0;
+		startupDeclickRapidRun = 0;
 
 		busValue = 0;
 		busValueTtl = 0;
@@ -461,12 +518,13 @@ public:
 	* Activate the start-up declick.
 	*
 	* Call once at the init -> playback boundary (after the tune's init has run,
-	* before captured output begins), and only for tunes that return from init.
+	* before captured output begins). Safe for every tune - including non-returning
+	* (digi/BASIC) ones - thanks to the write rate gate (see startupDeclickWriteGate).
 	* Settles the external filter to the current operating point immediately (removing
-	* any residual DC-blocker ring at capture start) and keeps re-settling it on every
-	* $d417/$d418 write until the first note trigger (a gate bit set in a voice control
-	* register) - guaranteed for STARTUP_DECLICK_MIN_CYCLES, then until that trigger,
-	* capped at STARTUP_DECLICK_MAX_CYCLES.
+	* any residual DC-blocker ring at capture start) and keeps re-settling it on each
+	* *isolated* $d417/$d418 write until the first note trigger (a gate bit set in a voice
+	* control register) - guaranteed for STARTUP_DECLICK_MIN_CYCLES, then until that trigger,
+	* capped at STARTUP_DECLICK_MAX_CYCLES. Dense (digi-rate) write streams are not settled.
 	* Deliberately separate from reset(): reset() issues a $d418 write that would
 	* otherwise be treated as part of the opening dance.
 	*/
@@ -477,6 +535,8 @@ public:
 		startupDeclickNoteSeen = false;
 		startupDeclickMinCycles = STARTUP_DECLICK_MIN_CYCLES;
 		startupDeclickCapCycles = STARTUP_DECLICK_MAX_CYCLES;
+		startupDeclickWriteGate = 0;			// first write starts a fresh run
+		startupDeclickRapidRun = 0;
 	}
 
 	/**
@@ -570,21 +630,21 @@ public:
 				filter.writeRES_FILT ( value );
 				filterUsage |= value;
 
-				// While the start-up declick is active, re-settle the external filter:
-				// routing a voice into/out of the SID filter shifts the DC path and
-				// would otherwise ring the DC-blocker into a pop.
-				if ( startupDeclickActive ) [[ unlikely ]]
-					startupDeclickPending = true;
+				// While the start-up declick is active, re-settle the external filter on an
+				// isolated write: routing a voice into/out of the SID filter shifts the DC
+				// path and would otherwise ring the DC-blocker into a pop. (Rate-gated so a
+				// digi's dense $d418 stream is left intact - see declickVolFilterWrite.)
+				declickVolFilterWrite ();
 			}
 			break;
 			case 0x18:																			// Volume and filter modes
 			{
-				// While the start-up declick is active, re-settle the external filter
-				// on any volume/mode write. Both the volume nibble (scales the mixer
-				// DC) and the filter-mode bits (route the filter output, at its own DC,
-				// into the mixer) step the DC and would otherwise ring it.
-				if ( startupDeclickActive ) [[ unlikely ]]
-					startupDeclickPending = true;
+				// While the start-up declick is active, re-settle the external filter on an
+				// isolated volume/mode write. Both the volume nibble (scales the mixer DC)
+				// and the filter-mode bits (route the filter output, at its own DC, into the
+				// mixer) step the DC and would otherwise ring it. Rate-gated so a volume-
+				// register digi's audio-rate writes pass through un-settled.
+				declickVolFilterWrite ();
 
 				filter.writeMODE_VOL ( value );
 				lastVolume = int8_t ( value & 0x0F );
@@ -657,6 +717,11 @@ public:
 		{
 			startupDeclickMinCycles -= int ( cycles );
 			startupDeclickCapCycles -= int ( cycles );
+
+			// Age the rapid-write timer: while it is running the next volume/filter write
+			// counts as "rapid" (continuing a fast run); once it expires the run resets.
+			if ( startupDeclickWriteGate > 0 )
+				startupDeclickWriteGate -= int ( cycles );
 
 			if ( ( startupDeclickCapCycles <= 0 )
 				|| ( ( startupDeclickMinCycles <= 0 ) && startupDeclickNoteSeen ) )
