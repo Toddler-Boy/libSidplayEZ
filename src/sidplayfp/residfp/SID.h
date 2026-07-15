@@ -188,14 +188,19 @@ private:
 	//
 	// Gating is by silence, not time: some tunes have long silent intros yet poke the
 	// volume register during them (e.g. Chris Huelsbeck's "Shades" - 4 s before the
-	// music, volume play inside the first second). The declick therefore stays active
-	// for a guaranteed minimum, then as long as all voice envelopes remain at zero (no
-	// note sounding), up to a safety cap. It releases the moment a note actually plays,
-	// so intended volume/filter dynamics and $d418 digis in real music pass untouched.
-	// Never armed for non-returning (digi/BASIC) tunes, whose volume writes are the
-	// actual audio. See ExternalFilter::settle and armStartupDeclick().
+	// music, volume play inside the first second). "Silence ended" is detected as the
+	// first note trigger - the gate bit set in a voice control register - which is
+	// caught in write() (notes can only start from a register write, so there is no
+	// need to poll anything in the clock path; and it never inspects envelope levels,
+	// which under the leaky-envelope model never reach zero). Gate defaults to 0, so a
+	// set bit unambiguously means a note is starting - no previous-state compare needed.
+	// The declick stays active for a guaranteed minimum, then until that first trigger,
+	// up to a safety cap. Real music's volume/filter dynamics and $d418 digis then pass
+	// untouched. Never armed for non-returning (digi/BASIC) tunes, whose volume writes
+	// are the actual audio. See ExternalFilter::settle and armStartupDeclick().
 	bool	startupDeclickActive = false;
 	bool	startupDeclickPending = false;
+	bool	startupDeclickNoteSeen = false;		// a gate bit was set while active
 	int		startupDeclickMinCycles = 0;		// guaranteed-active countdown
 	int		startupDeclickCapCycles = 0;		// safety-cap countdown
 
@@ -322,6 +327,23 @@ private:
 		return externalFilter.clock ( extIn );
 	}
 
+	/**
+	* Route a voice control-register write, watching the gate bit for the declick.
+	*
+	* Notes can only start from a control-register write, so the start-up declick keys
+	* its "silence ended" decision off the gate bit here rather than polling envelope
+	* levels in the clock path (which is both hotter and, under the leaky-envelope model
+	* where envelopes never reach zero, wrong). Gate defaults to 0, so any set bit means
+	* a note is starting - no previous-state compare is needed.
+	*/
+	sidinline void writeControlReg ( int idx, uint8_t value ) noexcept
+	{
+		if ( startupDeclickActive && ( value & 0x01 ) ) [[ unlikely ]]
+			startupDeclickNoteSeen = true;
+
+		voice[ idx ].writeCONTROL_REG ( value );
+	}
+
 public:
 	SID ()
 	{
@@ -426,6 +448,7 @@ public:
 
 		startupDeclickActive = false;
 		startupDeclickPending = false;
+		startupDeclickNoteSeen = false;
 		startupDeclickMinCycles = 0;
 		startupDeclickCapCycles = 0;
 
@@ -441,8 +464,9 @@ public:
 	* before captured output begins), and only for tunes that return from init.
 	* Settles the external filter to the current operating point immediately (removing
 	* any residual DC-blocker ring at capture start) and keeps re-settling it on every
-	* $d417/$d418 write until a note actually sounds - guaranteed for STARTUP_DECLICK_MIN_CYCLES,
-	* then for as long as all voices stay silent, capped at STARTUP_DECLICK_MAX_CYCLES.
+	* $d417/$d418 write until the first note trigger (a gate bit set in a voice control
+	* register) - guaranteed for STARTUP_DECLICK_MIN_CYCLES, then until that trigger,
+	* capped at STARTUP_DECLICK_MAX_CYCLES.
 	* Deliberately separate from reset(): reset() issues a $d418 write that would
 	* otherwise be treated as part of the opening dance.
 	*/
@@ -450,6 +474,7 @@ public:
 	{
 		startupDeclickActive = true;
 		startupDeclickPending = true;
+		startupDeclickNoteSeen = false;
 		startupDeclickMinCycles = STARTUP_DECLICK_MIN_CYCLES;
 		startupDeclickCapCycles = STARTUP_DECLICK_MAX_CYCLES;
 	}
@@ -521,21 +546,21 @@ public:
 			case 0x01:	voice[ 0 ].waveformGenerator.writeFREQ_HI ( value );			break;	// Voice #1 frequency (High-byte)
 			case 0x02:	voice[ 0 ].waveformGenerator.writePW_LO ( value );				break;	// Voice #1 pulse width (Low-byte)
 			case 0x03:	voice[ 0 ].waveformGenerator.writePW_HI ( value );				break;	// Voice #1 pulse width (bits #8-#15)
-			case 0x04:	voice[ 0 ].writeCONTROL_REG ( value );							break;	// Voice #1 control register
+			case 0x04:	writeControlReg ( 0, value );									break;	// Voice #1 control register
 			case 0x05:	voice[ 0 ].envelopeGenerator.writeATTACK_DECAY ( value );		break;	// Voice #1 Attack and Decay length
 			case 0x06:	voice[ 0 ].envelopeGenerator.writeSUSTAIN_RELEASE ( value );	break;	// Voice #1 Sustain volume and Release length
 			case 0x07:	voice[ 1 ].waveformGenerator.writeFREQ_LO ( value );			break;	// Voice #2 frequency (Low-byte)
 			case 0x08:	voice[ 1 ].waveformGenerator.writeFREQ_HI ( value );			break;	// Voice #2 frequency (High-byte)
 			case 0x09:	voice[ 1 ].waveformGenerator.writePW_LO ( value );				break;	// Voice #2 pulse width (Low-byte)
 			case 0x0a:	voice[ 1 ].waveformGenerator.writePW_HI ( value );				break;	// Voice #2 pulse width (bits #8-#15)
-			case 0x0b:	voice[ 1 ].writeCONTROL_REG ( value );							break;	// Voice #2 control register
+			case 0x0b:	writeControlReg ( 1, value );									break;	// Voice #2 control register
 			case 0x0c:	voice[ 1 ].envelopeGenerator.writeATTACK_DECAY ( value );		break;	// Voice #2 Attack and Decay length
 			case 0x0d:	voice[ 1 ].envelopeGenerator.writeSUSTAIN_RELEASE ( value );	break;	// Voice #2 Sustain volume and Release length
 			case 0x0e:	voice[ 2 ].waveformGenerator.writeFREQ_LO ( value );			break;	// Voice #3 frequency (Low-byte)
 			case 0x0f:	voice[ 2 ].waveformGenerator.writeFREQ_HI ( value );			break;	// Voice #3 frequency (High-byte)
 			case 0x10:	voice[ 2 ].waveformGenerator.writePW_LO ( value );				break;	// Voice #3 pulse width (Low-byte)
 			case 0x11:	voice[ 2 ].waveformGenerator.writePW_HI ( value );				break;	// Voice #3 pulse width (bits #8-#15)
-			case 0x12:	voice[ 2 ].writeCONTROL_REG ( value );							break;	// Voice #3 control register
+			case 0x12:	writeControlReg ( 2, value );									break;	// Voice #3 control register
 			case 0x13:	voice[ 2 ].envelopeGenerator.writeATTACK_DECAY ( value );		break;	// Voice #3 Attack and Decay length
 			case 0x14:	voice[ 2 ].envelopeGenerator.writeSUSTAIN_RELEASE ( value );	break;	// Voice #3 Sustain volume and Release length
 			case 0x15:	filter.writeFC_LO ( value ); 									break;	// Filter cut off frequency (bits #0-#2)
@@ -624,20 +649,17 @@ public:
 			}
 		}
 
-		// Maintain the start-up declick: active for a guaranteed minimum, then only
-		// while all voices are silent (covers long silent intros that poke the volume
-		// register), released once a note sounds or the safety cap is reached.
+		// Maintain the start-up declick window: active for a guaranteed minimum, then
+		// until the first note trigger (startupDeclickNoteSeen, set from a gate bit in
+		// write()), released also at the safety cap. Only the two countdowns live in the
+		// clock path - no envelope polling, so the leaky-envelope model can't defeat it.
 		if ( startupDeclickActive ) [[ unlikely ]]
 		{
 			startupDeclickMinCycles -= int ( cycles );
 			startupDeclickCapCycles -= int ( cycles );
 
-			const auto	voicesSilent = ! ( voice[ 0 ].envelopeGenerator.output ()
-										   | voice[ 1 ].envelopeGenerator.output ()
-										   | voice[ 2 ].envelopeGenerator.output () );
-
 			if ( ( startupDeclickCapCycles <= 0 )
-				|| ( ( startupDeclickMinCycles <= 0 ) && ! voicesSilent ) )
+				|| ( ( startupDeclickMinCycles <= 0 ) && startupDeclickNoteSeen ) )
 				startupDeclickActive = false;
 		}
 
