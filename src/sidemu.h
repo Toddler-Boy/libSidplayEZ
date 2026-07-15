@@ -110,6 +110,11 @@ public:
 	[[ nodiscard ]] virtual sidinline uint8_t read ( uint8_t addr ) noexcept = 0;
 	virtual sidinline void write ( uint8_t addr, uint8_t data ) noexcept = 0;
 
+	/**
+	* Arm the one-shot start-up declick. Call at the warm-up -> playback boundary.
+	*/
+	virtual void armStartupDeclick () noexcept {}
+
 	virtual void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) noexcept = 0;
 
 	virtual void filter6581Curve ( double filterCurve ) noexcept = 0;
@@ -196,6 +201,8 @@ public:
 		clock ();
 		m_sid.write ( addr, data );
 	}
+
+	void armStartupDeclick () noexcept override { m_sid.armStartupDeclick (); }
 
 	void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) noexcept override
 	{

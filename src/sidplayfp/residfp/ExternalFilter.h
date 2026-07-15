@@ -127,6 +127,22 @@ public:
 	{
 		Vlp = Vhp = 0;
 	}
+
+	/**
+	* Snap the filter state to a given input level, producing no DC transient.
+	*
+	* The high-pass (DC-blocker) stage otherwise rings for hundreds of ms when the
+	* input DC steps abruptly - e.g. when a tune's first play routine sets the master
+	* volume from 0 to 15, producing an audible start-up pop. Re-seating Vlp and Vhp
+	* at the new operating point keeps the output continuous with zero transient.
+	* Only the DC state is touched; AC content resumes normally on the next sample.
+	*
+	* @param input the current input sample (same units as clock())
+	*/
+	void settle ( int input ) noexcept
+	{
+		Vlp = Vhp = input << 11;
+	}
 };
 
 } // namespace reSIDfp

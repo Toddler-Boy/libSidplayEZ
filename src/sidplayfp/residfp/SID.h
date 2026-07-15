@@ -175,6 +175,33 @@ private:
 	int		volumeIndex = 0;
 	int8_t	lastVolume = 0;
 
+	// Start-up declick. Tunes that return from init routinely poke the volume and
+	// filter registers at the very beginning (init leaves volume 0, first play sets
+	// 15, some toggle 0/15; the first note may route a voice into the SID filter).
+	// Each such change steps the mixer DC offset - the volume nibble scales it, and
+	// $d417 routing / $d418 mode bits swap the filter output (at its own DC) in and out
+	// of the mix - stepping the external filter's input and ringing its slow (~1.6 Hz)
+	// DC-blocker into an audible pop. While the declick is active (armed by the player
+	// at the init->play boundary, for handshake tunes only) the external filter is
+	// re-settled to the current operating point on the first sample and on every
+	// subsequent $d417/$d418 write, so those steps produce no ring.
+	//
+	// Gating is by silence, not time: some tunes have long silent intros yet poke the
+	// volume register during them (e.g. Chris Huelsbeck's "Shades" - 4 s before the
+	// music, volume play inside the first second). The declick therefore stays active
+	// for a guaranteed minimum, then as long as all voice envelopes remain at zero (no
+	// note sounding), up to a safety cap. It releases the moment a note actually plays,
+	// so intended volume/filter dynamics and $d418 digis in real music pass untouched.
+	// Never armed for non-returning (digi/BASIC) tunes, whose volume writes are the
+	// actual audio. See ExternalFilter::settle and armStartupDeclick().
+	bool	startupDeclickActive = false;
+	bool	startupDeclickPending = false;
+	int		startupDeclickMinCycles = 0;		// guaranteed-active countdown
+	int		startupDeclickCapCycles = 0;		// safety-cap countdown
+
+	static constexpr int	STARTUP_DECLICK_MIN_CYCLES =	  100'000;	// ~100 ms guaranteed
+	static constexpr int	STARTUP_DECLICK_MAX_CYCLES = 15'000'000;	// ~15 s hard cap
+
 	// Time to live for the last written value
 	int	busValueTtl;
 
@@ -274,6 +301,25 @@ private:
 			for ( auto i = 0u; i < ( 1 << OSC_DAC_BITS ); i++ )
 				oscDAC[ i ] = float ( dacBuilder.getOutput ( i ) - offset );
 		}
+	}
+
+	/**
+	* Drive the external filter for one sample, honouring a pending start-up declick.
+	*
+	* When the first master-volume change of the tune is waiting to be handled, snap
+	* the external filter to the current input DC instead of clocking it, so the volume
+	* step produces no DC-blocker transient. All other samples clock normally.
+	*/
+	[[ nodiscard ]] sidinline int clockExternalFilter ( int extIn ) noexcept
+	{
+		if ( startupDeclickPending ) [[ unlikely ]]
+		{
+			startupDeclickPending = false;
+			externalFilter.settle ( extIn );
+			return 0;
+		}
+
+		return externalFilter.clock ( extIn );
 	}
 
 public:
@@ -378,9 +424,34 @@ public:
 		volumeIndex = 0;
 		lastVolume = 0;
 
+		startupDeclickActive = false;
+		startupDeclickPending = false;
+		startupDeclickMinCycles = 0;
+		startupDeclickCapCycles = 0;
+
 		busValue = 0;
 		busValueTtl = 0;
 		voiceSync ( false );
+	}
+
+	/**
+	* Activate the start-up declick.
+	*
+	* Call once at the init -> playback boundary (after the tune's init has run,
+	* before captured output begins), and only for tunes that return from init.
+	* Settles the external filter to the current operating point immediately (removing
+	* any residual DC-blocker ring at capture start) and keeps re-settling it on every
+	* $d417/$d418 write until a note actually sounds - guaranteed for STARTUP_DECLICK_MIN_CYCLES,
+	* then for as long as all voices stay silent, capped at STARTUP_DECLICK_MAX_CYCLES.
+	* Deliberately separate from reset(): reset() issues a $d418 write that would
+	* otherwise be treated as part of the opening dance.
+	*/
+	void armStartupDeclick () noexcept
+	{
+		startupDeclickActive = true;
+		startupDeclickPending = true;
+		startupDeclickMinCycles = STARTUP_DECLICK_MIN_CYCLES;
+		startupDeclickCapCycles = STARTUP_DECLICK_MAX_CYCLES;
 	}
 
 	/**
@@ -473,10 +544,23 @@ public:
 			{
 				filter.writeRES_FILT ( value );
 				filterUsage |= value;
+
+				// While the start-up declick is active, re-settle the external filter:
+				// routing a voice into/out of the SID filter shifts the DC path and
+				// would otherwise ring the DC-blocker into a pop.
+				if ( startupDeclickActive ) [[ unlikely ]]
+					startupDeclickPending = true;
 			}
 			break;
 			case 0x18:																			// Volume and filter modes
 			{
+				// While the start-up declick is active, re-settle the external filter
+				// on any volume/mode write. Both the volume nibble (scales the mixer
+				// DC) and the filter-mode bits (route the filter output, at its own DC,
+				// into the mixer) step the DC and would otherwise ring it.
+				if ( startupDeclickActive ) [[ unlikely ]]
+					startupDeclickPending = true;
+
 				filter.writeMODE_VOL ( value );
 				lastVolume = int8_t ( value & 0x0F );
 			}
@@ -540,6 +624,23 @@ public:
 			}
 		}
 
+		// Maintain the start-up declick: active for a guaranteed minimum, then only
+		// while all voices are silent (covers long silent intros that poke the volume
+		// register), released once a note sounds or the safety cap is reached.
+		if ( startupDeclickActive ) [[ unlikely ]]
+		{
+			startupDeclickMinCycles -= int ( cycles );
+			startupDeclickCapCycles -= int ( cycles );
+
+			const auto	voicesSilent = ! ( voice[ 0 ].envelopeGenerator.output ()
+										   | voice[ 1 ].envelopeGenerator.output ()
+										   | voice[ 2 ].envelopeGenerator.output () );
+
+			if ( ( startupDeclickCapCycles <= 0 )
+				|| ( ( startupDeclickMinCycles <= 0 ) && ! voicesSilent ) )
+				startupDeclickActive = false;
+		}
+
 		auto output = [ this ] () -> int
 		{
 			const auto	o1 = voice[ 0 ].output ( voice[ 2 ].waveformGenerator );
@@ -553,12 +654,12 @@ public:
 				const auto	env3 = voice[ 2 ].envelopeGenerator.output ();
 
 				const auto	input = int ( filter.clock ( o1, o2, o3, env1, env2, env3 ) );
-				return externalFilter.clock ( input + INT16_MIN );
+				return clockExternalFilter ( input + INT16_MIN );
 			}
 			else
 			{
  				const auto	input = int ( filter.clock ( o1, o2, o3 ) );
- 				return externalFilter.clock ( input + INT16_MIN );
+ 				return clockExternalFilter ( input + INT16_MIN );
  			}
 		};
 

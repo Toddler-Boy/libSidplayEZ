@@ -147,6 +147,16 @@ void Player::initialise ()
 
 		// Set the handshake to continue
 		mem.writeMemByte ( handshakeAddr, 2 );
+
+		// Only tunes that return from init reach here. Open the start-up declick
+		// window so the external filter absorbs the volume-register steps these tunes
+		// make at the beginning (init leaves volume 0, first play sets 15, some toggle
+		// it repeatedly) instead of ringing them into pops. Deliberately NOT done for
+		// non-returning (digi/BASIC) tunes, whose $d418 writes are the actual audio
+		// and must pass through untouched.
+		for ( auto& s : m_sidEmu )
+			if ( s )
+				s->armStartupDeclick ();
 	}
 
 	m_startTime = m_c64.getTimeMs ();
