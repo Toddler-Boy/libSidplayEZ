@@ -628,7 +628,7 @@ public:
 			case 0x17:																			// Filter control
 			{
 				filter.writeRES_FILT ( value );
-				filterUsage |= value;
+				filterUsage |= value & 0x0F;
 
 				// While the start-up declick is active, re-settle the external filter on an
 				// isolated write: routing a voice into/out of the SID filter shifts the DC
@@ -647,6 +647,7 @@ public:
 				declickVolFilterWrite ();
 
 				filter.writeMODE_VOL ( value );
+				filterUsage |= value & 0x70;
 				lastVolume = int8_t ( value & 0x0F );
 			}
 			break;
@@ -864,8 +865,8 @@ public:
 			filter.setFilterCurve ( filterCurve );
 	}
 
-	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const noexcept {	return voice[ voiceNo ].getEnvLevel (); }
-	[[ nodiscard ]] bool wasFilterUsed () const noexcept {	return filterUsage & 0x0F;		}
+	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const noexcept {	return voice[ voiceNo ].getEnvLevel ();			}
+	[[ nodiscard ]] bool wasFilterUsed () const noexcept {	return ( filterUsage & 0x70 ) && ( filterUsage & 0x0F );	}
 };
 //-----------------------------------------------------------------------------
 
