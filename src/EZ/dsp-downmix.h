@@ -8,18 +8,21 @@ namespace libsidplayEZ::dsp
 
 void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
 {
+	// Snap threshold: residual side level at width 1e-3 is ~-60 dB, inaudible
+	constexpr auto	epsilon = 1e-3f;
+
 	// Pure stereo, no down mixing required
-	if ( width >= ( 1.0f - 1e-6f ) )
+	if ( width >= ( 1.0f - epsilon ) )
 		return;
 
-	constexpr auto	quarterSine = 0.70710678118f;
+	constexpr auto	invSqrt2 = std::numbers::sqrt2_v<float> * 0.5f;
 
 	// Pure mono
-	if ( width < 1e-6f )
+	if ( width < epsilon )
 	{
 		for ( auto i = 0; i < numSamples; ++i )
 		{
-			const auto	mid = ( srcDstL[ i ] + srcDstR[ i ] ) * quarterSine;
+			const auto	mid = ( srcDstL[ i ] + srcDstR[ i ] ) * invSqrt2;
 
 			srcDstL[ i ] = mid;
 			srcDstR[ i ] = mid;
@@ -27,8 +30,8 @@ void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const i
 		return;
 	}
 
-	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> * width ) * quarterSine;
-	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> * width ) * quarterSine;
+	const auto	midGain = std::cos ( 0.25f * std::numbers::pi_v<float> * width ) * invSqrt2;
+	const auto	sideGain = std::sin ( 0.25f * std::numbers::pi_v<float> * width ) * invSqrt2;
 
 	// Down mix
 	for ( auto i = 0; i < numSamples; ++i )

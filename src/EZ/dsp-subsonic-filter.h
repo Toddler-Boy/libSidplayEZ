@@ -34,8 +34,9 @@ public:
 
 	void process ( float* data, int numSamples )
 	{
+		// local copies help the optimizer
 		auto    s1 = z1;
-		auto    s2 = z2;   // local copies help the optimizer
+		auto    s2 = z2;
 		for ( auto i = 0; i < numSamples; ++i )
 		{
 			const auto  in = data[ i ];
