@@ -169,10 +169,6 @@ private:
 	Voice<is6581>	voice[ numVoices ];
 
 	// Used to determine if the filter ever gets used during playback
-	uint8_t	filterUsage;
-
-	// Used to determine if the filter ever gets used during playback
-	int		volumeIndex = 0;
 	int8_t	lastVolume = 0;
 
 	// Start-up declick. Tunes that return from init routinely poke the volume and
@@ -497,8 +493,6 @@ public:
 
 		resampler.reset ();
 
-		filterUsage = 0;
-		volumeIndex = 0;
 		lastVolume = 0;
 
 		startupDeclickActive = false;
@@ -628,7 +622,6 @@ public:
 			case 0x17:																			// Filter control
 			{
 				filter.writeRES_FILT ( value );
-				filterUsage |= value & 0x0F;
 
 				// While the start-up declick is active, re-settle the external filter on an
 				// isolated write: routing a voice into/out of the SID filter shifts the DC
@@ -647,7 +640,6 @@ public:
 				declickVolFilterWrite ();
 
 				filter.writeMODE_VOL ( value );
-				filterUsage |= value & 0x70;
 				lastVolume = int8_t ( value & 0x0F );
 			}
 			break;
@@ -866,7 +858,6 @@ public:
 	}
 
 	[[ nodiscard ]] float getEnvLevel ( int voiceNo ) const noexcept {	return voice[ voiceNo ].getEnvLevel ();			}
-	[[ nodiscard ]] bool wasFilterUsed () const noexcept {	return ( filterUsage & 0x70 ) && ( filterUsage & 0x0F );	}
 };
 //-----------------------------------------------------------------------------
 

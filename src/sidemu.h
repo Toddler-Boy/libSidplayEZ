@@ -132,7 +132,6 @@ public:
 	virtual void setDacLeakage ( const double leakage ) noexcept = 0;
 
 	[[ nodiscard ]] virtual float getInternalEnvValue ( int voiceNo ) const noexcept = 0;
-	[[ nodiscard ]] virtual bool wasFilterUsed () const noexcept = 0;
 
 	/**
 	* Get the current position in buffer
@@ -223,7 +222,6 @@ public:
 	void setDacLeakage ( const double leakage ) noexcept override { m_sid.setDacLeakage ( leakage ); }
 
 	[[ nodiscard ]] float getInternalEnvValue ( int voiceNo ) const noexcept override	{	return m_sid.getEnvLevel ( voiceNo );	}
-	[[ nodiscard ]] bool wasFilterUsed () const noexcept override	{		return m_sid.wasFilterUsed ();	}
 
 private:
 	reSIDfp::SID<FLT>		m_sid;

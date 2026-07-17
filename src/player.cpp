@@ -149,6 +149,8 @@ void Player::initialise ()
 		// start; this settle budget is the knob for that.
 		warmup ( powerOnDelay );
 
+		// Get current filter status
+
 		// Set the handshake to continue
 		mem.writeMemByte ( handshakeAddr, 2 );
 	}
@@ -544,14 +546,6 @@ bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 	}
 
 	return false;
-}
-//-----------------------------------------------------------------------------
-
-bool Player::wasFilterUsed () const
-{
-	return		m_sidEmu[ 0 ]->wasFilterUsed ()
-			|| ( getNumChips () > 1 && m_sidEmu[ 1 ]->wasFilterUsed () )
-			|| ( getNumChips () > 2 && m_sidEmu[ 2 ]->wasFilterUsed () );
 }
 //-----------------------------------------------------------------------------
 

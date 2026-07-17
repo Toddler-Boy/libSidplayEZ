@@ -34,7 +34,6 @@ public:
 	uint32_t runEmulation ( float* dstL, float* dstR, int8_t** digiBuffers, uint32_t lengthWanted )	{	return engine.play ( dstL, dstR, digiBuffers, lengthWanted );		}
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] )			{	return engine.getSidStatus ( sidNum, regs );	}
 	uint16_t getInterruptCycles () const							{	return engine.getInterruptCycles ();			}
-	bool wasFilterUsed () const										{	return engine.wasFilterUsed ();					}
 
 	[[ nodiscard ]] int getNumChips () const { return engine.getNumChips (); }
 
