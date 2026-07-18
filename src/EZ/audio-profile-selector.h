@@ -21,7 +21,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	settings getProfile ( const char* path, const char* filename );
+	settings getProfile ( const char* path, const char* filename ) const;
 	void setProfiles ( const std::string& csvStr );
 
 private:

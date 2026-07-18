@@ -49,7 +49,7 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	settings getProfile ( const char* path, const char* filename, const int subtune );
+	settings getProfile ( const char* path, const char* filename, const int subtune ) const;
 
 	void setProfiles ( const std::string& csvStr );
 

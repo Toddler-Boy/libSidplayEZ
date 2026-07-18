@@ -10,7 +10,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, const char* _filename )
+OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, const char* _filename ) const
 {
 	auto	path = std::string ( _path ) + std::string ( _filename );
 

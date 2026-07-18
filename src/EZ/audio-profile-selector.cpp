@@ -9,7 +9,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _path, const char* _filename )
+AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _path, const char* _filename ) const
 {
 	auto	path = std::string ( _path ) + std::string ( _filename );
 

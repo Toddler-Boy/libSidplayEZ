@@ -9,7 +9,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _path, const char* _filename, const int subtune )
+ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _path, const char* _filename, const int subtune ) const
 {
 	auto	path = std::string ( _path );
 

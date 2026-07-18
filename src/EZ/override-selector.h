@@ -21,7 +21,7 @@ public:
 
 	using overrideMap = std::vector<overrides>;
 
-	overrides getOverride ( const char* path, const char* filename );
+	overrides getOverride ( const char* path, const char* filename ) const;
 	void setOverrides ( const std::string& csvStr );
 
 	const overrideMap& getAllOverrides () const { return tuneOverrides; }

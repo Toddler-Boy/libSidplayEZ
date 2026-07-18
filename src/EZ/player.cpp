@@ -29,6 +29,9 @@ bool Player::loadSidFile ( const char* filename )
 	readyToPlay = false;
 	stiEZ = {};
 
+	if ( sharedConfig == nullptr )
+		return false;
+
 	tune.load ( filename );
 
 	auto	info = tune.getInfo ();
@@ -37,7 +40,7 @@ bool Player::loadSidFile ( const char* filename )
 
 	stiEZ.md5 = tune.createMD5New ();
 
-	tuneOverride = overrideSelector.getOverride ( info->path (), info->dataFileName () );
+	tuneOverride = sharedConfig->overrideSelector.getOverride ( info->path (), info->dataFileName () );
 
 	// Fill basic tune information (global for all songs)
 	{
@@ -51,7 +54,7 @@ bool Player::loadSidFile ( const char* filename )
 
 		stiEZ.startSong = tuneOverride.startTune ? tuneOverride.startTune : info->startSong ();
 
-		stiEZ.playroutineID = sidID.findPlayerRoutines ( tune.getSidData () );
+		stiEZ.playroutineID = sharedConfig->sidID.findPlayerRoutines ( tune.getSidData () );
 
 		stiEZ.c64LoadAddress = info->loadAddr ();
 		stiEZ.c64InitAddress = info->initAddr ();
@@ -66,6 +69,9 @@ bool Player::loadSidFile ( const char* filename )
 bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFilter )
 {
 	readyToPlay = false;
+
+	if ( sharedConfig == nullptr )
+		return false;
 
 	//
 	// Apply overrides
@@ -143,7 +149,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// per author with the assumption they worked with the same machine their entire career
 	//
 	{
-		const auto chipProfile = chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
+		const auto chipProfile = sharedConfig->chipSelector.getProfile ( info->path (), info->dataFileName (), stiEZ.currentSong );
 
 		stiEZ.chipProfile = chipProfile.name;
 		stiEZ.chipProfileIsApproved = chipProfile.isApproved;
@@ -209,7 +215,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	// but we can provide a list where we want a full or narrowed stereo field and bass-adjustment
 	//
 	{
-		const auto audioProfile = audioSelector.getProfile ( info->path (), info->dataFileName () );
+		const auto audioProfile = sharedConfig->audioSelector.getProfile ( info->path (), info->dataFileName () );
 
 		stiEZ.stereoWidth = audioProfile.width;
 		stiEZ.bassAdjust = float ( audioProfile.bass );

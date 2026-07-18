@@ -1,12 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "../player.h"
 
-#include "audio-profile-selector.h"
-#include "chip-profile-selector.h"
-#include "override-selector.h"
-
-#include "sidid.h"
+#include "shared-config.h"
 #include "SidTuneInfoEZ.h"
 
 namespace libsidplayEZ
@@ -17,12 +15,15 @@ namespace libsidplayEZ
 class Player final
 {
 public:
-	bool loadSidIDConfig ( const char* filename ) { return sidID.loadSidIDConfig ( filename ); }
-	void setChipProfileMap ( const std::string& csvStr ) { chipSelector.setProfiles ( csvStr ); }
-	void setAudioProfileMap ( const std::string& cvsStr ) { audioSelector.setProfiles ( cvsStr ); }
-	void setTuneOverrides ( const std::string& cvsStr ) { overrideSelector.setOverrides ( cvsStr ); }
+	// All parsed configuration comes from one shared, immutable object: parse it
+	// once via SharedPlayerConfig::load, then hand the same pointer to every Player
+	void setSharedConfig ( std::shared_ptr<const SharedPlayerConfig> config ) { sharedConfig = std::move ( config ); }
 
-	const OverrideSelector::overrideMap& getAllTuneOverrides () const { return overrideSelector.getAllOverrides (); }
+	const OverrideSelector::overrideMap& getAllTuneOverrides () const
+	{
+		static const OverrideSelector::overrideMap	empty;
+		return sharedConfig != nullptr ? sharedConfig->overrideSelector.getAllOverrides () : empty;
+	}
 
 	void setRoms ( const void* kernal, const void* basic, const void* character );
 
@@ -49,9 +50,7 @@ public:
 private:
 	bool	readyToPlay = false;
 
-	OverrideSelector		overrideSelector;
-	ChipProfileSelector		chipSelector;
-	AudioProfileSelector	audioSelector;
+	std::shared_ptr<const SharedPlayerConfig>	sharedConfig;
 
 	libsidplayfp::Player	engine;
 
@@ -59,8 +58,6 @@ private:
 
 	SidTune		tune;
 	SidConfig	config;
-
-	sidid		sidID;
 
 	SidTuneInfoEZ	stiEZ;
 };
