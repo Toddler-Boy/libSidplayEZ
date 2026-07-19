@@ -23,9 +23,22 @@
 */
 
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "../../../EZ/config.h"
+
+#if SID_X86
+	#include <immintrin.h>
+	// the TU is compiled for the SSE4.2 baseline, so the AVX2 kernel needs its own target
+	#if defined(__clang__) || defined(__GNUC__)
+		#define SIDR_TARGET_AVX2 __attribute__(( target( "avx2" ) ))
+	#else
+		#define SIDR_TARGET_AVX2
+	#endif
+#elif SID_NEON
+	#include <arm_neon.h>
+#endif
 
 namespace reSIDfp
 {
@@ -71,27 +84,119 @@ private:
 	int32_t	sample[ RINGSIZE * 2 ];
 
 	/**
-	* Calculate convolution with sample and sinc
-	*
-	* @param a sample buffer input
-	* @param b sinc buffer
-	* @param bLength length of the sinc buffer
-	* @return convolved result
+	* Convolution kernels: int32 samples * int16 sinc coefficients, int32 sum.
+	* All variants are bit-exact against the scalar loop (wrap-around integer
+	* addition is associative, and the low 32 bits of the products are identical),
+	* so the choice of kernel never changes the audio.
 	*/
+	//-----------------------------------------------------------------------------
+	static int convolveScalar ( const int32_t* __restrict__ a, const int16_t* __restrict__ b, const int n ) noexcept
+	{
+		auto	out = 0;
+
+		[[ assume ( n > 0 ) ]];
+		for ( auto i = 0; i < n; ++i )
+			out += a[ i ] * b[ i ];
+
+		return out;
+	}
+
+#if SID_X86
+	static int convolveSSE4 ( const int32_t* __restrict__ a, const int16_t* __restrict__ b, const int n ) noexcept
+	{
+		auto	acc0 = _mm_setzero_si128 ();
+		auto	acc1 = _mm_setzero_si128 ();
+
+		auto	i = 0;
+		for ( ; i + 8 <= n; i += 8 )
+		{
+			const auto	b16 = _mm_loadu_si128 ( (const __m128i*)( b + i ) );
+			const auto	lo = _mm_cvtepi16_epi32 ( b16 );
+			const auto	hi = _mm_cvtepi16_epi32 ( _mm_srli_si128 ( b16, 8 ) );
+
+			acc0 = _mm_add_epi32 ( acc0, _mm_mullo_epi32 ( _mm_loadu_si128 ( (const __m128i*)( a + i ) ), lo ) );
+			acc1 = _mm_add_epi32 ( acc1, _mm_mullo_epi32 ( _mm_loadu_si128 ( (const __m128i*)( a + i + 4 ) ), hi ) );
+		}
+
+		acc0 = _mm_add_epi32 ( acc0, acc1 );
+		acc0 = _mm_add_epi32 ( acc0, _mm_shuffle_epi32 ( acc0, _MM_SHUFFLE ( 1, 0, 3, 2 ) ) );
+		acc0 = _mm_add_epi32 ( acc0, _mm_shuffle_epi32 ( acc0, _MM_SHUFFLE ( 2, 3, 0, 1 ) ) );
+		auto	out = _mm_cvtsi128_si32 ( acc0 );
+
+		for ( ; i < n; ++i )
+			out += a[ i ] * b[ i ];
+
+		return out;
+	}
+
+	SIDR_TARGET_AVX2 static int convolveAVX2 ( const int32_t* __restrict__ a, const int16_t* __restrict__ b, const int n ) noexcept
+	{
+		auto	acc0 = _mm256_setzero_si256 ();
+		auto	acc1 = _mm256_setzero_si256 ();
+
+		auto	i = 0;
+		for ( ; i + 16 <= n; i += 16 )
+		{
+			const auto	lo = _mm256_cvtepi16_epi32 ( _mm_loadu_si128 ( (const __m128i*)( b + i ) ) );
+			const auto	hi = _mm256_cvtepi16_epi32 ( _mm_loadu_si128 ( (const __m128i*)( b + i + 8 ) ) );
+
+			acc0 = _mm256_add_epi32 ( acc0, _mm256_mullo_epi32 ( _mm256_loadu_si256 ( (const __m256i*)( a + i ) ), lo ) );
+			acc1 = _mm256_add_epi32 ( acc1, _mm256_mullo_epi32 ( _mm256_loadu_si256 ( (const __m256i*)( a + i + 8 ) ), hi ) );
+		}
+
+		auto	acc = _mm_add_epi32 ( _mm256_castsi256_si128 ( _mm256_add_epi32 ( acc0, acc1 ) ),
+									  _mm256_extracti128_si256 ( _mm256_add_epi32 ( acc0, acc1 ), 1 ) );
+		acc = _mm_add_epi32 ( acc, _mm_shuffle_epi32 ( acc, _MM_SHUFFLE ( 1, 0, 3, 2 ) ) );
+		acc = _mm_add_epi32 ( acc, _mm_shuffle_epi32 ( acc, _MM_SHUFFLE ( 2, 3, 0, 1 ) ) );
+		auto	out = _mm_cvtsi128_si32 ( acc );
+
+		for ( ; i < n; ++i )
+			out += a[ i ] * b[ i ];
+
+		return out;
+	}
+#elif SID_NEON
+	static int convolveNEON ( const int32_t* __restrict__ a, const int16_t* __restrict__ b, const int n ) noexcept
+	{
+		auto	acc0 = vdupq_n_s32 ( 0 );
+		auto	acc1 = vdupq_n_s32 ( 0 );
+
+		auto	i = 0;
+		for ( ; i + 8 <= n; i += 8 )
+		{
+			const auto	b16 = vld1q_s16 ( b + i );
+
+			acc0 = vmlaq_s32 ( acc0, vld1q_s32 ( a + i ), vmovl_s16 ( vget_low_s16 ( b16 ) ) );
+			acc1 = vmlaq_s32 ( acc1, vld1q_s32 ( a + i + 4 ), vmovl_s16 ( vget_high_s16 ( b16 ) ) );
+		}
+
+		auto	out = vaddvq_s32 ( vaddq_s32 ( acc0, acc1 ) );
+
+		for ( ; i < n; ++i )
+			out += a[ i ] * b[ i ];
+
+		return out;
+	}
+#endif
+
+	using ConvolveFn = int (*) ( const int32_t*, const int16_t*, int );
+
+	static ConvolveFn selectConvolve () noexcept
+	{
+	#if SID_X86
+		return ( libsidplayEZ::simdLevel () >= libsidplayEZ::SIMD_AVX2 ) ? &convolveAVX2 : &convolveSSE4;
+	#elif SID_NEON
+		return &convolveNEON;
+	#else
+		return &convolveScalar;
+	#endif
+	}
+
+	static inline const ConvolveFn convolve = selectConvolve ();
+
 	//-----------------------------------------------------------------------------
 	sidinline int fir ( int subcycle ) noexcept
 	{
-		auto convolve = [] ( const int32_t* const __restrict__ a, const int16_t* const __restrict__ b, const int bLength )
-		{
-			auto    out = 0;
-
-			[[ assume ( bLength > 0 ) ]];
-			for ( auto i = 0; i < bLength; ++i )
-				out += a[ i ] * b[ i ];
-
-			return ( out + ( 1 << 14 ) ) >> 15;
-		};
-
 		// Find the first of the nearest fir tables close to the phase
 		auto		firTableFirst = subcycle * firRES >> 10;
 		const auto	firTableOffset = ( subcycle * firRES ) & 0x3FF;
@@ -99,7 +204,7 @@ private:
 		// Find firN most recent samples, plus one extra in case the FIR wraps
 		auto	sampleStart = sampleIndex - firN + RINGSIZE - 1;
 
-		const auto	v1 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
+		const auto	v1 = ( convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN ) + ( 1 << 14 ) ) >> 15;
 
 		// Use next FIR table, wrap around to first FIR table using previous sample
 		if ( ++firTableFirst == firRES ) [[ unlikely ]]
@@ -108,7 +213,7 @@ private:
 			++sampleStart;
 		}
 
-		const auto	v2 = convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN );
+		const auto	v2 = ( convolve ( sample + sampleStart, firTable.data () + firTableFirst * firN, firN ) + ( 1 << 14 ) ) >> 15;
 
 		// Linear interpolation between the sinc tables yields good approximation for the exact value
 		return v1 + ( firTableOffset * ( v2 - v1 ) >> 10 );
