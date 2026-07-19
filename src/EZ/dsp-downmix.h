@@ -6,7 +6,7 @@
 namespace libsidplayEZ::dsp
 {
 
-void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
+inline void downMix ( float* __restrict__ srcDstL, float* __restrict__ srcDstR, const int numSamples, const float width )
 {
 	// Snap threshold: residual side level at width 1e-3 is ~-60 dB, inaudible
 	constexpr auto	epsilon = 1e-3f;
