@@ -24,7 +24,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <random>
 
 namespace reSIDfp
 {
@@ -40,13 +39,17 @@ FilterModelConfig::FilterModelConfig ( double vvr, double c, double vdd, double 
 	, N16 ( norm * ( ( 1 << 16 ) - 1 ) )
 	, voice_voltage_range ( vvr )
 {
-	// Generate random noise for dithering
+	// Fixed pseudo-random dither set: identical on every run, platform and
+	// C++ runtime (std::default_random_engine / uniform_real_distribution are
+	// implementation-defined, so they are only stable per stdlib). Plain LCG,
+	// same constants as mmu.cpp.
 	{
-		std::uniform_real_distribution<double>	unif ( 0.0, 1.0 );
-		std::default_random_engine		re;
-
+		unsigned int	seed = 3686734;
 		for ( auto& buf : rndBuffer )
-			buf = unif ( re );
+		{
+			seed = seed * 1664525 + 1013904223;
+			buf = ( seed >> 8 ) * ( 1.0 / 16777216.0 );	// [0,1)
+		}
 	}
 
 	setUCoxAndCap ( ucox, c );
@@ -128,6 +131,7 @@ void FilterModelConfig::buildSummerTable ( OpAmp& opampModel ) noexcept
 	// and transistors are not linear components. However modeling all
 	// transistors separately would be extremely costly.
 	const auto	r_N16 = 1.0 / N16;
+	auto	rndIdx = 0;		// local dither index (distinct start per builder - see header)
 
 	for ( auto i = 0; i < 5; i++ )
 	{
@@ -141,7 +145,7 @@ void FilterModelConfig::buildSummerTable ( OpAmp& opampModel ) noexcept
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16 * r_idiv;	// vmin .. vmax
-			summer[ i ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ) );
+			summer[ i ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ), rndIdx );
 		}
 	}
 }
@@ -155,6 +159,7 @@ void FilterModelConfig::buildMixerTable ( OpAmp& opampModel, double nRatio ) noe
 	// All "on", transistors are modeled as one - see comments above for
 	// the filter summer.
 	const auto	r_N16 = 1.0 / N16;
+	auto	rndIdx = 1024;	// local dither index (distinct start per builder - see header)
 
 	for ( auto i = 0; i < 8; i++ )
 	{
@@ -168,7 +173,7 @@ void FilterModelConfig::buildMixerTable ( OpAmp& opampModel, double nRatio ) noe
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16 * r_idiv;	// vmin .. vmax
-			mixer[ i ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ) );
+			mixer[ i ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ), rndIdx );
 		}
 	}
 }
@@ -180,6 +185,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) 
 	// From die photographs of the volume "resistor" ladders it follows that
 	// gain ~ vol/12 (assuming ideal op-amps and ideal "resistors").
 	const auto	r_N16 = 1.0 / N16;
+	auto	rndIdx = 2048;	// local dither index (distinct start per builder - see header)
 
 	for ( auto n8 = 0; n8 < 16; n8++ )
 	{
@@ -191,7 +197,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) 
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16; // vmin .. vmax
-			m_tables->volume[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ) );
+			m_tables->volume[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( n, vin ), rndIdx );
 		}
 	}
 }
@@ -200,6 +206,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) 
 void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept
 {
 	const auto	r_N16 = 1.0 / N16;
+	auto	rndIdx = 3072;	// local dither index (distinct start per builder - see header)
 
 	for ( auto n8 = 0; n8 < 16; n8++ )
 	{
@@ -209,7 +216,7 @@ void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double re
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16;	// vmin .. vmax
-			m_tables->resonance[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ) );
+			m_tables->resonance[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ), rndIdx );
 		}
 	}
 }

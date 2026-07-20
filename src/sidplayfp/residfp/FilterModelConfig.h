@@ -117,7 +117,6 @@ protected:
 
 private:
  	double			rndBuffer[ 4096 ];
- 	mutable int		rndIndex = 0;
 
 public:
 	FilterModelConfig ( const FilterModelConfig& ) = delete;
@@ -164,14 +163,27 @@ public:
 	[[ nodiscard ]] sidinline double getVddt () const noexcept { return Vddt; }
 	[[ nodiscard ]] sidinline double getVth () const noexcept { return Vth; }
 
-	// helper functions
-	[[ nodiscard ]] sidinline uint16_t getNormalizedValue ( double value ) const noexcept
+	// helper functions.
+	// Not called in real-time (table construction + one-time constants only).
+	// The dither index is CALLER-owned: the table builders run in parallel
+	// threads (see FilterModelConfig6581's call_once block), and the previous
+	// shared mutable index raced - per-launch thread scheduling baked slightly
+	// different tables on every process start, breaking cross-run determinism.
+	// Each builder starts at its own fixed offset into rndBuffer (0 / 512 /
+	// 1024 / 2048 / 3072) so no two tables see the same dither sequence.
+	[[ nodiscard ]] sidinline uint16_t getNormalizedValue ( double value, int& rndIdx ) const noexcept
 	{
-		// This function does not get called in real-time, so we can afford to be a bit more accurate
-		const auto	tmp = N16 * ( value - vmin ) + rndBuffer[ rndIndex++ & 4095 ];
+		const auto	tmp = N16 * ( value - vmin ) + rndBuffer[ rndIdx++ & 4095 ];
 
  		assert ( tmp >= 0.0 && tmp < 65536.0 );
  		return uint16_t ( tmp );
+	}
+
+	// single-value quantization (one-time constants): fixed dither draw
+	[[ nodiscard ]] sidinline uint16_t getNormalizedValue ( double value ) const noexcept
+	{
+		auto	rndIdx = 4095;
+		return getNormalizedValue ( value, rndIdx );
 	}
 
 	template<int N>

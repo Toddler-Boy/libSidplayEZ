@@ -348,8 +348,9 @@ uint16_t* FilterModelConfig6581::getDAC ( double adjustment ) const noexcept
 
 	auto    f0_dac = new uint16_t[ 1 << DAC_BITS ];
 
+	auto	rndIdx = 512;	// local dither index (distinct start per builder - see getNormalizedValue)
 	for ( auto i = 0u; i < ( 1 << DAC_BITS ); i++ )
-		f0_dac[ i ] = getNormalizedValue ( _dac_zero + dac.getOutput ( i ) * dac_scale );
+		f0_dac[ i ] = getNormalizedValue ( _dac_zero + dac.getOutput ( i ) * dac_scale, rndIdx );
 
 	return f0_dac;
 }
