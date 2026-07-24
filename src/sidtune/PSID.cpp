@@ -334,7 +334,9 @@ void PSID::tryLoad ( const psidHeader& pHeader )
 	auto toStdString = [ this ] ( const char* infoStr )
 	{
 		char	tmp[ PSID_MAXSTRLEN + 1 ] = {};
-		for ( auto i = 0; infoStr[ i ] && i < PSID_MAXSTRLEN; i++ )
+
+		// The fields may use all 32 chars with no trailing zero
+		for ( auto i = 0; i < PSID_MAXSTRLEN && infoStr[ i ]; i++ )
 			tmp[ i ] = infoStr[ i ];
 
 		info.m_infoString.emplace_back ( tmp );

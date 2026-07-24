@@ -162,10 +162,14 @@ unsigned int SidTuneBase::selectSong ( unsigned int selectedSong )
 
 void SidTuneBase::placeSidTuneInC64mem ( sidmemory& mem )
 {
+	// Load address and length may together run past the top of C64 memory, and fillRam
+	// is an unchecked copy into a fixed 64k array.
+	const auto  start = info.m_loadAddr;
+	const auto  size = std::min ( MAX_MEMORY - uint32_t ( start ), info.m_c64dataLen );
+
 	// The Basic ROM sets these values on loading a file.
 	// Program end address
-	const auto  start = info.m_loadAddr;
-	const auto  end = uint16_t ( start + info.m_c64dataLen );
+	const auto  end = uint16_t ( start + size );
 	mem.writeMemWord ( 0x2d, end ); // Variables start
 	mem.writeMemWord ( 0x2f, end ); // Arrays start
 	mem.writeMemWord ( 0x31, end ); // Strings start
@@ -173,7 +177,7 @@ void SidTuneBase::placeSidTuneInC64mem ( sidmemory& mem )
 	mem.writeMemWord ( 0xae, end );
 
 	// Copy data from cache to the correct destination.
-	mem.fillRam ( info.m_loadAddr, &cache[ fileOffset ], info.m_c64dataLen );
+	mem.fillRam ( info.m_loadAddr, &cache[ fileOffset ], size );
 }
 //-----------------------------------------------------------------------------
 
@@ -273,6 +277,11 @@ void SidTuneBase::acceptSidTune ( const char* dataFileName, const char* infoFile
 	if ( info.m_startSong == 0 || info.m_startSong > info.m_songs )
 		info.m_startSong = 1;
 
+	// The data offset comes straight from the file header; past the end it would
+	// underflow the length below and the probes would read out of bounds.
+	if ( fileOffset >= buf.size () )
+		throw loadError ( ERR_TRUNCATED );
+
 	info.m_dataFileLen = uint32_t ( buf.size () );
 	info.m_c64dataLen = uint32_t ( buf.size () - fileOffset );
 
@@ -285,7 +294,9 @@ void SidTuneBase::acceptSidTune ( const char* dataFileName, const char* infoFile
 	if ( ! checkCompatibility () )
 		throw loadError ( ERR_BAD_ADDR );
 
-	if ( info.m_dataFileLen >= 2 )
+	// What matters is the data left at fileOffset - resolveAddrs may have consumed the
+	// last two bytes as an embedded load address.
+	if ( info.m_c64dataLen >= 2 )
 	{
 		// We only detect an offset of two. Some position independent
 		// sidtunes contain a load address of 0xE000, but are loaded

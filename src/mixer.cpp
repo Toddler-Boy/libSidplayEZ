@@ -84,8 +84,8 @@ void Mixer::doMix () noexcept
 		// move digi data to final buffer
 		std::memcpy ( outBuf, buf, toCopy );
 
-		// move the unhandled data to start of buffer, if any
-		std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+		// move the unhandled data to start of buffer, if any (the ranges overlap)
+		std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 	}
 
 	// Render chips
@@ -105,7 +105,7 @@ void Mixer::doMix () noexcept
 				sumBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 
 			// Update sample-position
 			chp->setBufferPos ( samplesLeft );
@@ -126,7 +126,7 @@ void Mixer::doMix () noexcept
 			convertBuffer ( outBuf, buf, toCopy );
 
 			// move the unhandled data to start of buffer, if any
-			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->setBufferPos ( samplesLeft );
 		}
 
@@ -150,7 +150,7 @@ void Mixer::doMix () noexcept
 			}
 
 			// move the unhandled data to start of buffer, if any
-			std::memcpy ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
 			chp->setBufferPos ( samplesLeft );
 		}
 	}
