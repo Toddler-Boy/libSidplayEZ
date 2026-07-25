@@ -50,7 +50,6 @@ private:
 	uint32_t	m_sampleIndex = 0;
 
 	uint32_t	m_sampleRate = 0;
-	bool		m_wait = false;
 
 public:
 	void doMix () noexcept;
@@ -110,10 +109,10 @@ public:
 	*/
 	[[ nodiscard ]] sidinline uint32_t samplesGenerated () const noexcept { return m_sampleIndex; }
 
-	/*
-	 * Wait till we consume the buffer
-	 */
-	[[ nodiscard ]] sidinline bool wait () const noexcept { return m_wait; }
+	/**
+	* Check if the chips have to be clocked further to finish the block
+	*/
+	[[ nodiscard ]] bool needsMoreSamples () const noexcept;
 
 	[[ nodiscard ]] sidinline int getNumChips () const noexcept { return int ( m_chips.size () ); }
 };

@@ -155,8 +155,14 @@ void Mixer::doMix () noexcept
 		}
 	}
 
-	m_wait = uint32_t ( samplesLeft ) > m_sampleCount;
 	m_sampleIndex += toCopy;
+}
+//-----------------------------------------------------------------------------
+
+bool Mixer::needsMoreSamples () const noexcept
+{
+	// Clocking on top of samples the chips still hold would append past the end of their fixed buffer
+	return m_chips.front ()->bufferpos () < int ( m_sampleCount - m_sampleIndex );
 }
 //-----------------------------------------------------------------------------
 
@@ -170,8 +176,6 @@ void Mixer::begin ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32
 	m_sampleBuffer[ 0 ] = bufferL;
 	m_sampleBuffer[ 1 ] = bufferR;
 	m_digiBuffers = digiBuffers;
-
-	m_wait = false;
 }
 //-----------------------------------------------------------------------------
 

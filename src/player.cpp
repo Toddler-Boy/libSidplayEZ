@@ -201,7 +201,7 @@ uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, ui
 	// Clock chips and mix into output buffer
 	while ( m_mixer.notFinished () )
 	{
-		if ( ! m_mixer.wait () )
+		if ( m_mixer.needsMoreSamples () )
 			run ( CYCLES );
 
 		m_mixer.clockChips ();
