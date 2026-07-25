@@ -1202,9 +1202,9 @@ void MOS6510::tya_instr () noexcept
 	interruptsAndNextOpcode ();
 }
 
-void MOS6510::invalidOpcode ()
+void MOS6510::invalidOpcode () noexcept
 {
-	throw haltInstruction ();
+	jammed = true;
 }
 
 
@@ -2045,6 +2045,8 @@ void MOS6510::Initialise () noexcept
 */
 void MOS6510::reset () noexcept
 {
+	jammed = false;
+
 	// Internal Stuff
 	Initialise ();
 

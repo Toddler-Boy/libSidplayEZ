@@ -138,8 +138,8 @@ void Player::initialise ()
 	// Run for some cycles until the initialization routine is done
 	if ( const auto	handshakeAddr = driver.getHandshakeAddr (); mem.readMemByte ( handshakeAddr ) == 0 )
 	{
-		// Wait for the handshake to be acknowledged
-		while ( mem.readMemByte ( handshakeAddr ) == 0 )
+		// Wait for the handshake to be acknowledged. A jammed CPU never sets it
+		while ( mem.readMemByte ( handshakeAddr ) == 0 && ! m_c64.isJammed () )
 			warmup ( 1000 );
 
 		// Let the INIT routine's own volume-register pokes settle before capture. These
@@ -199,7 +199,7 @@ uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, ui
 	constexpr auto	CYCLES = 3'000u;
 
 	// Clock chips and mix into output buffer
-	while ( m_mixer.notFinished () )
+	while ( m_mixer.notFinished () && ! m_c64.isJammed () )
 	{
 		if ( m_mixer.needsMoreSamples () )
 			run ( CYCLES );

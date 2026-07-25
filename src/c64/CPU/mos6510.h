@@ -46,8 +46,6 @@ namespace libsidplayfp
 class MOS6510
 {
 public:
-	class haltInstruction {};
-
 	// Status register interrupt bit
 	static constexpr int SR_INTERRUPT = 2;
 
@@ -99,6 +97,9 @@ private:
 
 	/// The RDY pin state during last throw away read.
 	bool rdyOnThrowAwayRead;
+
+	/// Set by an illegal opcode. The hardware locks up for good, so this only clears on reset
+	bool jammed = false;
 
 	/// Status register
 	Flags flags;
@@ -250,10 +251,7 @@ private:
 	sidinline void xas_instr () noexcept;
 	sidinline void sh_instr () noexcept;
 
-	/**
-	* @throws haltInstruction
-	*/
-	void invalidOpcode ();
+	void invalidOpcode () noexcept;
 
 	// Declare Arithmetic Operations
 	sidinline void doADC () noexcept;
@@ -284,6 +282,11 @@ public:
 	sidinline void cpuWrite ( uint16_t addr, uint8_t data ) noexcept	{	dataBus.cpuWrite ( addr, data );	}
 
 	void reset () noexcept;
+
+	/**
+	* Check whether an illegal opcode has halted the CPU.
+	*/
+	[[ nodiscard ]] sidinline bool isJammed () const noexcept { return jammed; }
 
 	static const char* credits ();
 

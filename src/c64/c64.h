@@ -189,10 +189,13 @@ public:
 
 	/**
 	* Clock the emulation.
-	*
-	* @throws haltInstruction
 	*/
 	sidinline void clock () noexcept { eventScheduler.clock (); }
+
+	/**
+	* Check whether an illegal opcode has halted the CPU.
+	*/
+	[[ nodiscard ]] sidinline bool isJammed () const noexcept { return cpu.isJammed (); }
 
 	void reset () noexcept;
 	void resetCpu () noexcept { cpu.reset (); }

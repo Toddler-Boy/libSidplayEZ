@@ -38,6 +38,12 @@ public:
 
 	[[ nodiscard ]] int getNumChips () const { return engine.getNumChips (); }
 
+	/**
+	* Check whether an illegal opcode has halted the CPU. Poll after setTuneNumber ()
+	* and after every runEmulation (), which both stop early once it is set.
+	*/
+	[[ nodiscard ]] bool isJammed () const { return engine.isJammed (); }
+
 	[[ nodiscard ]] const SidTuneInfoEZ& getFileInfo () const	{	return stiEZ;	}
 	[[ nodiscard ]] const SidTune& getSidTune () const { return tune; }
 

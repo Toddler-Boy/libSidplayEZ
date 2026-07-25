@@ -89,6 +89,12 @@ public:
 
 	[[ nodiscard ]] int getNumChips () const { return m_mixer.getNumChips (); }
 
+	/**
+	* Check whether an illegal opcode has halted the CPU. Poll after loading a tune
+	* and after every play (), which both stop early once it is set.
+	*/
+	[[ nodiscard ]] bool isJammed () const { return m_c64.isJammed (); }
+
 	void setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold );
 
 	void set6581FilterCurve ( const double value );
