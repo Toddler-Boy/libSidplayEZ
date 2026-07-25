@@ -101,6 +101,11 @@ protected:
 	// the same allocation.  Set by derived-class constructor via assignSharedTables().
 	std::shared_ptr<SharedFilterTables>	m_tables;
 
+	// The shared resonance table is built for the default bandpass width offset and
+	// belongs to every other instance, so an instance wanting a different one builds
+	// its own here. Null means the shared table still applies
+	std::unique_ptr<uint16_t[]>	privateResonance;
+
 	// Per-instance pointer arrays whose ADDRESSES are stable from the moment
 	// the FilterModelConfig object is allocated.  Their VALUES are filled in
 	// by assignSharedTables() to redirect into m_tables.
@@ -146,7 +151,12 @@ protected:
 	void buildSummerTable ( OpAmp& opAmp ) noexcept;
 	void buildMixerTable ( OpAmp& opampModel, double nRatio ) noexcept;
 	void buildVolumeTable ( OpAmp& opampModel, double nDivisor ) noexcept;
-	void buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept;
+	void buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ], uint16_t* dst ) noexcept;
+
+public:
+	static constexpr size_t	resonanceTableSize = 16 * ( 1 << 16 );
+
+protected:
 
 public:
 	// Returns null if called before assignSharedTables() (e.g. from Filter's base
@@ -154,7 +164,13 @@ public:
 	// Filter6581/8580 re-fetch these into their protected base members once the
 	// fmc member is fully constructed.
 	[[ nodiscard ]] uint16_t* getVolume () noexcept { return m_tables ? &m_tables->volume[ 0 ][ 0 ] : nullptr; }
-	[[ nodiscard ]] uint16_t* getResonance () noexcept { return m_tables ? &m_tables->resonance[ 0 ][ 0 ] : nullptr; }
+	[[ nodiscard ]] uint16_t* getResonance () noexcept
+	{
+		if ( privateResonance )
+			return privateResonance.get ();
+
+		return m_tables ? &m_tables->resonance[ 0 ][ 0 ] : nullptr;
+	}
 	[[ nodiscard ]] uint16_t** getSummer () noexcept { return summer; }
 	[[ nodiscard ]] uint16_t** getMixer () noexcept { return mixer; }
 

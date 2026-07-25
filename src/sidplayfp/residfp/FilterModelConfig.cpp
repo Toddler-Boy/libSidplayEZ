@@ -203,7 +203,7 @@ void FilterModelConfig::buildVolumeTable ( OpAmp& opampModel, double nDivisor ) 
 }
 //-----------------------------------------------------------------------------
 
-void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ] ) noexcept
+void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double resonance_n[ 16 ], uint16_t* dst ) noexcept
 {
 	const auto	r_N16 = 1.0 / N16;
 	auto	rndIdx = 3072;	// local dither index (distinct start per builder - see header)
@@ -216,7 +216,7 @@ void FilterModelConfig::buildResonanceTable ( OpAmp& opampModel, const double re
 		for ( auto vi = 0; vi < size; vi++ )
 		{
 			const auto	vin = vmin + vi * r_N16;	// vmin .. vmax
-			m_tables->resonance[ n8 ][ vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ), rndIdx );
+			dst[ ( n8 << 16 ) + vi ] = getNormalizedValue ( opampModel.solve ( resonance_n[ n8 ], vin ), rndIdx );
 		}
 	}
 }

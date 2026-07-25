@@ -73,10 +73,9 @@ private:
 	static std::shared_ptr<SharedFilterTables6581>	s_sharedTables;
 	static std::once_flag							s_tablesOnce;
 
-	// Offset the shared resonance table currently reflects. Lets setBandpassWidthOffset
-	// skip the rebuild when unchanged — the table is shared and persists across tune
-	// loads, so this must track the table's actual state, not a per-instance value.
-	static double									s_bandpassWidthOffset;
+	// Offset this instance's resonance table reflects, so setBandpassWidthOffset can
+	// skip the rebuild when unchanged
+	double											bandpassWidthOffset = 0.0;
 
 	// Typed alias for the shared block (avoids repeated static_cast).
 	SharedFilterTables6581*	m_tables6581 = nullptr;
@@ -119,7 +118,8 @@ public:
 	* feedback coefficient (≈ 1/Q) across all registers and rebuilds the
 	* resonance table. offset > 0 widens the band and lowers resonance,
 	* including the maximum-resonance register; 0 is stock behaviour.
-	* Writes into the shared resonance block, so it acts as a global control.
+	* Any offset but the default gives this instance a private 2 MiB table, so the
+	* pointer from getResonance () changes and callers must re-fetch it.
 	* Rebuilds the table; not intended for per-sample use.
 	*/
 	void setBandpassWidthOffset ( double offset ) noexcept;

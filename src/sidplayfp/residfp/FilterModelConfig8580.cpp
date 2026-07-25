@@ -164,7 +164,7 @@ FilterModelConfig8580::FilterModelConfig8580 () :
 		auto clBuildResonanceTable = [ this ]
 		{
 			OpAmp opampModel ( std::vector<Spline::Point> ( std::begin ( opamp_voltage_8580 ), std::end ( opamp_voltage_8580 ) ), Vddt, vmin, vmax );
-			buildResonanceTable ( opampModel, resGain );
+			buildResonanceTable ( opampModel, resGain, &m_tables->resonance[ 0 ][ 0 ] );
 		};
 
 		auto    thdSummer = std::thread ( clBuildSummerTable );

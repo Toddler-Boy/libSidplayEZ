@@ -499,14 +499,22 @@ public:
 	* Bandwidth and resonance are the same parameter in this topology, so
 	* widening necessarily lowers the LP/HP resonance peak.
 	*
-	* Rebuilds the shared resonance table, so this is a config-time control (not
-	* per-sample) and affects all instances sharing the tables.
+	* Rebuilds a resonance table, so this is a config-time control, not per-sample.
 	*
 	* @param offset  0 = default; e.g. at 1 kHz cutoff, offset 1.0 ≈ +1 kHz bandwidth
 	*/
 	void setBandpassWidthOffset ( double offset ) noexcept
 	{
 		fmc6581.setBandpassWidthOffset ( offset );
+
+		// A non-default offset swaps in this instance's own table, so both cached
+		// pointers have to follow it
+		const auto	resonanceIndex = this->currentResonance ? this->currentResonance - this->resonance : 0;
+
+		this->resonance = fmc6581.getResonance ();
+
+		if ( this->currentResonance )
+			this->currentResonance = this->resonance + resonanceIndex;
 	}
 
 	/**
