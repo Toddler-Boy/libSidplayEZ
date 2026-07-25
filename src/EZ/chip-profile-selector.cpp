@@ -74,7 +74,7 @@ ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _pat
 }
 //-----------------------------------------------------------------------------
 
-void ChipProfileSelector::setProfiles ( const std::string& csvStr )
+std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
 {
 	chipProfiles.clear ();
 
@@ -137,6 +137,8 @@ void ChipProfileSelector::setProfiles ( const std::string& csvStr )
 
 		chipProfiles[ setting.name ] = setting;
 	}
+
+	return csv.getError ();
 }
 //-----------------------------------------------------------------------------
 

@@ -14,6 +14,8 @@ namespace libsidplayEZ
 int TinyCSV::parseCSV ( const std::string& csvData )
 {
 	data.clear ();
+	rawLines.clear ();
+	lineNumbers.clear ();
 
 	error = "Empty CSV data";
 	if ( csvData.empty () )
@@ -66,8 +68,16 @@ int TinyCSV::parseCSV ( const std::string& csvData )
 	std::vector<std::string>	columns;
 	std::string					line;
 
+	auto	lineNo = 0;
+
 	while ( std::getline ( iss, line ) )
 	{
+		++lineNo;
+
+		// A file saved with CRLF leaves the carriage return on the end
+		if ( ! line.empty () && line.back () == '\r' )
+			line.pop_back ();
+
 		if ( line.empty () || line[ 0 ] == '#' )
 			continue;
 
@@ -86,6 +96,8 @@ int TinyCSV::parseCSV ( const std::string& csvData )
 				lineData[ columns[ i ] ] = values[ i ];
 
 		data.emplace_back ( lineData );
+		rawLines.emplace_back ( line );
+		lineNumbers.emplace_back ( lineNo );
 	}
 
 	return int ( data.size () );

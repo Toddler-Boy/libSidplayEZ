@@ -51,7 +51,7 @@ AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _p
 }
 //-----------------------------------------------------------------------------
 
-void AudioProfileSelector::setProfiles ( const std::string& csvStr )
+std::string AudioProfileSelector::setProfiles ( const std::string& csvStr )
 {
 	stereoProfiles.clear ();
 
@@ -69,6 +69,8 @@ void AudioProfileSelector::setProfiles ( const std::string& csvStr )
 
 		stereoProfiles[ name ] = setting;
 	}
+
+	return csv.getError ();
 }
 //-----------------------------------------------------------------------------
 

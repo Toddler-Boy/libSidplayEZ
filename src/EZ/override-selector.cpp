@@ -38,7 +38,7 @@ OverrideSelector::overrides OverrideSelector::getOverride ( const char* _path, c
 }
 //-----------------------------------------------------------------------------
 
-void OverrideSelector::setOverrides ( const std::string& csvStr )
+std::string OverrideSelector::setOverrides ( const std::string& csvStr )
 {
 	tuneOverrides.clear ();
 
@@ -63,6 +63,8 @@ void OverrideSelector::setOverrides ( const std::string& csvStr )
 
 		tuneOverrides.emplace_back ( setting );
 	}
+
+	return csv.getError ();
 }
 //-----------------------------------------------------------------------------
 }

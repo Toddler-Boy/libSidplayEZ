@@ -22,7 +22,8 @@ public:
 	using overrideMap = std::vector<overrides>;
 
 	overrides getOverride ( const char* path, const char* filename ) const;
-	void setOverrides ( const std::string& csvStr );
+	// Returns a description of the first unusable cell, empty when the file was clean
+	std::string setOverrides ( const std::string& csvStr );
 
 	const overrideMap& getAllOverrides () const { return tuneOverrides; }
 

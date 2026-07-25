@@ -19,10 +19,19 @@ public:
 	T get ( const int row, const std::string& column, T defaultValue = {} ) const;
 	std::string get ( const int row, const std::string& column, const char* defaultValue = "" ) const;
 
+	// Empty when the whole file parsed and converted cleanly. Names the first bad cell,
+	// which keeps its default value
+	[[ nodiscard ]] const std::string& getError () const	{	return error;	}
+
 private:
-	std::string	error;
+	mutable std::string	error;
 
 	std::vector<std::unordered_map<std::string, std::string>>	data;
+
+	// Source line and its number for each data row, so an error can point at the file
+	// rather than at a row index the editor knows nothing about
+	std::vector<std::string>	rawLines;
+	std::vector<int>			lineNumbers;
 };
 //-----------------------------------------------------------------------------
 
@@ -37,17 +46,39 @@ inline T TinyCSV::get ( const int row, const std::string& column, T defaultValue
 		return defaultValue;
 
 	if constexpr ( std::is_same_v<T, std::string> )
+	{
 		return it->second;
-	else if constexpr ( std::is_same_v<T, int> )
-		return std::stoi ( it->second );
-	else if constexpr ( std::is_same_v<T, float> )
-		return std::stof ( it->second );
-	else if constexpr ( std::is_same_v<T, double> )
-		return std::stod ( it->second );
+	}
+	else
+	{
+		static_assert ( std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, double>, "Unsupported type" );
 
-	assert ( false ); // Unsupported type
+		// A hand-edited file can hold anything. The conversions throw when nothing at the
+		// front is a number, but keep the leading digits of something like "1.1x" without
+		// complaint, so the whole cell has to be accounted for. Empty cells never get here,
+		// parseCSV drops them and the caller's default applies
+		try
+		{
+			size_t	used = 0;
+			T		value {};
 
-	return defaultValue;
+			if constexpr ( std::is_same_v<T, int> )			value = std::stoi ( it->second, &used );
+			else if constexpr ( std::is_same_v<T, float> )	value = std::stof ( it->second, &used );
+			else if constexpr ( std::is_same_v<T, double> )	value = std::stod ( it->second, &used );
+
+			if ( used == it->second.size () )
+				return value;
+		}
+		catch ( ... )
+		{
+		}
+
+		if ( error.empty () )
+			error = "line " + std::to_string ( lineNumbers[ row ] ) + ", column '" + column + "' holds '" + it->second
+					+ "', which is not a number\n" + rawLines[ row ];
+
+		return defaultValue;
+	}
 }
 //-----------------------------------------------------------------------------
 

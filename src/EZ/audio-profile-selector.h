@@ -22,7 +22,8 @@ public:
 	using profileMap = std::unordered_map<std::string, settings>;
 
 	settings getProfile ( const char* path, const char* filename ) const;
-	void setProfiles ( const std::string& csvStr );
+	// Returns a description of the first unusable cell, empty when the file was clean
+	std::string setProfiles ( const std::string& csvStr );
 
 private:
 	profileMap	stereoProfiles;
