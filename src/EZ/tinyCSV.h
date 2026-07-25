@@ -28,8 +28,7 @@ private:
 
 	std::vector<std::unordered_map<std::string, std::string>>	data;
 
-	// Source line and its number for each data row, so an error can point at the file
-	// rather than at a row index the editor knows nothing about
+	// Source line and its number for each data row, for errors that point into the file
 	std::vector<std::string>	rawLines;
 	std::vector<int>			lineNumbers;
 };

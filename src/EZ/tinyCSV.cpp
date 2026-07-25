@@ -68,7 +68,8 @@ int TinyCSV::parseCSV ( const std::string& csvData )
 	std::vector<std::string>	columns;
 	std::string					line;
 
-	auto	lineNo = 0;
+	// The header counts as line 0, matching the tool these files are maintained with
+	auto	lineNo = -1;
 
 	while ( std::getline ( iss, line ) )
 	{
