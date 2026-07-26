@@ -27,7 +27,73 @@
 namespace libsidplayfp
 {
 
-struct psidHeader;
+constexpr auto	PSID_MAXSTRLEN = 32;
+
+// Header has been extended for 'RSID' format
+// The following changes are present:
+//		id = 'RSID'
+//		version = 2, 3 or 4
+//		play, load and speed reserved 0
+//		psidspecific flag is called C64BASIC flag
+//		init cannot be under ROMS/IO memory area
+//		load address cannot be less than $07E8
+//		info strings may be 32 characters long without trailing zero
+//		all values are big-endian
+struct psidHeader
+{
+	uint32_t	id;						// 'PSID' or 'RSID' (ASCII)
+	uint16_t	version;				// 1, 2, 3, or 4
+	uint16_t	data;					// 16-bit offset to binary data in file
+	uint16_t	load;					// 16-bit C64 address to load file to
+	uint16_t	init;					// 16-bit C64 address of init subroutine
+	uint16_t	play;					// 16-bit C64 address of play subroutine
+	uint16_t	songs;					// number of songs
+	uint16_t	start;					// start song out of [1..256]
+	uint32_t	speed;					// bit: 0=50 Hz, 1=CIA 1 Timer A (default: 60 Hz)
+
+	char	name[ PSID_MAXSTRLEN ];		// ASCII strings, 32 characters long and NOT terminated by a trailing zero
+	char	author[ PSID_MAXSTRLEN ];
+	char	released[ PSID_MAXSTRLEN ];
+
+	uint16_t	flags;					// only version >= 2
+	uint8_t		relocStartPage;			// only version >= 2ng
+	uint8_t		relocPages;				// only version >= 2ng
+	uint8_t		sidChipBase2;			// only version >= 3
+	uint8_t		sidChipBase3;			// only version >= 4
+};
+//-----------------------------------------------------------------------------
+
+enum
+{
+	PSID_MUS = 1 << 0,
+	PSID_SPECIFIC = 1 << 1, // These two are mutually exclusive
+	PSID_BASIC = 1 << 1,
+	PSID_CLOCK = 3 << 2,
+	PSID_SIDMODEL = 3 << 4
+};
+
+enum
+{
+	PSID_CLOCK_UNKNOWN = 0,
+	PSID_CLOCK_PAL = 1 << 2,
+	PSID_CLOCK_NTSC = 1 << 3,
+	PSID_CLOCK_ANY = PSID_CLOCK_PAL | PSID_CLOCK_NTSC
+};
+
+enum
+{
+	PSID_SIDMODEL_UNKNOWN = 0,
+	PSID_SIDMODEL_6581 = 1,
+	PSID_SIDMODEL_8580 = 2,
+	PSID_SIDMODEL_ANY = PSID_SIDMODEL_6581 | PSID_SIDMODEL_8580
+};
+
+constexpr auto	psid_headerSize = 118;
+constexpr auto	psidv2_headerSize = psid_headerSize + 6;
+
+// Magic fields
+constexpr	uint32_t PSID_ID = 0x50534944;
+constexpr	uint32_t RSID_ID = 0x52534944;
 
 //-----------------------------------------------------------------------------
 
