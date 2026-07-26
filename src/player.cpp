@@ -94,14 +94,17 @@ void Player::setChargen ( const uint8_t* rom )
 }
 //-----------------------------------------------------------------------------
 
-void Player::initialise ()
+bool Player::initialise ()
 {
 	m_c64.reset ();
 
 	const auto	tuneInfo = m_tune->getInfo ();
 
-	[[ maybe_unused ]] const auto	size = uint32_t ( tuneInfo->loadAddr () ) + tuneInfo->c64dataLen () - 1;
-	assert ( size <= 0xffff && "File is larger than C64 memory (64k)" );
+	if ( const auto size = uint32_t ( tuneInfo->loadAddr () ) + tuneInfo->c64dataLen () - 1; size > 0xffff )
+	{
+		m_errorString = "SIDPLAYER ERROR: File is larger than C64 memory (64k)";
+		return false;
+	}
 
 	auto warmup = [ this ] ( int iterations )
 	{
@@ -120,8 +123,13 @@ void Player::initialise ()
 	warmup ( powerOnDelay );
 
 	auto	driver = psiddrv ( m_tune->getInfo () );
-	[[ maybe_unused ]] const auto	drvRelocSuccess = driver.drvReloc ();
-	assert ( drvRelocSuccess && "Couldn't install C64 driver" );
+
+	// Its members stay indeterminate on failure, so install () must not run
+	if ( ! driver.drvReloc () )
+	{
+		m_errorString = driver.errorString ();
+		return false;
+	}
 
 	m_info.m_driverAddr = driver.driverAddr ();
 	m_info.m_driverLength = driver.driverLength ();
@@ -130,8 +138,11 @@ void Player::initialise ()
 	auto&	mem = m_c64.getMemInterface ();
 	driver.install ( mem, videoSwitch );
 
-	[[ maybe_unused ]] const auto	tunePlacementSuccess = m_tune->placeSidTuneInC64mem ( mem );
-	assert ( tunePlacementSuccess && "No tune loaded" );
+	if ( ! m_tune->placeSidTuneInC64mem ( mem ) )
+	{
+		m_errorString = "SIDPLAYER ERROR: Could not place the tune in C64 memory";
+		return false;
+	}
 
 	m_c64.resetCpu ();
 
@@ -144,7 +155,7 @@ void Player::initialise ()
 
 		// Let the INIT routine's own volume-register pokes settle before capture. These
 		// writes happen here, BEFORE the start-up declick is armed (below), so the declick
-		// can't settle them - their ring must decay naturally through the ~1.6 Hz DC-blocker,
+		// can't settle them, their ring must decay naturally through the ~1.6 Hz DC-blocker,
 		// which needs a few hundred ms. Too short a wait leaves soft micro-pops at capture
 		// start; this settle budget is the knob for that.
 		warmup ( powerOnDelay );
@@ -160,12 +171,14 @@ void Player::initialise ()
 	// 15, some toggle it repeatedly) instead of ringing them into pops. Armed for every
 	// tune, handshake or not: the declick settles the whole start-up burst but releases the
 	// instant a write stream proves itself a sustained digi, so even non-returning
-	// (digi/BASIC) tunes - whose $d418 writes are the actual audio - are safe to arm.
+	// (digi/BASIC) tunes, whose $d418 writes are the actual audio, are safe to arm.
 	for ( auto& s : m_sidEmu )
 		if ( s )
 			s->armStartupDeclick ();
 
 	m_startTime = m_c64.getTimeMs ();
+
+	return true;
 }
 //-----------------------------------------------------------------------------
 
@@ -269,7 +282,8 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 		sidParams ( m_c64.getMainCpuSpeed (), cfg.frequency );
 
 		// Configure, setup and install C64 environment/events
-		initialise ();
+		if ( ! initialise () )
+			return false;
 	}
 
 	m_mixer.setSamplerate ( cfg.frequency );

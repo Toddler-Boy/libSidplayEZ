@@ -188,15 +188,18 @@ void SidTuneBase::loadFile ( const char* fileName, buffer_t& bufferRef )
 	if ( ! inFile.is_open () )
 		throw loadError ( ERR_CANT_OPEN_FILE );
 
-	const auto fileLen = int ( inFile.tellg () );
+	const auto fileLen = std::streamoff ( inFile.tellg () );
 
 	if ( fileLen <= 0 )
 		throw loadError ( ERR_EMPTY );
 
+	if ( fileLen > MAX_FILELEN )
+		throw loadError ( ERR_FILE_TOO_LONG );
+
 	inFile.seekg ( 0, inFile.beg );
 
 	buffer_t fileBuf;
-	fileBuf.reserve ( fileLen );
+	fileBuf.reserve ( size_t ( fileLen ) );
 
 	try
 	{

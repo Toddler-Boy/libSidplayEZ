@@ -60,7 +60,8 @@ private:
 	*/
 	c64::model_t c64model ( SidConfig::c64_model_t defaultModel, bool forced );
 
-	void initialise ();
+	// False when the tune cannot be set up, with the reason in error ()
+	[[ nodiscard ]] bool initialise ();
 
 	void sidRelease ();
 	void sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const std::vector<uint16_t>& sidAddresses, const bool useFilter );
