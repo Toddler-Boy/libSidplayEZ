@@ -94,18 +94,14 @@ enum
 constexpr auto	psid_headerSize = 118;
 constexpr auto	psidv2_headerSize = psid_headerSize + 6;
 
-//
-// WebSid's "SID file format+", version 0x004E ('N'). A generalisation of v3/v4 that drops the
-// hard coded second and third SID in favour of a variable length list of SIDs, and adds an
-// output channel per chip. See sid-format-4E.md
-//
+// WebSid's "SID file format+": a variable length list of SIDs with an output channel each,
+// instead of v3/v4's hard coded second and third. See sid-format-4E.md
 constexpr uint16_t	PSID_VERSION_4E = 0x004E;
 
 // Output channel, at the same bit in the main flags word and in every nSidFlags word
 constexpr auto	PSID_CHANNEL = 1 << 6;
 
-// Where the nSidFlags list starts: right after flags, startPage and pageLength, on the word
-// that v2 reserved. In 4E the header length is whatever dataOffset says, never the version
+// Where the nSidFlags list starts, on the word that v2 reserved
 constexpr auto	psid4E_extraSidsOffset = psidv2_headerSize - 2;
 
 // The chip address, as the two centre nibbles: 0x42 is $D420

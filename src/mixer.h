@@ -22,6 +22,7 @@
 */
 
 #include <cstdint>
+#include <span>
 #include <vector>
 
 #include "EZ/config.h"
@@ -39,13 +40,12 @@ class Mixer
 private:
 	std::vector<sidemu*>	m_chips;
 
-	// Output channel per chip. Empty means the tune did not say, and the fixed placement
-	// for one, two and three chips applies instead
+	// Output channel per chip, empty when the tune does not place them itself
 	std::vector<uint8_t>	m_channels;
 
 	// Mixer settings
 	float*		m_sampleBuffer[ 2 ] = { nullptr, nullptr };
-	int8_t**	m_digiBuffers = nullptr;
+	std::span<const std::span<int8_t>>	m_digiBuffers;
 	uint32_t	m_sampleCount = 0;
 	uint32_t	m_sampleIndex = 0;
 
@@ -67,10 +67,12 @@ public:
 	/**
 	* Prepare for mixing cycle
 	*
-	* @param buffer output buffer
-	* @param count size of the buffer in samples
+	* @param bufferL output buffer, and the sample count for this cycle
+	* @param bufferR second output buffer, empty for mono, otherwise as long as bufferL
+	* @param buffersDigi one digi buffer for every chip, each as long as bufferL, or empty
+	*        for no digi output at all. Anything short of that is rejected and treated as empty
 	*/
-	void begin ( float* bufferL, float* bufferR, int8_t** buffersDigi, uint32_t count ) noexcept;
+	void begin ( std::span<float> bufferL, std::span<float> bufferR, std::span<const std::span<int8_t>> buffersDigi ) noexcept;
 
 	/**
 	* Remove all SIDs from the mixer
@@ -85,10 +87,9 @@ public:
 	void addSid ( sidemu* chip ) noexcept;
 
 	/**
-	* Tell the mixer which output channel each chip asked for, in chip order. Only a tune
-	* that states it (4E) sets this; pass an empty list for every other tune
+	* Place the chips. Only a tune that states its own placement (4E) sets this
 	*
-	* @param channels 0 for left, 1 for right, one entry per chip
+	* @param channels 0 for left, 1 for right, one entry per chip, or empty
 	*/
 	void setChannels ( std::vector<uint8_t> channels ) noexcept;
 

@@ -112,9 +112,8 @@ void PSID::readHeader ( const buffer_t& dataBuf, psidHeader& hdr )
 
 		if ( hdr.version == PSID_VERSION_4E )
 		{
-			// A word per additional SID, ending at a zero word. Both the declared data offset
-			// and the real file length bound the walk, so a truncated or lying header cannot
-			// read past the buffer
+			// A word per additional SID, ending at a zero word. A lying header cannot get
+			// past the smaller of the declared data offset and the real file length
 			const auto	listEnd = std::min ( size_t ( hdr.data ), dataBuf.size () );
 
 			for ( auto pos = size_t ( psid4E_extraSidsOffset ); pos + 2 <= listEnd; pos += 2 )
@@ -254,8 +253,7 @@ void PSID::tryLoad ( const psidHeader& pHeader )
 
 		if ( pHeader.version == PSID_VERSION_4E )
 		{
-			// Only 4E states where its chips go, so the channel list stays empty for every
-			// other version and the mixer keeps its own placement for those
+			// Only 4E places its chips, so other versions leave the list empty
 			info.m_sidChannels.push_back ( uint8_t ( ( flags & PSID_CHANNEL ) != 0 ) );
 
 			for ( const auto nSidFlags : pHeader.extraSids )

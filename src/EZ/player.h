@@ -32,7 +32,8 @@ public:
 
 	bool loadSidFile ( const char* filename );
 	bool setTuneNumber ( const unsigned int songNo = 0, const bool useFilter = true );
-	uint32_t runEmulation ( float* dstL, float* dstR, int8_t** digiBuffers, uint32_t lengthWanted )	{	return engine.play ( dstL, dstR, digiBuffers, lengthWanted );		}
+	// dstL sets the length; dstR is empty for mono. digiBuffers: one per chip (getNumChips ()), or empty
+	uint32_t runEmulation ( std::span<float> dstL, std::span<float> dstR, std::span<const std::span<int8_t>> digiBuffers )	{	return engine.play ( dstL, dstR, digiBuffers );		}
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] )			{	return engine.getSidStatus ( sidNum, regs );	}
 	uint16_t getInterruptCycles () const							{	return engine.getInterruptCycles ();			}
 

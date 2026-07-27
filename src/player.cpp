@@ -199,15 +199,15 @@ bool Player::loadTune ( SidTune* tune )
 }
 //-----------------------------------------------------------------------------
 
-uint32_t Player::play ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t samples )
+uint32_t Player::play ( std::span<float> bufferL, std::span<float> bufferR, std::span<const std::span<int8_t>> digiBuffers )
 {
 	// Make sure we can actually play
 	assert ( m_tune && "No tune loaded" );
-	assert ( bufferL && samples && "You need to provide at least one buffer to render into" );
+	assert ( ! bufferL.empty () && "You need to provide at least one buffer to render into" );
 	assert ( m_mixer.getSid ( 0 ) && "No SID chip is configured" );
 
 	// Start the player loop
-	m_mixer.begin ( bufferL, bufferR, digiBuffers, samples );
+	m_mixer.begin ( bufferL, bufferR, digiBuffers );
 
 	constexpr auto	CYCLES = 3'000u;
 
@@ -262,15 +262,14 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 		addSid ( 1, cfg.secondSidAddress );
 		addSid ( 2, cfg.thirdSidAddress );
 
-		// A tune may ask for more than three; those place themselves, so there is no
-		// config address to fall back on
+		// Past the third there is no config address to fall back on
 		for ( auto i = 3; i < tuneInfo->sidChips (); ++i )
 			addSid ( i, 0 );
 
 		// SID emulation setup (must be performed before the environment setup call)
 		sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses, cfg.useFilter );
 
-		// Only a tune that states its own placement overrides the mixer's default
+		// Only a tune that places its own chips overrides the mixer default
 		if ( tuneInfo->hasSidChannels () )
 		{
 			std::vector<uint8_t>	channels;

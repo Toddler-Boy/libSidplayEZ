@@ -74,18 +74,19 @@ void Mixer::doMix () noexcept
 			out[ i ] += smp16ToFloat ( in[ i ] );
 	};
 
-	// Copy digi buffers
-	for ( auto i = 0; auto chp : m_chips )
+	// Copy digi buffers, unless the caller wants none
+	if ( ! m_digiBuffers.empty () )
 	{
-		// Digi output
-		const auto	buf = chp->getDigiBuffer ();
-		const auto	outBuf = m_digiBuffers[ i++ ] + m_sampleIndex;
+		for ( auto i = 0; auto chp : m_chips )
+		{
+			const auto	buf = chp->getDigiBuffer ();
 
-		// move digi data to final buffer
-		std::memcpy ( outBuf, buf, toCopy );
+			// move digi data to final buffer
+			std::memcpy ( m_digiBuffers[ i++ ].data () + m_sampleIndex, buf, toCopy );
 
-		// move the unhandled data to start of buffer, if any (the ranges overlap)
-		std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+			// move the unhandled data to start of buffer, if any (the ranges overlap)
+			std::memmove ( buf, buf + toCopy, samplesLeft * sizeof ( *buf ) );
+		}
 	}
 
 	// Render chips
@@ -118,8 +119,7 @@ void Mixer::doMix () noexcept
 		//
 		constexpr auto	centerGain = 0.708f;	// Center gain (-3dB)
 
-		// Whether a side has been written yet, so the first chip on it assigns and the
-		// rest sum. A side nobody claimed is filled from the other one further down
+		// The first chip on a side assigns, the rest sum
 		bool	written[ 2 ] = { false, false };
 
 		auto renderTo = [ & ] ( const int side, const int16_t* buf, const float gain )
@@ -160,7 +160,7 @@ void Mixer::doMix () noexcept
 			}
 			else
 			{
-				// The third chip has always been centred, and so is anything past it
+				// The third chip and anything past it is centred
 				renderTo ( 0, buf, centerGain );
 				renderTo ( 1, buf, centerGain );
 			}
@@ -172,7 +172,7 @@ void Mixer::doMix () noexcept
 			++i;
 		}
 
-		// A tune can put every chip on one side, and a single chip has always been mirrored
+		// Mirror into a side that got nothing
 		for ( auto side = 0; side < 2; ++side )
 			if ( ! written[ side ] && written[ ! side ] )
 				std::copy_n ( m_sampleBuffer[ ! side ] + m_sampleIndex, toCopy, m_sampleBuffer[ side ] + m_sampleIndex );
@@ -189,16 +189,33 @@ bool Mixer::needsMoreSamples () const noexcept
 }
 //-----------------------------------------------------------------------------
 
-void Mixer::begin ( float* bufferL, float* bufferR, int8_t** digiBuffers, uint32_t count) noexcept
+void Mixer::begin ( std::span<float> bufferL, std::span<float> bufferR, std::span<const std::span<int8_t>> digiBuffers ) noexcept
 {
 	// we need a minimum buffer-size, otherwise a crash might occur
-	assert ( count > 100 );
+	assert ( bufferL.size () > 100 );
+	assert ( ( bufferR.empty () || bufferR.size () == bufferL.size () ) && "stereo needs two buffers of the same length" );
 
 	m_sampleIndex = 0;
-	m_sampleCount = count;
-	m_sampleBuffer[ 0 ] = bufferL;
-	m_sampleBuffer[ 1 ] = bufferR;
+	m_sampleCount = uint32_t ( bufferL.size () );
+	m_sampleBuffer[ 0 ] = bufferL.data ();
+	m_sampleBuffer[ 1 ] = bufferR.empty () ? nullptr : bufferR.data ();
 	m_digiBuffers = digiBuffers;
+
+	// All or nothing: anything short of one full buffer per chip means the caller got its
+	// chips wrong, so drop digi output rather than write past the end
+	if ( ! m_digiBuffers.empty () )
+	{
+		auto	usable = m_digiBuffers.size () >= m_chips.size ();
+
+		for ( auto i = 0u; usable && i < m_chips.size (); ++i )
+			usable = m_digiBuffers[ i ].size () >= m_sampleCount;
+
+		if ( ! usable )
+		{
+			assert ( false && "one digi buffer per chip is required, see getNumChips ()" );
+			m_digiBuffers = {};
+		}
+	}
 }
 //-----------------------------------------------------------------------------
 
