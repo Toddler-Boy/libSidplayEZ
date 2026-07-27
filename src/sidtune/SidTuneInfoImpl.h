@@ -64,6 +64,9 @@ public:
 	std::vector<model_t>	m_sidModels = { SIDMODEL_UNKNOWN };
 	std::vector<uint16_t>	m_sidChipAddresses = { 0xD400 };
 
+	// Output channel per chip, empty unless the tune states it (4E only)
+	std::vector<uint8_t>	m_sidChannels;
+
 	std::vector<std::string>	m_infoString;
 	std::vector<std::string>	m_commentString;
 
@@ -95,6 +98,9 @@ public:
 	[[ nodiscard ]] uint8_t getRelocPages () const override { return m_relocPages; }
 
 	[[ nodiscard ]] model_t getSidModel ( unsigned int i ) const override	{	return i < m_sidModels.size () ? m_sidModels[ i ] : SIDMODEL_UNKNOWN;	}
+
+	[[ nodiscard ]] bool getHasSidChannels () const override					{	return ! m_sidChannels.empty ();	}
+	[[ nodiscard ]] int getSidChannel ( unsigned int i ) const override		{	return i < m_sidChannels.size () ? m_sidChannels[ i ] : 0;	}
 
 	[[ nodiscard ]] compatibility_t getCompatibility () const override { return m_compatibility; }
 

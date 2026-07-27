@@ -22,6 +22,7 @@
  */
 
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -52,7 +53,8 @@ public:
 	std::string m_basicDesc;
 	std::string m_chargenDesc;
 
-	const unsigned int	m_maxsids = libsidplayfp::Mixer::MAX_SIDS;
+	// No fixed ceiling: a tune gets as many chips as it declares
+	const unsigned int	m_maxsids = std::numeric_limits<unsigned int>::max ();
 
 	uint16_t m_driverAddr = 0;
 	uint16_t m_driverLength = 0;

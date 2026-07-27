@@ -262,8 +262,25 @@ bool Player::setConfig ( const SidConfig& cfg, bool force )
 		addSid ( 1, cfg.secondSidAddress );
 		addSid ( 2, cfg.thirdSidAddress );
 
+		// A tune may ask for more than three; those place themselves, so there is no
+		// config address to fall back on
+		for ( auto i = 3; i < tuneInfo->sidChips (); ++i )
+			addSid ( i, 0 );
+
 		// SID emulation setup (must be performed before the environment setup call)
 		sidCreate ( cfg.defaultSidModel, cfg.forceSidModel, addresses, cfg.useFilter );
+
+		// Only a tune that states its own placement overrides the mixer's default
+		if ( tuneInfo->hasSidChannels () )
+		{
+			std::vector<uint8_t>	channels;
+			channels.reserve ( addresses.size () );
+
+			for ( auto i = 0u; i < addresses.size (); ++i )
+				channels.push_back ( uint8_t ( tuneInfo->sidChannel ( i ) ) );
+
+			m_mixer.setChannels ( std::move ( channels ) );
+		}
 
 		m_c64.setModel ( c64model ( cfg.defaultC64Model, cfg.forceC64Model ) );
 
@@ -394,11 +411,10 @@ void Player::sidRelease ()
 
 void Player::sidDestroy ()
 {
-	for ( auto& a : m_sidEmu )
-	{
+	for ( auto a : m_sidEmu )
 		delete a;
-		a = nullptr;
-	}
+
+	m_sidEmu.clear ();
 }
 //-----------------------------------------------------------------------------
 
@@ -417,22 +433,26 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 
 	sidDestroy ();
 
+	m_sidEmu.reserve ( sidAddresses.size () );
+
 	for ( auto i = 0; auto extraAddr : sidAddresses )
 	{
 		defaultModel = getSidModel ( tuneInfo->sidModel ( i ), defaultModel, forced );
 
+		sidemu*	s;
+
 		if ( defaultModel == SidConfig::MOS8580 )
 			if ( useFilter )
-				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<true>> ( m_c64.getEventScheduler () );
+				s = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<true>> ( m_c64.getEventScheduler () );
 			else
-				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<false>> ( m_c64.getEventScheduler () );
+				s = new libsidplayfp::sidemuSpec<reSIDfp::Filter8580<false>> ( m_c64.getEventScheduler () );
 		else
 			if ( useFilter )
-				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<true>> ( m_c64.getEventScheduler () );
+				s = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<true>> ( m_c64.getEventScheduler () );
 			else
-				m_sidEmu[ i ] = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<false>> ( m_c64.getEventScheduler () );
+				s = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<false>> ( m_c64.getEventScheduler () );
 
-		auto	s = m_sidEmu[ i ];
+		m_sidEmu.push_back ( s );
 
 		if ( i++ == 0 )
 		{
@@ -451,7 +471,7 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 
 void Player::sidParams ( double cpuFreq, int frequency )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->sampling ( float ( cpuFreq ), frequency );
 }
@@ -459,7 +479,7 @@ void Player::sidParams ( double cpuFreq, int frequency )
 
 void Player::setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->combinedWaveforms ( cws, threshold );
 }
@@ -467,7 +487,7 @@ void Player::setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float 
 
 void Player::set6581FilterCurve ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Curve ( value );
 }
@@ -475,7 +495,7 @@ void Player::set6581FilterCurve ( const double value )
 
 void Player::set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581_uCoxAndCap ( uCox, oldCap );
 }
@@ -483,7 +503,7 @@ void Player::set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap )
 
 void Player::set6581FilterGain ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Gain ( value );
 }
@@ -491,7 +511,7 @@ void Player::set6581FilterGain ( const double value )
 
 void Player::set6581FilterSaturation ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Saturation ( value );
 }
@@ -499,7 +519,7 @@ void Player::set6581FilterSaturation ( const double value )
 
 void Player::set6581FilterBandpassWidthOffset ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581BandpassWidthOffset ( value );
 }
@@ -507,7 +527,7 @@ void Player::set6581FilterBandpassWidthOffset ( const double value )
 
 void Player::set6581DigiVolume ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->filter6581Digi ( value );
 }
@@ -515,7 +535,7 @@ void Player::set6581DigiVolume ( const double value )
 
 void Player::setDacLeakage ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->setDacLeakage ( value );
 }
@@ -523,7 +543,7 @@ void Player::setDacLeakage ( const double value )
 
 void Player::set6581VoiceDCDrift ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->voice6581DCDrift ( value );
 }
@@ -531,7 +551,7 @@ void Player::set6581VoiceDCDrift ( const double value )
 
 void Player::set6581SawPulseUltra ( const bool enable )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->voiceSawPulseUltra ( enable );
 }
@@ -539,7 +559,7 @@ void Player::set6581SawPulseUltra ( const bool enable )
 
 void Player::set6581LeakageRate ( const double value )
 {
-	for ( auto i = 0; i < Mixer::MAX_SIDS; i++ )
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
 		if ( auto s = m_mixer.getSid ( i ) )
 			s->voice6581LeakageRate ( value );
 }

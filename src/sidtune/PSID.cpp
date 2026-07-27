@@ -109,8 +109,28 @@ void PSID::readHeader ( const buffer_t& dataBuf, psidHeader& hdr )
 		hdr.flags = get_big16 ( &dataBuf[ 118 ] );
 		hdr.relocStartPage = dataBuf[ 120 ];
 		hdr.relocPages = dataBuf[ 121 ];
-		hdr.sidChipBase2 = dataBuf[ 122 ];
-		hdr.sidChipBase3 = dataBuf[ 123 ];
+
+		if ( hdr.version == PSID_VERSION_4E )
+		{
+			// A word per additional SID, ending at a zero word. Both the declared data offset
+			// and the real file length bound the walk, so a truncated or lying header cannot
+			// read past the buffer
+			const auto	listEnd = std::min ( size_t ( hdr.data ), dataBuf.size () );
+
+			for ( auto pos = size_t ( psid4E_extraSidsOffset ); pos + 2 <= listEnd; pos += 2 )
+			{
+				const auto	nSidFlags = get_big16 ( &dataBuf[ pos ] );
+				if ( ! nSidFlags )
+					break;
+
+				hdr.extraSids.push_back ( nSidFlags );
+			}
+		}
+		else
+		{
+			hdr.sidChipBase2 = dataBuf[ 122 ];
+			hdr.sidChipBase3 = dataBuf[ 123 ];
+		}
 	}
 }
 //-----------------------------------------------------------------------------
@@ -131,6 +151,7 @@ void PSID::tryLoad ( const psidHeader& pHeader )
 			case 2:
 			case 3:
 			case 4:
+			case PSID_VERSION_4E:
 				break;
 
 			default:
@@ -145,6 +166,7 @@ void PSID::tryLoad ( const psidHeader& pHeader )
 			case 2:
 			case 3:
 			case 4:
+			case PSID_VERSION_4E:
 				break;
 
 			default:
@@ -216,22 +238,43 @@ void PSID::tryLoad ( const psidHeader& pHeader )
 		info.m_relocStartPage = pHeader.relocStartPage;
 		info.m_relocPages = pHeader.relocPages;
 
-		if ( pHeader.version >= 3 )
+		auto validateAddress = [] ( uint8_t address )
 		{
-			auto validateAddress = [] ( uint8_t address )
+			// Only even values are valid
+			if ( address & 1 )
+				return false;
+
+			// Ranges $00-$41 ($D000-$D410) and $80-$DF ($D800-$DDF0) are invalid
+			// Any invalid value means that no second SID is used, like $00
+			if ( address <= 0x41 || ( address >= 0x80 && address <= 0xdf ) )
+				return false;
+
+			return true;
+		};
+
+		if ( pHeader.version == PSID_VERSION_4E )
+		{
+			// Only 4E states where its chips go, so the channel list stays empty for every
+			// other version and the mixer keeps its own placement for those
+			info.m_sidChannels.push_back ( uint8_t ( ( flags & PSID_CHANNEL ) != 0 ) );
+
+			for ( const auto nSidFlags : pHeader.extraSids )
 			{
-				// Only even values are valid
-				if ( address & 1 )
-					return false;
+				const auto	address = uint8_t ( nSidFlags >> psid4E_addressShift );
+				if ( ! validateAddress ( address ) )
+					continue;
 
-				// Ranges $00-$41 ($D000-$D410) and $80-$DF ($D800-$DDF0) are invalid
-				// Any invalid value means that no second SID is used, like $00
-				if ( address <= 0x41 || ( address >= 0x80 && address <= 0xdf ) )
-					return false;
+				const auto	model = getSidModel ( nSidFlags >> 4 );
 
-				return true;
-			};
+				info.m_sidChipAddresses.push_back ( 0xd000 | uint16_t ( address << 4 ) );
 
+				// An unknown model means the chip follows the main SID
+				info.m_sidModels.push_back ( model != SidTuneInfo::SIDMODEL_UNKNOWN ? model : info.m_sidModels[ 0 ] );
+				info.m_sidChannels.push_back ( uint8_t ( ( nSidFlags & PSID_CHANNEL ) != 0 ) );
+			}
+		}
+		else if ( pHeader.version >= 3 )
+		{
 			if ( validateAddress ( pHeader.sidChipBase2 ) )
 			{
 				info.m_sidChipAddresses.push_back ( 0xd000 | uint16_t ( pHeader.sidChipBase2 << 4 ) );

@@ -45,7 +45,7 @@ private:
 	SidInfoImpl	m_info;				// Tune info
 	SidConfig	m_cfg;				// User Configuration Settings
 
-	sidemu*		m_sidEmu[ Mixer::MAX_SIDS ] = { nullptr, nullptr, nullptr };	// emulation of an actual SID chip
+	std::vector<sidemu*>	m_sidEmu;	// emulation of the actual SID chips, as many as the tune asks for
 
 	std::string	m_errorString = "N/A";
 

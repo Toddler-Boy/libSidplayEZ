@@ -36,12 +36,12 @@ class sidemu;
 */
 class Mixer
 {
-public:
-	// Maximum number of supported SIDs
-	static constexpr unsigned int MAX_SIDS = 3;
-
 private:
 	std::vector<sidemu*>	m_chips;
+
+	// Output channel per chip. Empty means the tune did not say, and the fixed placement
+	// for one, two and three chips applies instead
+	std::vector<uint8_t>	m_channels;
 
 	// Mixer settings
 	float*		m_sampleBuffer[ 2 ] = { nullptr, nullptr };
@@ -83,6 +83,14 @@ public:
 	* @param chip the sid emu to add
 	*/
 	void addSid ( sidemu* chip ) noexcept;
+
+	/**
+	* Tell the mixer which output channel each chip asked for, in chip order. Only a tune
+	* that states it (4E) sets this; pass an empty list for every other tune
+	*
+	* @param channels 0 for left, 1 for right, one entry per chip
+	*/
+	void setChannels ( std::vector<uint8_t> channels ) noexcept;
 
 	/**
 	* Get a SID from the mixer

@@ -82,6 +82,11 @@ public:
 	[[ nodiscard ]] uint8_t relocPages () const { return getRelocPages (); }			// Number of pages available for relocation
 
 	[[ nodiscard ]] SidTuneInfo::model_t sidModel ( unsigned int i ) const { return getSidModel ( i ); }	// The SID chip model(s) requested by the sidtune
+
+	// Whether the tune places its chips itself (4E), and which output channel the nth one wants
+	[[ nodiscard ]] bool hasSidChannels () const { return getHasSidChannels (); }
+	[[ nodiscard ]] int sidChannel ( unsigned int i ) const { return getSidChannel ( i ); }
+
 	[[ nodiscard ]] SidTuneInfo::compatibility_t compatibility () const { return getCompatibility (); }		// Compatibility requirements
 
 	/**
@@ -134,6 +139,8 @@ private:
 	[[ nodiscard ]] virtual uint8_t getRelocPages () const = 0;
 
 	[[ nodiscard ]] virtual model_t getSidModel ( unsigned int i ) const = 0;
+	[[ nodiscard ]] virtual bool getHasSidChannels () const = 0;
+	[[ nodiscard ]] virtual int getSidChannel ( unsigned int i ) const = 0;
 	[[ nodiscard ]] virtual compatibility_t getCompatibility () const = 0;
 
 	[[ nodiscard ]] virtual unsigned int getNumberOfInfoStrings () const = 0;
