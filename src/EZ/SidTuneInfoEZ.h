@@ -56,6 +56,7 @@ struct SidTuneInfoEZ
 	// Stereo data
 	int				stereoWidth = 0;	// in percent, from 0 to 100
 	float			bassAdjust = 0.0f;	// in dB, usually negative values to push them down, as the defaults tend to be high
+	bool			wantsStereo = false;	// The tune places its chips explicitly (PSID 4E), so the stereo image is authored
 
 	// Technical data
 	unsigned int	currentSong = 0;

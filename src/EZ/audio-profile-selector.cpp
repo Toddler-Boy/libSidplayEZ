@@ -9,7 +9,7 @@ namespace libsidplayEZ
 
 //-----------------------------------------------------------------------------
 
-AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _path, const char* _filename ) const
+std::optional<AudioProfileSelector::settings> AudioProfileSelector::getProfile ( const char* _path, const char* _filename ) const
 {
 	auto	path = std::string ( _path ) + std::string ( _filename );
 
@@ -21,7 +21,7 @@ AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _p
 	if ( pos == std::string::npos )		pos = path.rfind ( "/DEMOS/" );
 	if ( pos == std::string::npos )		pos = path.rfind ( "/GAMES/" );
 	if ( pos == std::string::npos )
-		return {};	// No profile found, use default
+		return std::nullopt;
 
 	path = path.substr ( pos );
 
@@ -38,7 +38,7 @@ AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _p
 		const auto	slash = path.find_last_of ( '/' );
 
 		if ( slash > underscore || underscore == std::string::npos )
-			return {};
+			return std::nullopt;
 
 		const auto	wildcard = path.substr ( 0, slash + 1 ) + "*" + path.substr ( underscore );
 
@@ -47,7 +47,7 @@ AudioProfileSelector::settings AudioProfileSelector::getProfile ( const char* _p
 			return it->second;
 	}
 
-	return {};
+	return std::nullopt;
 }
 //-----------------------------------------------------------------------------
 

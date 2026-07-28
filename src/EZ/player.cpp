@@ -219,8 +219,19 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 	{
 		const auto audioProfile = sharedConfig->audioSelector.getProfile ( info->path (), info->dataFileName () );
 
-		stiEZ.stereoWidth = audioProfile.width;
-		stiEZ.bassAdjust = float ( audioProfile.bass );
+		// The mixer follows the same flag when placing the chips
+		stiEZ.wantsStereo = info->hasSidChannels ();
+
+		if ( audioProfile )
+		{
+			stiEZ.stereoWidth = audioProfile->width;
+			stiEZ.bassAdjust = float ( audioProfile->bass );
+		}
+		else if ( stiEZ.wantsStereo )
+		{
+			// A tune that places its chips gets the full authored field
+			stiEZ.stereoWidth = 100;
+		}
 	}
 
 	return readyToPlay;

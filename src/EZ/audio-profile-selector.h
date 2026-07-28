@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -21,7 +22,8 @@ public:
 
 	using profileMap = std::unordered_map<std::string, settings>;
 
-	settings getProfile ( const char* path, const char* filename ) const;
+	// Empty when the tune has no entry
+	std::optional<settings> getProfile ( const char* path, const char* filename ) const;
 	// Returns a description of the first unusable cell, empty when the file was clean
 	std::string setProfiles ( const std::string& csvStr );
 
