@@ -101,6 +101,10 @@ std::vector<std::string> sidid::findPlayerRoutines ( const std::vector<uint8_t>&
 		const auto	length = int ( tuneData.size () );
 		const auto	sigSize = int ( bytes.size () );
 
+		// A hand-edited config can produce an empty signature (an all-END line)
+		if ( ! sigSize )
+			return false;
+
 		int	c = 0;
 		int	d = 0;
 		int	rc = 0;
@@ -124,7 +128,10 @@ std::vector<std::string> sidid::findPlayerRoutines ( const std::vector<uint8_t>&
 
 				if ( bytes[ d ] == SIDID::token::AND )
 				{
-					d++;
+					// A trailing AND has nothing left to anchor on, the prefix already matched
+					if ( ++d == sigSize )
+						return true;
+
 					while ( c < length )
 					{
 						if ( buffer[ c ] == bytes[ d ] )

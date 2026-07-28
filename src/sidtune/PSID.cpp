@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <string>
 
 #include "../sidplayfp/SidTuneInfo.h"
@@ -68,10 +69,11 @@ SidTuneBase* PSID::load ( buffer_t& dataBuf )
 	psidHeader	pHeader;
 	readHeader ( dataBuf, pHeader );
 
-	auto	tune = new PSID ();
+	// tryLoad throws on malformed headers
+	std::unique_ptr<PSID>	tune { new PSID () };
 	tune->tryLoad ( pHeader );
 
-	return tune;
+	return tune.release ();
 }
 //-----------------------------------------------------------------------------
 

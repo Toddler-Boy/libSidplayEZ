@@ -38,7 +38,9 @@ bool Player::loadSidFile ( const char* filename )
 	if ( ! info )
 		return false;
 
-	stiEZ.md5 = tune.createMD5New ();
+	// Only the PSID loader computes an MD5; .prg/.p00 return null
+	const auto	md5 = tune.createMD5New ();
+	stiEZ.md5 = md5 ? md5 : "";
 
 	tuneOverride = sharedConfig->overrideSelector.getOverride ( info->path (), info->dataFileName () );
 

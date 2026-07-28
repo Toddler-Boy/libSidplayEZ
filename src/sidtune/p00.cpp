@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cctype>
+#include <memory>
 
 #include "../sidplayfp/SidTuneInfo.h"
 
@@ -101,8 +102,6 @@ SidTuneBase* p00::load ( const char* fileName, buffer_t& dataBuf )
 
 	X00Header pHeader;
 	memcpy ( pHeader.id, &dataBuf[ 0 ], X00_ID_LEN );
-	memcpy ( pHeader.name, &dataBuf[ X00_ID_LEN ], X00_NAME_LEN );
-	pHeader.length = dataBuf[ X00_ID_LEN + X00_NAME_LEN ];
 
 	// Magic field
 	if ( strcmp ( pHeader.id, "C64File" ) )
@@ -115,10 +114,13 @@ SidTuneBase* p00::load ( const char* fileName, buffer_t& dataBuf )
 	if ( bufLen < sizeof ( X00Header ) + 2 )
 		throw loadError ( ERR_TRUNCATED );
 
-	auto	tune = new p00;
+	memcpy ( pHeader.name, &dataBuf[ X00_ID_LEN ], X00_NAME_LEN );
+	pHeader.length = dataBuf[ X00_ID_LEN + X00_NAME_LEN ];
+
+	std::unique_ptr<p00>	tune { new p00 () };
 	tune->load ( format, &pHeader );
 
-	return tune;
+	return tune.release ();
 }
 //-----------------------------------------------------------------------------
 

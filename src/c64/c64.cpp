@@ -63,6 +63,7 @@ const cia_model_data_t ciaModelData[] =
 {
 	{	MOS652X::model_t::MOS6526		},	// Old
 	{	MOS652X::model_t::MOS8521		},	// New
+	{	MOS652X::model_t::MOS6526W4485	},	// Old week 4485
 };
 //-----------------------------------------------------------------------------
 

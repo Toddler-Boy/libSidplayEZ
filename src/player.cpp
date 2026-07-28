@@ -149,9 +149,20 @@ bool Player::initialise ()
 	// Run for some cycles until the initialization routine is done
 	if ( const auto	handshakeAddr = driver.getHandshakeAddr (); mem.readMemByte ( handshakeAddr ) == 0 )
 	{
-		// Wait for the handshake to be acknowledged. A jammed CPU never sets it
+		// Wait for the handshake to be acknowledged. A jammed CPU never sets it,
+		// and the budget (~10 emulated seconds, far beyond any real init routine)
+		// bounds an init that loops forever without jamming
+		auto	initBudget = 10'000;
 		while ( mem.readMemByte ( handshakeAddr ) == 0 && ! m_c64.isJammed () )
+		{
+			if ( --initBudget < 0 )
+			{
+				m_errorString = "SIDPLAYER ERROR: The tune's init routine never returned";
+				return false;
+			}
+
 			warmup ( 1000 );
+		}
 
 		// Let the INIT routine's own volume-register pokes settle before capture. These
 		// writes happen here, BEFORE the start-up declick is armed (below), so the declick
@@ -205,6 +216,9 @@ uint32_t Player::play ( std::span<float> bufferL, std::span<float> bufferR, std:
 	assert ( m_tune && "No tune loaded" );
 	assert ( ! bufferL.empty () && "You need to provide at least one buffer to render into" );
 	assert ( m_mixer.getSid ( 0 ) && "No SID chip is configured" );
+
+	if ( ! m_tune || bufferL.empty () || ! m_mixer.getSid ( 0 ) )
+		return 0;
 
 	// Start the player loop
 	m_mixer.begin ( bufferL, bufferR, digiBuffers );

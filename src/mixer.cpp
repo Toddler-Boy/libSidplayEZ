@@ -191,8 +191,6 @@ bool Mixer::needsMoreSamples () const noexcept
 
 void Mixer::begin ( std::span<float> bufferL, std::span<float> bufferR, std::span<const std::span<int8_t>> digiBuffers ) noexcept
 {
-	// we need a minimum buffer-size, otherwise a crash might occur
-	assert ( bufferL.size () > 100 );
 	assert ( ( bufferR.empty () || bufferR.size () == bufferL.size () ) && "stereo needs two buffers of the same length" );
 
 	m_sampleIndex = 0;

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 
 #include "chip-profile-selector.h"
 #include "tinyCSV.h"
@@ -54,7 +55,8 @@ ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _pat
 
 	// Get filename without extension
 	auto	filename = std::string ( _filename );
-	filename.erase ( filename.length () - 4 );
+	if ( filename.length () >= 4 )
+		filename.erase ( filename.length () - 4 );
 
 	// Attach tune-number to filename
 	filename += "#" + std::to_string ( subtune );
@@ -80,6 +82,18 @@ std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
 
 	auto	csv = TinyCSV ();
 
+	// First bad subtune range in an exceptions cell; TinyCSV only validates the
+	// cell as a string, its inner syntax is ours to check
+	std::string	rangeError;
+
+	// Full-token numeric parse, so a typo is reported instead of throwing
+	auto parseNo = [] ( const std::string& s, int& out )
+	{
+		char*	end = nullptr;
+		out = int ( std::strtol ( s.c_str (), &end, 10 ) );
+		return end != s.c_str () && *end == 0;
+	};
+
 	const auto	rows = csv.parseCSV ( csvStr );
 	for ( auto i = 0; i < rows; ++i )
 	{
@@ -101,7 +115,7 @@ std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		auto	cwsLevel = stringutils::toLower ( csv.get ( i, "cwsLevel", "average" ) );
 
 		// Check for ultra sawPulse setting (indicated by a '+' at the end of the cwsLevel)
-		setting.cwsSawPulseUltra = cwsLevel.back () == '+';
+		setting.cwsSawPulseUltra = ! cwsLevel.empty () && cwsLevel.back () == '+';
 		if ( setting.cwsSawPulseUltra )
 			cwsLevel.erase ( cwsLevel.length () - 1 );
 
@@ -122,9 +136,23 @@ std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
 						{
 							for ( const auto& range : ranges )
 							{
+								// A range of "-" tokenizes to nothing at all
 								const auto	subtune = stringutils::arrayFromTokens ( range, '-' );
-								const auto	subtuneStart = std::stoi ( subtune[ 0 ] );
-								const auto	subtuneEnd = subtune.size () == 2 ? std::stoi ( subtune[ 1 ] ) : subtuneStart;
+
+								auto	subtuneStart = 0;
+								auto	ok = ! subtune.empty () && parseNo ( subtune[ 0 ], subtuneStart );
+
+								auto	subtuneEnd = subtuneStart;
+								if ( ok && subtune.size () >= 2 )
+									ok = parseNo ( subtune[ 1 ], subtuneEnd );
+
+								if ( ! ok )
+								{
+									if ( rangeError.empty () )
+										rangeError = "profile '" + setting.name + "', column 'exceptions' holds the subtune range '"
+													 + range + "', which is not a number or number-number";
+									continue;
+								}
 
 								for ( auto st = subtuneStart; st <= subtuneEnd; ++st )
 									setting.exceptions[ file_ranges[ 0 ] + "#" + std::to_string ( st ) ] = file_profile[ 1 ];
@@ -138,7 +166,8 @@ std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
 		chipProfiles[ setting.name ] = setting;
 	}
 
-	return csv.getError ();
+	// The CSV layer's own error wins, it points at an exact line
+	return csv.getError ().empty () ? rangeError : csv.getError ();
 }
 //-----------------------------------------------------------------------------
 

@@ -20,6 +20,8 @@
 *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <memory>
+
 #include "prg.h"
 
 #include "../sidplayfp/SidTuneInfo.h"
@@ -43,10 +45,10 @@ SidTuneBase* prg::load ( const char* fileName, buffer_t& dataBuf )
 	if ( dataBuf.size () < 2 )
 		throw loadError ( ERR_TRUNCATED );
 
-	auto	tune = new prg;
+	std::unique_ptr<prg>	tune { new prg () };
 	tune->load ();
 
-	return tune;
+	return tune.release ();
 }
 //-----------------------------------------------------------------------------
 

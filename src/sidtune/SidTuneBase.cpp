@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
+#include <memory>
 
 #include "SidTuneTools.h"
 #include "SidTuneInfoImpl.h"
@@ -240,14 +241,15 @@ SidTuneBase* SidTuneBase::getFromBuffer ( const uint8_t* const buffer, uint32_t 
 
 	buffer_t	buf1 ( buffer, buffer + bufferLen );
 
-	// Here test for the possible single file formats.
-	auto	s = PSID::load ( buf1 );
+	// Here test for the possible single file formats. acceptSidTune throws on
+	// malformed content
+	std::unique_ptr<SidTuneBase>	s { PSID::load ( buf1 ) };
 	if ( ! s )
 		throw loadError ( ERR_UNRECOGNIZED_FORMAT );
 
 	s->acceptSidTune ( "-", "-", buf1, false );
 
-	return s;
+	return s.release ();
 }
 //-----------------------------------------------------------------------------
 
@@ -335,16 +337,16 @@ SidTuneBase* SidTuneBase::getFromFiles ( LoaderFunc loader, const char* fileName
 	loader ( fileName, fileBuf1 );
 
 	// File loaded. Now check if it is in a valid single-file-format
-	auto	s = PSID::load ( fileBuf1 );
-	if ( ! s )	s = p00::load ( fileName, fileBuf1 );
-	if ( ! s )	s = prg::load ( fileName, fileBuf1 );
+	std::unique_ptr<SidTuneBase>	s { PSID::load ( fileBuf1 ) };
+	if ( ! s )	s.reset ( p00::load ( fileName, fileBuf1 ) );
+	if ( ! s )	s.reset ( prg::load ( fileName, fileBuf1 ) );
 
 	if ( ! s )
 		throw loadError ( ERR_UNRECOGNIZED_FORMAT );
 
 	s->acceptSidTune ( fileName, nullptr, fileBuf1, separatorIsSlash );
 
-	return s;
+	return s.release ();
 }
 //-----------------------------------------------------------------------------
 

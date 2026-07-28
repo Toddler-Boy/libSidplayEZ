@@ -83,6 +83,10 @@ std::string utf8toExtendedASCII ( const std::string& input )
 	{
 		auto	ch = uint8_t ( *in++ );
 
+		// A bare trailing 0xC2/0xC3 has no continuation byte to consume
+		if ( ( ch == 0xC2 || ch == 0xC3 ) && ! *in )
+			break;
+
 		if ( ch == 0xC2 )		out.append ( 1, *in++ );
 		else if ( ch == 0xC3 )	out.append ( 1, *in++ + 0x40 );
 		else					out.append ( 1, char ( ch ) );
@@ -93,25 +97,23 @@ std::string utf8toExtendedASCII ( const std::string& input )
 
 std::string extendedASCIItoUTF8 ( const char* str )
 {
-	uint8_t	outBuffer[ 256 ];
+	std::string	out;
 
 	auto	in = str;
-	auto	out = &outBuffer[ 0 ];
-
 	while ( auto c = static_cast<uint8_t> ( *in++ ) )
 	{
 		if ( c < 128 )
 		{
-			*out++ = c;
+			out.append ( 1, char ( c ) );
 		}
 		else
 		{
-			*out++ = 0xC2 + ( c > 0xBF );
-			*out++ = 0x80 + ( c & 0x3F );
+			out.append ( 1, char ( 0xC2 + ( c > 0xBF ) ) );
+			out.append ( 1, char ( 0x80 + ( c & 0x3F ) ) );
 		}
 	}
 
-	return std::string ( (const char*)&outBuffer[ 0 ], out - &outBuffer[ 0 ] );
+	return out;
 }
 //-----------------------------------------------------------------------------
 
