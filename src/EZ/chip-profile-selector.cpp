@@ -76,9 +76,10 @@ ChipProfileSelector::settings ChipProfileSelector::getProfile ( const char* _pat
 }
 //-----------------------------------------------------------------------------
 
-std::string ChipProfileSelector::setProfiles ( const std::string& csvStr )
+std::string ChipProfileSelector::setProfiles ( const std::string& csvStr, const bool merge )
 {
-	chipProfiles.clear ();
+	if ( ! merge )
+		chipProfiles.clear ();
 
 	auto	csv = TinyCSV ();
 
