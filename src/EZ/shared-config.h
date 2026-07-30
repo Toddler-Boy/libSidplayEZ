@@ -53,6 +53,7 @@ struct SharedPlayerConfig final
 	OverrideSelector		overrideSelector;
 
 	bool loadSidIDConfig ( const char* filename )			{ return sidID.loadSidIDConfig ( filename ); }
+	bool loadSidIDConfigText ( const std::string& str )		{ return sidID.loadSidIDConfigText ( str ); }
 	// Each returns a description of the first unusable cell, empty when the file was clean
 	std::string loadChipProfiles ( const std::string& csvStr, const bool merge = false )	{ return chipSelector.setProfiles ( csvStr, merge ); }
 	std::string loadAudioProfiles ( const std::string& csvStr )	{ return audioSelector.setProfiles ( csvStr ); }

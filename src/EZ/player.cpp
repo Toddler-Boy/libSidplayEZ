@@ -34,6 +34,27 @@ bool Player::loadSidFile ( const char* filename )
 
 	tune.load ( filename );
 
+	return finishLoad ();
+}
+//-----------------------------------------------------------------------------
+
+bool Player::loadSidFile ( SidTune::LoaderFunc loader, const char* filename )
+{
+	readyToPlay = false;
+	stiEZ = {};
+
+	if ( sharedConfig == nullptr )
+		return false;
+
+	// Archive paths always use forward slashes
+	tune.load ( loader, filename, true );
+
+	return finishLoad ();
+}
+//-----------------------------------------------------------------------------
+
+bool Player::finishLoad ()
+{
 	auto	info = tune.getInfo ();
 	if ( ! info )
 		return false;

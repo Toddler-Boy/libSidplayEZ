@@ -31,6 +31,11 @@ public:
 	bool isReadyToPlay () const { return readyToPlay; }
 
 	bool loadSidFile ( const char* filename );
+
+	// The loader supplies the bytes for a name that isn't a real file (data
+	// shipped inside an archive); the name still flows into path-based lookups
+	bool loadSidFile ( SidTune::LoaderFunc loader, const char* filename );
+
 	bool setTuneNumber ( const unsigned int songNo = 0, const bool useFilter = true );
 	// dstL sets the length; dstR is empty for mono. digiBuffers: one per chip (getNumChips ()), or empty
 	uint32_t runEmulation ( std::span<float> dstL, std::span<float> dstR, std::span<const std::span<int8_t>> digiBuffers )	{	return engine.play ( dstL, dstR, digiBuffers );		}
@@ -55,6 +60,9 @@ public:
 	[[ nodiscard ]] unsigned int getEmulatedTimeMs () const { return engine.timeMs (); }
 
 private:
+	// Everything after the tune bytes are in, shared by both loadSidFile flavours
+	bool finishLoad ();
+
 	bool	readyToPlay = false;
 
 	std::shared_ptr<const SharedPlayerConfig>	sharedConfig;

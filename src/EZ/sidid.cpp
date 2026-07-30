@@ -28,7 +28,12 @@ namespace libsidplayEZ
 
 bool sidid::loadSidIDConfig ( const char* filename )
 {
-	auto	str = stringutils::loadFile ( filename );
+	return loadSidIDConfigText ( stringutils::loadFile ( filename ) );
+}
+//-----------------------------------------------------------------------------
+
+bool sidid::loadSidIDConfigText ( const std::string& str )
+{
 	if ( str.empty () )
 		return false;
 
