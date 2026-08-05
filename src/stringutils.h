@@ -23,6 +23,7 @@
 #include <cctype>
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace stringutils
@@ -76,6 +77,7 @@ namespace stringutils
 
 	[[ nodiscard ]] std::string utf8toExtendedASCII ( const std::string& input );
 	[[ nodiscard ]] std::string extendedASCIItoUTF8 ( const char* str );
+	[[ nodiscard ]] std::string extendedASCIItoUTF8 ( std::string_view str );
 
 	[[ nodiscard ]] inline std::string trim ( std::string str )
 	{

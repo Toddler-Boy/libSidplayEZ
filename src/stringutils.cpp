@@ -97,11 +97,19 @@ std::string utf8toExtendedASCII ( const std::string& input )
 
 std::string extendedASCIItoUTF8 ( const char* str )
 {
-	std::string	out;
+	return extendedASCIItoUTF8 ( std::string_view ( str ) );
+}
+//-----------------------------------------------------------------------------
 
-	auto	in = str;
-	while ( auto c = static_cast<uint8_t> ( *in++ ) )
+std::string extendedASCIItoUTF8 ( const std::string_view str )
+{
+	std::string	out;
+	out.reserve ( str.size () );
+
+	for ( const auto sc : str )
 	{
+		const auto	c = static_cast<uint8_t> ( sc );
+
 		if ( c < 128 )
 		{
 			out.append ( 1, char ( c ) );
