@@ -8,7 +8,8 @@ set(here ${CMAKE_CURRENT_LIST_DIR})
 find_program(CA65 ca65)
 find_program(LD65 ld65)
 if(NOT CA65 OR NOT LD65)
-	message(FATAL_ERROR "cc65 not found, ca65/ld65 must be on PATH")
+	message(WARNING "cc65 not on PATH, psiddrv.bin NOT rebuilt from psiddrv.a65")
+	return()
 endif()
 
 # the memory bases mirror what xa wrote into the o65 header, keeping the
