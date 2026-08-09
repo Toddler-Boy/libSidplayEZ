@@ -168,8 +168,9 @@ private:
 	// SID voices
 	Voice<is6581>	voice[ numVoices ];
 
-	// Used to determine if the filter ever gets used during playback
-	int8_t	lastVolume = 0;
+	// Last byte written to $d418, captured whole into the digi buffer: 8-bit
+	// techniques carry sample data in the filter-mode bits too
+	int8_t	lastVolReg = 0;
 
 	// Start-up declick. Tunes that return from init routinely poke the volume and
 	// filter registers at the very beginning (init leaves volume 0, first play sets
@@ -493,7 +494,7 @@ public:
 
 		resampler.reset ();
 
-		lastVolume = 0;
+		lastVolReg = 0;
 
 		startupDeclickActive = false;
 		startupDeclickPending = false;
@@ -640,7 +641,7 @@ public:
 				declickVolFilterWrite ();
 
 				filter.writeMODE_VOL ( value );
-				lastVolume = int8_t ( value & 0x0F );
+				lastVolReg = int8_t ( value );
 			}
 			break;
 
@@ -763,7 +764,7 @@ public:
 					if ( resampler.input ( output () ) ) [[ unlikely ]]
 					{
 						buf[ s ] = resampler.output ();
-						volRegBuf[ s ] = lastVolume;
+						volRegBuf[ s ] = lastVolReg;
 
 						++s;
 					}
