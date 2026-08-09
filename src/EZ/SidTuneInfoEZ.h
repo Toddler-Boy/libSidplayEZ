@@ -53,6 +53,10 @@ struct SidTuneInfoEZ
 	std::string			chipProfile;
 	bool				chipProfileIsApproved = false;
 
+	// The chip settings actually applied at load, audible fields only, fixed
+	// order, deterministic text (consumers hash it for change detection)
+	std::string			chipSettingsValues;
+
 	// Stereo data
 	int				stereoWidth = 0;	// in percent, from 0 to 100
 	float			bassAdjust = 0.0f;	// in dB, usually negative values to push them down, as the defaults tend to be high

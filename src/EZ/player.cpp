@@ -1,8 +1,28 @@
+#include <cmath>
+
 #include "player.h"
 
 #include "../sidplayfp/SidTuneInfo.h"
 #include "../stringutils.h"
 
+//-----------------------------------------------------------------------------
+
+// The audible fields in fixed order; hundredths composed as scaled integers,
+// so the text never depends on locale or float formatting (consumers hash it)
+static std::string describeAppliedSettings ( const libsidplayEZ::ChipProfileSelector::settings& s )
+{
+	auto centi = [] ( const double v ) { return std::to_string ( std::lround ( v * 100.0 ) ); };
+
+	return "cap=" + std::to_string ( int ( s.fltCapOld ) )
+		 + " dac=" + centi ( s.flt0Dac )
+		 + " gain=" + centi ( s.fltGain )
+		 + " sat=" + centi ( s.fltSaturation )
+		 + " bpw=" + centi ( s.fltBandpassWidthOffset )
+		 + " digi=" + centi ( s.digi )
+		 + " leak=" + centi ( s.leakageRate )
+		 + " cws=" + std::to_string ( s.cwsLevel )
+		 + " ultra=" + std::to_string ( int ( s.cwsSawPulseUltra ) );
+}
 //-----------------------------------------------------------------------------
 
 namespace libsidplayEZ
@@ -189,6 +209,8 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 		engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms ( chipProfile.cwsLevel ), 1.0f );
 		engine.set6581SawPulseUltra ( chipProfile.cwsSawPulseUltra );
+
+		stiEZ.chipSettingsValues = describeAppliedSettings ( chipProfile );
 	}
 
 	// Override chip-profile for Emulation based SID editors (Cheesecutter, GoatTracker, SidWizard etc.)
@@ -225,6 +247,12 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 
 				engine.setCombinedWaveforms ( reSIDfp::CombinedWaveforms::AVERAGE, 1.0 );
 				engine.set6581SawPulseUltra ( false );
+
+				// Mirrors the fixed values above
+				ChipProfileSelector::settings	neutral;
+				neutral.flt0Dac = 0.5;
+				neutral.fltGain = 1.0;
+				stiEZ.chipSettingsValues = describeAppliedSettings ( neutral );
 			};
 
 			for ( const auto& id : editorsUsingEmulation )
