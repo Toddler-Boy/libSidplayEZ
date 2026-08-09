@@ -372,6 +372,8 @@ public:
 
 			// Leak AC component of filter input into mixer
 			Vsum[ 0 ] += ( ( Vsum[ 1 ] - fmc8580.getFilterInputDC ( routing & 0x0F ) ) * leakMixerInput ) >> 12;
+			if ( Vsum[ 0 ] < 0 ) [[unlikely]]
+				Vsum[ 0 ] = 0;
 
 			// Apply filter (local copies prevent aliasing through this-> which forces memory reloads)
 			const auto	lVhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];

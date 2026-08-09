@@ -410,6 +410,8 @@ public:
 //			filterInputDC += dcE & -fltE;	// seems unecessary
 
 			Vsum[ 0 ] += ( ( Vsum[ 1 ] - filterInputDC ) * leakInputInt ) >> 12;
+			if ( Vsum[ 0 ] < 0 ) [[unlikely]]
+				Vsum[ 0 ] = 0;
 
 			// Apply filter
 			const auto	lVhp = this->currentSummer[ this->currentResonance[ this->Vbp ] + this->Vlp + Vsum[ 1 ] ];
