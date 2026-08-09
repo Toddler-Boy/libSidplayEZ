@@ -1205,6 +1205,10 @@ void MOS6510::tya_instr () noexcept
 void MOS6510::invalidOpcode () noexcept
 {
 	jammed = true;
+
+	// The hardware locks up for good: re-execute this cycle forever, so the
+	// zombie CPU can't touch memory or registers until the host polls isJammed
+	cycleCount--;
 }
 
 
