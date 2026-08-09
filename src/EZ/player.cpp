@@ -7,21 +7,39 @@
 
 //-----------------------------------------------------------------------------
 
-// The audible fields in fixed order; hundredths composed as scaled integers,
-// so the text never depends on locale or float formatting (consumers hash it)
+// The audible fields in fixed order, hundredths composed as scaled integers,
+// so the text never depends on locale or float formatting (consumers hash it).
+// Fields at their default are omitted: a new field is invisible until a
+// profile actually sets it, and an unprofiled tune serializes empty
 static std::string describeAppliedSettings ( const libsidplayEZ::ChipProfileSelector::settings& s )
 {
-	auto centi = [] ( const double v ) { return std::to_string ( std::lround ( v * 100.0 ) ); };
+	const libsidplayEZ::ChipProfileSelector::settings	defaults;
 
-	return "cap=" + std::to_string ( int ( s.fltCapOld ) )
-		 + " dac=" + centi ( s.flt0Dac )
-		 + " gain=" + centi ( s.fltGain )
-		 + " sat=" + centi ( s.fltSaturation )
-		 + " bpw=" + centi ( s.fltBandpassWidthOffset )
-		 + " digi=" + centi ( s.digi )
-		 + " leak=" + centi ( s.leakageRate )
-		 + " cws=" + std::to_string ( s.cwsLevel )
-		 + " ultra=" + std::to_string ( int ( s.cwsSawPulseUltra ) );
+	std::string	text;
+
+	auto field = [ &text ] ( const char* name, const long value, const long defaultValue )
+	{
+		if ( value == defaultValue )
+			return;
+
+		if ( ! text.empty () )
+			text += ' ';
+		text += name + ( "=" + std::to_string ( value ) );
+	};
+
+	auto centi = [] ( const double v ) { return std::lround ( v * 100.0 ); };
+
+	field ( "cap", s.fltCapOld, defaults.fltCapOld );
+	field ( "dac", centi ( s.flt0Dac ), centi ( defaults.flt0Dac ) );
+	field ( "gain", centi ( s.fltGain ), centi ( defaults.fltGain ) );
+	field ( "sat", centi ( s.fltSaturation ), centi ( defaults.fltSaturation ) );
+	field ( "bpw", centi ( s.fltBandpassWidthOffset ), centi ( defaults.fltBandpassWidthOffset ) );
+	field ( "digi", centi ( s.digi ), centi ( defaults.digi ) );
+	field ( "leak", centi ( s.leakageRate ), centi ( defaults.leakageRate ) );
+	field ( "cws", s.cwsLevel, defaults.cwsLevel );
+	field ( "ultra", s.cwsSawPulseUltra, defaults.cwsSawPulseUltra );
+
+	return text;
 }
 //-----------------------------------------------------------------------------
 
