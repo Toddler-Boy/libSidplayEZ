@@ -329,6 +329,7 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{ "ddf01a31a0bc52fe9d5300f9e7afeb67", DigiMode::output },	// FRODIGI_4_tune_2
 			{ "17b06cb2477d3d8b24e5b14a8709df29", DigiMode::covox },		// Out_on_a_Limb, speech in all subtunes but the first
 			{ "e771c1358d9143864e6fea46a1c9a8b8", DigiMode::voice1Pwm },	// Wonderland_IX_part_5, PWM samples on voices 1+2
+			{ "74323308a10bbb02d713a23c6b5b16e7", DigiMode::covox },		// All_Risks, speech in subtune 4
 		};
 
 		stiEZ.digiMode = DigiMode::nibble;
