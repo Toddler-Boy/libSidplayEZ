@@ -322,6 +322,13 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{ "c5e7d1a5ce3e8bd886fdb04801f96adc", DigiMode::carmina },	// Vicious_SID_2-Carmina_Burana
 			{ "48a3418ebaa3faf66e58dd9644503e4a", DigiMode::escos },	// Vicious_SID_2-Escos
 			{ "48bcfe1e849627dd680a7b8d69a9d432", DigiMode::escos },	// Vicious_SID_2-1st_loader, same impulse school
+			{ "36866f276dbfa35d3d407ba7ad3cd01e", DigiMode::output },	// FRODIGI
+			{ "1e662d0b7cb80ecb686877471a9a47cc", DigiMode::output },	// FRODIGI_2
+			{ "ccfa92d4441dcc6e84524a0826126844", DigiMode::output },	// FRODIGI_3
+			{ "c5183a95ffeffc5fbe30f190c685bd77", DigiMode::output },	// FRODIGI_4_tune_1
+			{ "ddf01a31a0bc52fe9d5300f9e7afeb67", DigiMode::output },	// FRODIGI_4_tune_2
+			{ "17b06cb2477d3d8b24e5b14a8709df29", DigiMode::covox },		// Out_on_a_Limb, speech in all subtunes but the first
+			{ "e771c1358d9143864e6fea46a1c9a8b8", DigiMode::voice1Pwm },	// Wonderland_IX_part_5, PWM samples on voices 1+2
 		};
 
 		stiEZ.digiMode = DigiMode::nibble;

@@ -106,6 +106,8 @@
 */
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <limits>
 
 namespace reSIDfp
@@ -180,11 +182,41 @@ private:
 	// off to count raw level changes
 	bool			digiSmooth = true;
 
-	// Pseudo-source conditioning state: a two-pole low-pass (both voice
-	// techniques play well below the 44.1 kHz capture rate, everything above
-	// is stair-step artifacts or carrier) and, for PWM, a slow DC blocker
-	// that re-centers static levels (idle duty, music instruments sharing
-	// the voice)
+	// Smoothing corners per capture mode as per-sample alphas, tuned by eye at
+	// 44.1 kHz to fit each technique's real playback rate (everything above is
+	// stair-step artifacts or carrier); DigiMode order
+	static constexpr std::array<float, 17>	digiAlpha44 =
+	{
+		0.2f,	// nibble: volume-register players run at a few kHz (CIA-timed NMIs), lower corner than the byte modes
+		0.35f,	// mahoney
+		0.35f,	// freq1
+		0.35f,	// freq2
+		0.35f,	// freq3
+		0.2f,	// pwLo1
+		0.07f,	// pwHi1
+		0.15f,	// pwFull1
+		0.07f,	// filt1
+		0.15f,	// voice3Out
+		0.07f,	// voice1Pwm
+		0.07f,	// covox
+		0.35f,	// carmina (voice 1; voice 2 has its own corner)
+		0.2f,	// escos
+		0.2f,	// output
+		0.35f,	// rawCtrl3
+		0.35f,	// rawPw1
+	};
+	static constexpr float	digiDcAlpha44 = 0.01f;
+	static constexpr float	digiCarminaAlpha44 = 0.07f;
+
+	// The same corners at the active sampling rate, rescaled in
+	// setSamplingParameters (at 44.1 kHz they equal the tuned values exactly)
+	std::array<float, 17>	digiAlpha = digiAlpha44;
+	float	digiDcAlpha = digiDcAlpha44;
+	float	digiCarminaAlpha = digiCarminaAlpha44;
+
+	// Pseudo-source conditioning state: a two-pole low-pass and a slow DC
+	// blocker that re-centers static levels (idle duty, music instruments
+	// sharing the voice)
 	float	digiLp1 = 0.0f;
 	float	digiLp2 = 0.0f;
 	float	digiDc = 0.0f;
@@ -742,6 +774,16 @@ public:
 		externalFilter.setClockFrequency ( clockFrequency );
 
 		resampler.setup ( clockFrequency, samplingFrequency );
+
+		// Re-pitch the digi smoothing corners: the same pole at another rate
+		// is alpha' = 1 - (1 - alpha)^(44100 / rate)
+		const auto	ratio = 44100.0 / samplingFrequency;
+
+		for ( size_t i = 0; i < digiAlpha.size (); ++i )
+			digiAlpha[ i ] = float ( 1.0 - std::pow ( 1.0 - digiAlpha44[ i ], ratio ) );
+
+		digiDcAlpha = float ( 1.0 - std::pow ( 1.0 - digiDcAlpha44, ratio ) );
+		digiCarminaAlpha = float ( 1.0 - std::pow ( 1.0 - digiCarminaAlpha44, ratio ) );
 	}
 
 	/**
@@ -825,20 +867,15 @@ public:
 					{
 						buf[ s ] = resampler.output ();
 
-						// The raw display level per capture mode, and the smoothing
-						// corner fitting the technique's real playback rate (all
-						// techniques play well below the 44.1 kHz capture rate,
-						// everything above is stair-step artifacts or carrier)
+						// The raw display level per capture mode; the smoothing corner
+						// comes from the per-mode table, re-pitched to the sampling rate
 						auto	level = 0.0f;
-						auto	alpha = 0.35f;
 
 						switch ( digiMode )
 						{
 							default:
 							case DigiMode::nibble:
-								// Volume-register players run at a few kHz (CIA-timed NMIs), lower corner than the byte modes
 								level = float ( ( ( lastpoke[ 0x18 ] & 0x0F ) << 4 ) - 128 );
-								alpha = 0.2f;
 								break;
 
 							case DigiMode::mahoney:
@@ -861,7 +898,6 @@ public:
 								// Cyberbrain 4-channel mixer: the full 8-bit sum lands in
 								// PW-hi (hardware uses 4 bits, the shadow keeps all 8)
 								level = float ( lastpoke[ 0x03 ] - 128 );
-								alpha = 0.07f;
 								break;
 
 							case DigiMode::pwFull1:
@@ -869,7 +905,6 @@ public:
 								// full 12-bit pulse width (high nibble in PW-hi, low nibble in
 								// PW-lo's top bits), reassembled from both shadow bytes
 								level = 127.0f - float ( ( ( lastpoke[ 0x03 ] & 0x0F ) << 4 ) | ( lastpoke[ 0x02 ] >> 4 ) );
-								alpha = 0.15f;
 								break;
 
 							case DigiMode::filt1:
@@ -877,7 +912,6 @@ public:
 								// voice 1 filter-routing bit, each edge steps the mixer DC;
 								// the low-pass demodulates the edge stream into the waveform
 								level = ( lastpoke[ 0x17 ] & 0x01 ) ? 127.0f : -128.0f;
-								alpha = 0.07f;
 								break;
 
 							case DigiMode::pwLo1:
@@ -885,7 +919,6 @@ public:
 								// swings, test-bit retriggered), amplitude in the envelope;
 								// the low-pass demodulates it into the waveform
 								level = float ( lastpoke[ 0x02 ] - 128 ) * voice[ 0 ].getEnvLevel ();
-								alpha = 0.2f;
 								break;
 
 							case DigiMode::rawCtrl3:
@@ -902,14 +935,12 @@ public:
 								// scaled by the live envelope; the low corner suppresses
 								// the audible-band carrier
 								level = float ( ( ( lastpoke[ 0x03 ] & 0x0F ) << 4 ) - 128 ) * voice[ 0 ].getEnvLevel ();
-								alpha = 0.07f;
 								break;
 
 							case DigiMode::voice3Out:
 								// Frozen osc3 = digi; OSC3 readback x live envelope
 								if ( lastpoke[ 0x0E ] == 0 && lastpoke[ 0x0F ] == 0 )
 									level = float ( voice[ 2 ].waveformGenerator.readOSC () - 128 ) * voice[ 2 ].getEnvLevel ();
-								alpha = 0.15f;
 								break;
 
 							case DigiMode::carmina:
@@ -922,9 +953,8 @@ public:
 								// so the plain sum fits the display range
 								if ( ! ( lastpoke[ 0x04 ] & 0x08 ) )
 									level = float ( lastpoke[ 0x01 ] - 128 ) * voice[ 0 ].getEnvLevel ();
-								carminaLp += 0.07f * ( float ( voice[ 1 ].waveformGenerator.readOSC () - 128 ) * voice[ 1 ].getEnvLevel () - carminaLp );
+								carminaLp += digiCarminaAlpha * ( float ( voice[ 1 ].waveformGenerator.readOSC () - 128 ) * voice[ 1 ].getEnvLevel () - carminaLp );
 								level = ( level + carminaLp ) * 0.85f;
-								alpha = 0.35f;
 								break;
 
 							case DigiMode::escos:
@@ -933,7 +963,15 @@ public:
 								// carries a level); only the voice output shows the impulse
 								// train, the low-pass turns it into the chord waveform
 								level = float ( voice[ 2 ].waveformGenerator.readOSC () - 128 ) * voice[ 2 ].getEnvLevel ();
-								alpha = 0.2f;
+								break;
+
+							case DigiMode::output:
+								// FRODIGI school: all three oscillators and the master volume
+								// resynthesize the audio at a low sample rate, no register
+								// carries the sample, the final mix IS the digi (which only
+								// spans ~12 bits, hence the hotter scale; the clamp below
+								// catches the rest)
+								level = float ( buf[ s ] ) * ( 1.0f / 64.0f );
 								break;
 
 							case DigiMode::covox:
@@ -944,17 +982,18 @@ public:
 								// music does not; the bit is read straight from the ctrl shadow
 								if ( lastpoke[ 0x00 ] == 0 && lastpoke[ 0x01 ] == 0 )
 									level = ( lastpoke[ 0x04 ] & 0x08 ? 127.0f : -128.0f ) * float ( lastpoke[ 0x18 ] & 0x0F ) * ( 1.0f / 15.0f );
-								alpha = 0.07f;
 								break;
 						}
 
 						if ( digiSmooth ) [[ likely ]]
 						{
+							const auto	alpha = digiAlpha[ size_t ( digiMode ) ];
+
 							digiLp1 += alpha * ( level - digiLp1 );
 							digiLp2 += alpha * ( digiLp1 - digiLp2 );
 
 							// Re-center every mode (idle levels, off-center 4-bit streams)
-							digiDc += 0.01f * ( digiLp2 - digiDc );
+							digiDc += digiDcAlpha * ( digiLp2 - digiDc );
 						}
 						else
 						{
