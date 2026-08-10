@@ -58,7 +58,9 @@ public:
 	* 3.43-7 V for the 6581 and 4.51-4.99 V for the 8580
 	* corresponding to envelope state 0 .. 255.
 	*
-	* Ideal range [-2048*255, 2047*255].
+	* The DAC tables hold normalized voltages: the waveform contribution is
+	* offset-centered around zero, the envelope scales it by 0..1, so the
+	* result spans roughly -0.5 .. 0.5
 	*
 	* @param ringModulator Ring-modulator for waveform
 	* @return the voice analog output

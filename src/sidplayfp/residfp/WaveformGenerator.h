@@ -833,6 +833,11 @@ public:
 	[[ nodiscard ]] sidinline unsigned int readFreq () const noexcept { return freq; }
 
 	/**
+	* Read pulse-width value.
+	*/
+	[[ nodiscard ]] sidinline unsigned int readPW () const noexcept { return pw; }
+
+	/**
 	* Read test value.
 	*/
 	[[ nodiscard ]] sidinline bool readTest () const noexcept { return test; }

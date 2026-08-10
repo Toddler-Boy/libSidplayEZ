@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cmath>
+#include <string_view>
 
 #include "player.h"
 
@@ -277,6 +279,41 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 				if ( stiEZ.playroutineID[ 0 ].starts_with ( id.id ) )
 					oldEmulation ( id );
 		}
+	}
+
+	// Dedicated sample players and the playback technique each one uses; the
+	// mode implies the register its samples ride on
+	{
+		using DigiMode = reSIDfp::DigiMode;
+
+		struct DigiPlayer
+		{
+			std::string_view	id;
+			DigiMode			mode;
+		};
+
+		static constexpr DigiPlayer digiPlayers[] = {
+			{ "8bitDigi/Mahoney",   DigiMode::mahoney },
+			{ "OxyMod4Bit/THCM",    DigiMode::mahoney },
+			{ "OxyMod/THCM",        DigiMode::freq3 },
+			{ "Algorithm/8bitDigi", DigiMode::freq3 },
+			{ "Censor_8bit_Digi_1", DigiMode::freq3 },
+			{ "Censor_8bit_Digi_2", DigiMode::voice3Out },
+			{ "Censor_Digi_2",      DigiMode::voice1Pwm },
+		};
+
+		stiEZ.digiMode = DigiMode::nibble;
+		stiEZ.digiPlayer = false;
+
+		for ( const auto& player : digiPlayers )
+			if ( std::ranges::contains ( stiEZ.playroutineID, player.id ) )
+			{
+				stiEZ.digiMode = player.mode;
+				stiEZ.digiPlayer = true;
+				break;
+			}
+
+		engine.setDigiCapture ( stiEZ.digiMode );
 	}
 
 	//

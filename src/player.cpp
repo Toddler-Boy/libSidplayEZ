@@ -500,6 +500,30 @@ void Player::setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float 
 }
 //-----------------------------------------------------------------------------
 
+void Player::setDigiCapture ( const reSIDfp::DigiMode mode )
+{
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->setDigiCapture ( mode );
+}
+//-----------------------------------------------------------------------------
+
+void Player::setDigiScan ( const reSIDfp::DigiMode mode )
+{
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->setDigiScan ( mode );
+}
+//-----------------------------------------------------------------------------
+
+void Player::setDigiSmoothing ( const bool enable )
+{
+	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )
+		if ( auto s = m_mixer.getSid ( i ) )
+			s->digiSmoothing ( enable );
+}
+//-----------------------------------------------------------------------------
+
 void Player::set6581FilterCurve ( const double value )
 {
 	for ( auto i = 0; i < m_mixer.getNumChips (); i++ )

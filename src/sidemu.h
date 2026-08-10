@@ -39,19 +39,15 @@ namespace libsidplayfp
 
 class sidemu : public Bank
 {
-private:
-	uint8_t		lastpoke[ 0x20 ] = {};
-
 public:
 	// Bank functions
-	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override
-	{
-		lastpoke[ address & 0x1f ] = value;
-		write ( address & 0x1f, value );
-	}
+	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override { write ( address & 0x1f, value ); }
 	sidinline uint8_t peek ( uint16_t address ) noexcept override { return read ( address & 0x1f ); }
 
-	void getStatus ( uint8_t regs[ 0x20 ] ) const noexcept { std::copy_n ( lastpoke, std::size ( lastpoke ), regs ); }
+	// The emulation's register shadow, the raw last-written bytes
+	virtual void getStatus ( uint8_t regs[ 0x20 ] ) const noexcept = 0;
+
+public:
 
 	/**
 	* Buffer size. 5000 is roughly 5 ms at 96 kHz
@@ -84,8 +80,6 @@ public:
 
 	virtual void reset ( uint8_t /*volume*/ ) noexcept
 	{
-		std::fill ( std::begin ( lastpoke ), std::end ( lastpoke ), 0 );
-
 		m_accessClk = 0;
 	}
 
@@ -116,6 +110,15 @@ public:
 	virtual void armStartupDeclick () noexcept {}
 
 	virtual void combinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold ) noexcept = 0;
+
+	// How the digi buffer derives its samples; the mode implies the register
+	// its data rides on
+	virtual void setDigiCapture ( reSIDfp::DigiMode mode ) noexcept = 0;
+
+	// Measurement variant: the raw write stream of the technique's register
+	virtual void setDigiScan ( reSIDfp::DigiMode mode ) noexcept = 0;
+
+	virtual void digiSmoothing ( bool enable ) noexcept = 0;
 
 	virtual void filter6581Curve ( double filterCurve ) noexcept = 0;
 	virtual void filter6581_uCoxAndCap ( double uCox, bool oldCap ) noexcept = 0;
@@ -165,6 +168,7 @@ public:
 	sidemuSpec ( EventScheduler& _eventScheduler )
 		: sidemu ( _eventScheduler )
 	{
+		setDigiCapture ( reSIDfp::DigiMode::nibble );
 		reset ( 0xF );
 	}
 
@@ -207,6 +211,13 @@ public:
 	{
 		m_sid.setCombinedWaveforms ( cws, threshold );
 	}
+
+	void setDigiCapture ( reSIDfp::DigiMode mode ) noexcept override { m_sid.setDigiCapture ( mode ); }
+	void setDigiScan ( reSIDfp::DigiMode mode ) noexcept override { m_sid.setDigiScan ( mode ); }
+
+	void getStatus ( uint8_t regs[ 0x20 ] ) const noexcept override { m_sid.getRegs ( regs ); }
+
+	void digiSmoothing ( bool enable ) noexcept override { m_sid.setDigiSmoothing ( enable ); }
 
 	void filter6581Curve ( double filterCurve ) noexcept override { m_sid.setFilter6581Curve ( filterCurve ); }
 	void filter6581_uCoxAndCap ( double uCox, bool oldCap ) noexcept override { m_sid.setFilter6581_uCoxAndCap ( uCox, oldCap ); }

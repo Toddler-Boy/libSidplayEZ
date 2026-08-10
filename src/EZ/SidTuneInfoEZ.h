@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include "../sidplayfp/residfp/DigiMode.h"
+
 //-----------------------------------------------------------------------------
 
 struct SidTuneInfoEZ
@@ -48,6 +50,14 @@ struct SidTuneInfoEZ
 
 	// e.g. "Martin_Galway_Digi", "Rob_Hubbard", etc.
 	std::vector<std::string>		playroutineID;
+
+	// How the digi buffer derives its signed display-ready samples; the mode
+	// implies the register the samples ride on
+	reSIDfp::DigiMode	digiMode = reSIDfp::DigiMode::nibble;
+
+	// A dedicated sample player is present, digis are likely but not certain
+	// (fx-only or digi-less subtunes exist)
+	bool			digiPlayer = false;
 
 	// e.g. "Martin Galway", "Rob Hubbard", "GoatTracker", etc.
 	std::string			chipProfile;

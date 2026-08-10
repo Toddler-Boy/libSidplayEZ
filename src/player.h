@@ -99,6 +99,11 @@ public:
 
 	void setCombinedWaveforms ( reSIDfp::CombinedWaveforms cws, const float threshold );
 
+	void setDigiCapture ( const reSIDfp::DigiMode mode );
+	void setDigiScan ( const reSIDfp::DigiMode mode );
+
+	void setDigiSmoothing ( const bool enable );
+
 	void set6581FilterCurve ( const double value );
 	void set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap );
 	void set6581FilterGain ( const double value );

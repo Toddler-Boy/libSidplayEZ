@@ -64,6 +64,9 @@ public:
 	void set6581FilterBandpassWidthOffset ( const double value )			{ engine.set6581FilterBandpassWidthOffset ( value ); }
 	void set6581DigiVolume ( const double value )							{ engine.set6581DigiVolume ( value ); }
 	void setCombinedWaveforms ( const reSIDfp::CombinedWaveforms cws, const float threshold )	{ engine.setCombinedWaveforms ( cws, threshold ); }
+	void setDigiCapture ( const reSIDfp::DigiMode mode )					{ engine.setDigiCapture ( mode ); }
+	void setDigiScan ( const reSIDfp::DigiMode mode )						{ engine.setDigiScan ( mode ); }
+	void setDigiSmoothing ( const bool enable )								{ engine.setDigiSmoothing ( enable ); }
 	void set6581SawPulseUltra ( const bool value )							{ engine.set6581SawPulseUltra ( value ); }
 
 	[[ nodiscard ]] unsigned int getEmulatedTimeMs () const { return engine.timeMs (); }

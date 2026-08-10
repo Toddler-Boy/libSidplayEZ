@@ -126,8 +126,10 @@ namespace reSIDfp
 
 #include "Dac.h"
 
+#include "DigiMode.h"
 #include "Filter6581.h"
 #include "Filter8580.h"
+#include "MahoneyLevels.h"
 
 #include "WaveformCalculator.h"
 #include "resample/TwoPassSincResampler.h"
@@ -168,9 +170,24 @@ private:
 	// SID voices
 	Voice<is6581>	voice[ numVoices ];
 
-	// Last byte written to $d418, captured whole into the digi buffer: 8-bit
-	// techniques carry sample data in the filter-mode bits too
-	int8_t	lastVolReg = 0;
+	// Register shadow: the raw last-written bytes, serving the digi capture
+	// (each reading mode takes its byte straight from here) and the status
+	// export
+	uint8_t		lastpoke[ 0x20 ] = {};
+	DigiMode	digiMode = DigiMode::nibble;
+
+	// Smoothing conditions the capture for display; measurement tools turn it
+	// off to count raw level changes
+	bool			digiSmooth = true;
+
+	// Pseudo-source conditioning state: a two-pole low-pass (both voice
+	// techniques play well below the 44.1 kHz capture rate, everything above
+	// is stair-step artifacts or carrier) and, for PWM, a slow DC blocker
+	// that re-centers static levels (idle duty, music instruments sharing
+	// the voice)
+	float	digiLp1 = 0.0f;
+	float	digiLp2 = 0.0f;
+	float	digiDc = 0.0f;
 
 	// Start-up declick. Tunes that return from init routinely poke the volume and
 	// filter registers at the very beginning (init leaves volume 0, first play sets
@@ -442,6 +459,43 @@ public:
 	}
 
 	/**
+	* Pick how the digi buffer derives its samples; each mode knows the
+	* register it reads
+	*/
+	void setDigiCapture ( const DigiMode mode ) noexcept
+	{
+		digiMode = mode;
+		digiLp1 = digiLp2 = digiDc = 0.0f;
+	}
+
+	/**
+	* Measurement variant: the computed display modes move with any music, so
+	* rate detection watches the raw write stream of the technique's register
+	*/
+	void setDigiScan ( const DigiMode mode ) noexcept
+	{
+		switch ( mode )
+		{
+			case DigiMode::voice3Out:	setDigiCapture ( DigiMode::rawCtrl3 );	break;
+			case DigiMode::voice1Pwm:	setDigiCapture ( DigiMode::rawPw1 );	break;
+			default:					setDigiCapture ( mode );				break;
+		}
+	}
+
+	/**
+	* The register shadow, for the host's status export
+	*/
+	void getRegs ( uint8_t regs[ 0x20 ] ) const noexcept
+	{
+		std::copy_n ( lastpoke, std::size ( lastpoke ), regs );
+	}
+
+	void setDigiSmoothing ( const bool enable ) noexcept
+	{
+		digiSmooth = enable;
+	}
+
+	/**
 	* Set Voice DC drift
 	*/
 	void setVoiceDCDrift ( const double drift ) noexcept
@@ -486,6 +540,8 @@ public:
 	*/
 	void reset () noexcept
 	{
+		std::fill ( std::begin ( lastpoke ), std::end ( lastpoke ), uint8_t ( 0 ) );
+
 		for ( auto& vce : voice )
 			vce.reset ();
 
@@ -493,8 +549,6 @@ public:
 		externalFilter.reset ();
 
 		resampler.reset ();
-
-		lastVolReg = 0;
 
 		startupDeclickActive = false;
 		startupDeclickPending = false;
@@ -592,6 +646,8 @@ public:
 	*/
 	sidinline void write ( int offset, uint8_t value ) noexcept
 	{
+		lastpoke[ offset & 0x1f ] = value;
+
 		busValue = value;
 		busValueTtl = modelTTL;
 
@@ -641,7 +697,6 @@ public:
 				declickVolFilterWrite ();
 
 				filter.writeMODE_VOL ( value );
-				lastVolReg = int8_t ( value );
 			}
 			break;
 
@@ -764,7 +819,67 @@ public:
 					if ( resampler.input ( output () ) ) [[ unlikely ]]
 					{
 						buf[ s ] = resampler.output ();
-						volRegBuf[ s ] = lastVolReg;
+
+						// The raw display level per capture mode, and the smoothing
+						// corner fitting the technique's real playback rate (all
+						// techniques play well below the 44.1 kHz capture rate,
+						// everything above is stair-step artifacts or carrier)
+						auto	level = 0.0f;
+						auto	alpha = 0.35f;
+
+						switch ( digiMode )
+						{
+							default:
+							case DigiMode::nibble:
+								// Volume-register players run at a few kHz (CIA-timed NMIs), lower corner than the byte modes
+								level = float ( ( ( lastpoke[ 0x18 ] & 0x0F ) << 4 ) - 128 );
+								alpha = 0.2f;
+								break;
+
+							case DigiMode::mahoney:
+								level = float ( ( is6581 ? mahoney6581Levels : mahoney8580Levels )[ lastpoke[ 0x18 ] ] );
+								break;
+
+							case DigiMode::freq3:
+								level = float ( lastpoke[ 0x0f ] - 128 );
+								break;
+
+							case DigiMode::rawCtrl3:
+								level = float ( lastpoke[ 0x12 ] - 128 );
+								break;
+
+							case DigiMode::rawPw1:
+								level = float ( lastpoke[ 0x03 ] - 128 );
+								break;
+
+							case DigiMode::voice1Pwm:
+								// The mean pulse level over a carrier period: the fraction
+								// of the period spent high (only 4 upper bits of pulse width),
+								// scaled by the live envelope; the low corner suppresses
+								// the audible-band carrier
+								level = float ( ( ( lastpoke[ 0x03 ] & 0x0F ) << 4 ) - 128 ) * voice[ 0 ].getEnvLevel ();
+								alpha = 0.07f;
+								break;
+
+							case DigiMode::voice3Out:
+								// Frozen osc3 = digi; OSC3 readback x live envelope
+								if ( voice[ 2 ].waveformGenerator.readFreq () == 0 )
+									level = float ( voice[ 2 ].waveformGenerator.readOSC () - 128 ) * voice[ 2 ].getEnvLevel ();
+								alpha = 0.15f;
+								break;
+						}
+
+						if ( digiSmooth ) [[ likely ]]
+						{
+							digiLp1 += alpha * ( level - digiLp1 );
+							digiLp2 += alpha * ( digiLp1 - digiLp2 );
+
+							// Re-center every mode (idle levels, off-center 4-bit streams)
+							digiDc += 0.01f * ( digiLp2 - digiDc );
+						}
+
+						const auto	v = int ( digiLp2 - digiDc );
+						volRegBuf[ s ] = int8_t ( v < -128 ? -128 : v > 127 ? 127 : v );
 
 						++s;
 					}
