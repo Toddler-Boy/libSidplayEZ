@@ -295,11 +295,33 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		static constexpr DigiPlayer digiPlayers[] = {
 			{ "8bitDigi/Mahoney",   DigiMode::mahoney },
 			{ "OxyMod4Bit/THCM",    DigiMode::mahoney },
+			{ "AnnoyedArt1256_Digi", DigiMode::mahoney },
 			{ "OxyMod/THCM",        DigiMode::freq3 },
 			{ "Algorithm/8bitDigi", DigiMode::freq3 },
 			{ "Censor_8bit_Digi_1", DigiMode::freq3 },
+			{ "Abaddon_Digi",       DigiMode::freq3 },
+			{ "Groepaz_8bit_Digi",  DigiMode::freq2 },
 			{ "Censor_8bit_Digi_2", DigiMode::voice3Out },
 			{ "Censor_Digi_2",      DigiMode::voice1Pwm },
+			{ "Cyberbrain_Digi",    DigiMode::pwHi1 },
+			{ "Censor_Digi/16khz",  DigiMode::pwLo1 },
+			{ "Silas_Warner_Digi",  DigiMode::filt1 },
+			{ "StreetTuff_Digi",    DigiMode::pwFull1 },
+			{ "Voicemaster_Covox",  DigiMode::covox },
+		};
+
+		// One-off rips whose player has no sidid entry, keyed by tune md5
+		struct DigiTune
+		{
+			std::string_view	md5;
+			DigiMode			mode;
+		};
+
+		static constexpr DigiTune digiTunes[] = {
+			{ "40e7840d61e508d4c9be68a2b848b35b", DigiMode::freq1 },	// Vicious_SID_2-15638Hz
+			{ "c5e7d1a5ce3e8bd886fdb04801f96adc", DigiMode::carmina },	// Vicious_SID_2-Carmina_Burana
+			{ "48a3418ebaa3faf66e58dd9644503e4a", DigiMode::escos },	// Vicious_SID_2-Escos
+			{ "48bcfe1e849627dd680a7b8d69a9d432", DigiMode::escos },	// Vicious_SID_2-1st_loader, same impulse school
 		};
 
 		stiEZ.digiMode = DigiMode::nibble;
@@ -312,6 +334,15 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 				stiEZ.digiPlayer = true;
 				break;
 			}
+
+		if ( ! stiEZ.digiPlayer )
+			for ( const auto& digiTune : digiTunes )
+				if ( stiEZ.md5 == digiTune.md5 )
+				{
+					stiEZ.digiMode = digiTune.mode;
+					stiEZ.digiPlayer = true;
+					break;
+				}
 
 		engine.setDigiCapture ( stiEZ.digiMode );
 	}
