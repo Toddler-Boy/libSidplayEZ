@@ -329,7 +329,9 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{ "ddf01a31a0bc52fe9d5300f9e7afeb67", DigiMode::output },	// FRODIGI_4_tune_2
 			{ "17b06cb2477d3d8b24e5b14a8709df29", DigiMode::covox },		// Out_on_a_Limb, speech in all subtunes but the first
 			{ "e771c1358d9143864e6fea46a1c9a8b8", DigiMode::voice1Pwm },	// Wonderland_IX_part_5, PWM samples on voices 1+2
+			{ "d29612059e480333104edf8315fef76f", DigiMode::voice1Pwm },	// Spasmolytic_part_2, PWM samples on voice 1
 			{ "74323308a10bbb02d713a23c6b5b16e7", DigiMode::covox },		// All_Risks, speech in subtune 4
+			{ "b8b3fe215c067d3e4bf0a4cee8eed753", DigiMode::pwLo1 },		// Wonderland_XI-End, 16 kHz Censor school without a signature
 		};
 
 		stiEZ.digiMode = DigiMode::nibble;
