@@ -20,10 +20,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
-#include "../sidplayfp/residfp/DigiMode.h"
+namespace reSIDfp { enum class DigiMode : uint8_t; }
 
 //-----------------------------------------------------------------------------
 
@@ -52,8 +53,8 @@ struct SidTuneInfoEZ
 	std::vector<std::string>		playroutineID;
 
 	// How the digi buffer derives its signed display-ready samples; the mode
-	// implies the register the samples ride on
-	reSIDfp::DigiMode	digiMode = reSIDfp::DigiMode::nibble;
+	// implies the register the samples ride on. Zero value = nibble
+	reSIDfp::DigiMode	digiMode {};
 
 	// A dedicated sample player is present, digis are likely but not certain
 	// (fx-only or digi-less subtunes exist)

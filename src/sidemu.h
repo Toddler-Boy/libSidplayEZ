@@ -30,6 +30,7 @@
 
 #include "c64/Banks/Bank.h"
 
+#include "sidplayfp/residfp/DigiMode.h"
 #include "sidplayfp/residfp/SID.h"
 
 #include "EZ/config.h"
