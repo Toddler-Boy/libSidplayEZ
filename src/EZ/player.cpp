@@ -5,6 +5,7 @@
 #include "player.h"
 
 #include "../sidplayfp/SidTuneInfo.h"
+#include "../sidplayfp/residfp/DigiMode.h"
 #include "../stringutils.h"
 
 //-----------------------------------------------------------------------------
@@ -310,7 +311,8 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{ "Voicemaster_Covox",  DigiMode::covox },
 		};
 
-		// One-off rips whose player has no sidid entry, keyed by tune md5
+		// One-off rips and per-tune overrides, keyed by tune md5; most
+		// specific, wins over any player signature
 		struct DigiTune
 		{
 			std::string_view	md5;
@@ -332,24 +334,25 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 			{ "d29612059e480333104edf8315fef76f", DigiMode::voice1Pwm },	// Spasmolytic_part_2, PWM samples on voice 1
 			{ "74323308a10bbb02d713a23c6b5b16e7", DigiMode::covox },		// All_Risks, speech in subtune 4
 			{ "b8b3fe215c067d3e4bf0a4cee8eed753", DigiMode::pwLo1 },		// Wonderland_XI-End, 16 kHz Censor school without a signature
+			{ "bdf9ab7e56acb3d93053b3360eab58b7", DigiMode::output },	// Comaland_tune_3, hard-sync ctrl streams + PCM, the mix IS the digi
 		};
 
 		stiEZ.digiMode = DigiMode::nibble;
 		stiEZ.digiPlayer = false;
 
-		for ( const auto& player : digiPlayers )
-			if ( std::ranges::contains ( stiEZ.playroutineID, player.id ) )
+		for ( const auto& digiTune : digiTunes )
+			if ( stiEZ.md5 == digiTune.md5 )
 			{
-				stiEZ.digiMode = player.mode;
+				stiEZ.digiMode = digiTune.mode;
 				stiEZ.digiPlayer = true;
 				break;
 			}
 
 		if ( ! stiEZ.digiPlayer )
-			for ( const auto& digiTune : digiTunes )
-				if ( stiEZ.md5 == digiTune.md5 )
+			for ( const auto& player : digiPlayers )
+				if ( std::ranges::contains ( stiEZ.playroutineID, player.id ) )
 				{
-					stiEZ.digiMode = digiTune.mode;
+					stiEZ.digiMode = player.mode;
 					stiEZ.digiPlayer = true;
 					break;
 				}
