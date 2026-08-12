@@ -60,6 +60,10 @@ struct SidTuneInfoEZ
 	// (fx-only or digi-less subtunes exist)
 	bool			digiPlayer = false;
 
+	// The digi CSVs have a verdict for this tune either way ("none" rows
+	// set this without digiPlayer); scans skip the unknown-mode detection
+	bool			digiCovered = false;
+
 	// e.g. "Martin Galway", "Rob Hubbard", "GoatTracker", etc.
 	std::string			chipProfile;
 	bool				chipProfileIsApproved = false;

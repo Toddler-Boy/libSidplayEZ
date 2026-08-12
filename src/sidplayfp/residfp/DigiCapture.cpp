@@ -35,7 +35,7 @@ namespace reSIDfp
 // Smoothing corners per capture mode in Hz, tuned by eye to sit just above
 // each technique's real content bandwidth (everything above is stair-step
 // artifacts or carrier); DigiMode order
-static constexpr std::array<int, 17>	cornerHz =
+static constexpr std::array<int, 21>	cornerHz =
 {
 	1500,	// nibble: volume-register players run at a few kHz (CIA-timed NMIs), lower corner than the byte modes
 	3000,	// mahoney
@@ -48,15 +48,23 @@ static constexpr std::array<int, 17>	cornerHz =
 	500,	// filt1
 	1150,	// voice3Out
 	500,	// voice1Pwm
-	500,	// covox
+	1000,	// covox
 	3000,	// carmina (voice 1; voice 2 has its own corner)
 	1500,	// escos
-	1500,	// output
+	3000,	// output
+	3000,	// output2x
+	3000,	// output3x
+	3000,	// output4x
 	3000,	// rawCtrl3
 	3000,	// rawPw1
+	1500,	// unknown: the buffer carries plain nibble levels
 };
 static constexpr int	dcCornerHz = 70;
 static constexpr int	carminaCornerHz = 500;
+
+// unknown mode: a block with this many changes on one register carries a
+// sample stream (~2 kHz); frame-driven music tops out at a few per block
+static constexpr int	busyChangesPerBlock = 32;
 
 //-----------------------------------------------------------------------------
 
@@ -79,6 +87,11 @@ void DigiCapture::setMode ( const DigiMode newMode ) noexcept
 	alpha = alphaFor ( cornerHz[ size_t ( mode ) ], sampleRate );
 
 	lp1 = lp2 = dc = carminaLp = 0.0f;
+
+	rates = {};
+	prevPoke.fill ( 0 );
+	blockChanges.fill ( 0 );
+	blockCountdown = blockSamples;
 }
 //-----------------------------------------------------------------------------
 
@@ -100,6 +113,9 @@ void DigiCapture::setSamplingRate ( const double samplingFrequency ) noexcept
 	alpha = alphaFor ( cornerHz[ size_t ( mode ) ], sampleRate );
 	dcAlpha = alphaFor ( dcCornerHz, sampleRate );
 	carminaAlpha = alphaFor ( carminaCornerHz, sampleRate );
+
+	blockSamples = std::max ( 1, int ( sampleRate / 60.0 ) );
+	blockCountdown = blockSamples;
 }
 //-----------------------------------------------------------------------------
 
@@ -213,12 +229,51 @@ int8_t DigiCapture::capture ( const uint8_t* lastpoke, const Voice<is6581>* voic
 			level = float ( mixedSample ) * ( 1.0f / 64.0f );
 			break;
 
+		case DigiMode::output2x:
+			// output for quiet mixes: hotter scales, the clamp eats overshoots
+			level = float ( mixedSample ) * ( 2.0f / 64.0f );
+			break;
+
+		case DigiMode::output3x:
+			level = float ( mixedSample ) * ( 3.0f / 64.0f );
+			break;
+
+		case DigiMode::output4x:
+			level = float ( mixedSample ) * ( 4.0f / 64.0f );
+			break;
+
+		case DigiMode::unknown:
+			// No established technique: count the changes of every write
+			// register per block while the buffer carries the plain nibble
+			// level, so the regular wiggler detection stays intact
+			for ( auto i = 0; i < watchedRegs; ++i )
+				if ( lastpoke[ i ] != prevPoke[ i ] )
+				{
+					prevPoke[ i ] = lastpoke[ i ];
+					++blockChanges[ i ];
+				}
+
+			if ( --blockCountdown <= 0 )
+			{
+				blockCountdown = blockSamples;
+
+				for ( auto i = 0; i < watchedRegs; ++i )
+				{
+					rates.maxPerBlock[ i ] = std::max ( rates.maxPerBlock[ i ], blockChanges[ i ] );
+					rates.busyBlocks[ i ] += blockChanges[ i ] >= busyChangesPerBlock;
+					blockChanges[ i ] = 0;
+				}
+			}
+
+			level = float ( ( ( lastpoke[ 0x18 ] & 0x0F ) << 4 ) - 128 );
+			break;
+
 		case DigiMode::covox:
-			// Voice Master speech: a 1-bit test-bit stream on voice 1
-			// (~12.6 kHz), shaped by a ~100 Hz volume track; the low-pass
-			// demodulates the bits into the speech waveform. The player
-			// leaves voice 1 freq at 0 and the envelope at full, running
-			// music does not; the bit is read straight from the ctrl shadow
+			// Test-bit speech on voice 1: Voice Master density streams
+			// (~12.6 kHz, ~100 Hz volume track) and Reynolds sign PCM
+			// (~7 kHz, block volume) both demodulate through the low-pass.
+			// The players leave voice 1 freq at 0 and the envelope at full,
+			// running music does not; the bit comes from the ctrl shadow
 			if ( lastpoke[ 0x00 ] == 0 && lastpoke[ 0x01 ] == 0 )
 				level = ( lastpoke[ 0x04 ] & 0x08 ? 127.0f : -128.0f ) * float ( lastpoke[ 0x18 ] & 0x0F ) * ( 1.0f / 15.0f );
 			break;

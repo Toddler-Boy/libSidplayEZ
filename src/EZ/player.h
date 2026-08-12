@@ -40,6 +40,7 @@ public:
 	// dstL sets the length; dstR is empty for mono. digiBuffers: one per chip (getNumChips ()), or empty
 	uint32_t runEmulation ( std::span<float> dstL, std::span<float> dstR, std::span<const std::span<int8_t>> digiBuffers )	{	return engine.play ( dstL, dstR, digiBuffers );		}
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] )			{	return engine.getSidStatus ( sidNum, regs );	}
+	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates )	{	return engine.getDigiWriteRates ( sidNum, rates );	}
 	uint16_t getInterruptCycles () const							{	return engine.getInterruptCycles ();			}
 
 	[[ nodiscard ]] int getNumChips () const { return engine.getNumChips (); }

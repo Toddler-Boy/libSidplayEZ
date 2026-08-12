@@ -127,6 +127,7 @@ public:
 	[[ nodiscard ]] uint16_t getCia1TimerA () const { return m_c64.getCia1TimerA (); }
 
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] );
+	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates );
 
 	[[ nodiscard ]] uint16_t getInterruptCycles () const { return m_c64.getInterruptCycles (); }
 };

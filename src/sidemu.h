@@ -119,6 +119,9 @@ public:
 	// Measurement variant: the raw write stream of the technique's register
 	virtual void setDigiScan ( reSIDfp::DigiMode mode ) noexcept = 0;
 
+	// The unknown scan mode's per-register change counts
+	[[ nodiscard ]] virtual const reSIDfp::DigiCapture::WriteRates& getDigiWriteRates () const noexcept = 0;
+
 	virtual void digiSmoothing ( bool enable ) noexcept = 0;
 
 	virtual void filter6581Curve ( double filterCurve ) noexcept = 0;
@@ -215,6 +218,7 @@ public:
 
 	void setDigiCapture ( reSIDfp::DigiMode mode ) noexcept override { m_sid.setDigiCapture ( mode ); }
 	void setDigiScan ( reSIDfp::DigiMode mode ) noexcept override { m_sid.setDigiScan ( mode ); }
+	[[ nodiscard ]] const reSIDfp::DigiCapture::WriteRates& getDigiWriteRates () const noexcept override { return m_sid.getDigiWriteRates (); }
 
 	void getStatus ( uint8_t regs[ 0x20 ] ) const noexcept override { m_sid.getRegs ( regs ); }
 

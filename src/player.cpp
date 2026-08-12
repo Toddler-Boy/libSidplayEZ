@@ -604,6 +604,18 @@ void Player::set6581LeakageRate ( const double value )
 }
 //-----------------------------------------------------------------------------
 
+bool Player::getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates )
+{
+	if ( auto s = m_mixer.getSid ( sidNum ) )
+	{
+		rates = s->getDigiWriteRates ();
+		return true;
+	}
+
+	return false;
+}
+//-----------------------------------------------------------------------------
+
 bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 {
 	if ( auto s = m_mixer.getSid ( sidNum ) )

@@ -19,6 +19,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <array>
 #include <cstdint>
 
 namespace reSIDfp
@@ -60,6 +61,18 @@ public:
 	template <bool is6581>
 	[[ nodiscard ]] int8_t capture ( const uint8_t* lastpoke, const Voice<is6581>* voice, int mixedSample ) noexcept;
 
+	// unknown only: how often each write register ($D400-$D418) changed, per
+	// 60 Hz block; busyBlocks counts blocks with digi-rate change density
+	static constexpr int	watchedRegs = 25;
+
+	struct WriteRates final
+	{
+		std::array<uint16_t, watchedRegs>	maxPerBlock {};
+		std::array<uint32_t, watchedRegs>	busyBlocks {};
+	};
+
+	[[ nodiscard ]] const WriteRates& getWriteRates () const noexcept	{	return rates;	}
+
 private:
 	DigiMode	mode {};	// Zero value = nibble
 	bool		smooth = true;
@@ -81,6 +94,14 @@ private:
 	// demodulates at its own, much lower corner before joining the sum (the
 	// shared corner serves voice 1)
 	float	carminaLp = 0.0f;
+
+	// unknown only: the register shadow snapshot the per-sample compare runs
+	// against, and the change counters of the running block
+	WriteRates	rates;
+	std::array<uint8_t, watchedRegs>	prevPoke {};
+	std::array<uint16_t, watchedRegs>	blockChanges {};
+	int		blockSamples = 735;
+	int		blockCountdown = 735;
 };
 
 }

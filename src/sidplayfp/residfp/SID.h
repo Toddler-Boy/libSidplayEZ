@@ -459,6 +459,11 @@ public:
 		digi.setScanMode ( mode );
 	}
 
+	[[ nodiscard ]] const DigiCapture::WriteRates& getDigiWriteRates () const noexcept
+	{
+		return digi.getWriteRates ();
+	}
+
 	/**
 	* The register shadow, for the host's status export
 	*/

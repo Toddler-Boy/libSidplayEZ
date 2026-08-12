@@ -11,7 +11,8 @@ namespace reSIDfp
 // compute from live voice state, output copies the final mix (techniques
 // resynthesizing audio on all voices at once). The raw* modes are the
 // measurement variants: the plain centered byte of a computed mode's write
-// register
-enum class DigiMode : uint8_t { nibble, mahoney, freq1, freq2, freq3, pwLo1, pwHi1, pwFull1, filt1, voice3Out, voice1Pwm, covox, carmina, escos, output, rawCtrl3, rawPw1 };
+// register. unknown is the scan mode for tunes without an established
+// technique: nibble levels in the buffer plus per-register write rates
+enum class DigiMode : uint8_t { nibble, mahoney, freq1, freq2, freq3, pwLo1, pwHi1, pwFull1, filt1, voice3Out, voice1Pwm, covox, carmina, escos, output, output2x, output3x, output4x, rawCtrl3, rawPw1, unknown };
 
 }

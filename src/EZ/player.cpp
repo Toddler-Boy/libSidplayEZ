@@ -282,80 +282,14 @@ bool libsidplayEZ::Player::setTuneNumber ( unsigned int songNo, const bool useFi
 		}
 	}
 
-	// Dedicated sample players and the playback technique each one uses; the
-	// mode implies the register its samples ride on
+	// Dedicated sample players and one-off rips get their playback technique
+	// from the digi CSVs; the mode implies the register the samples ride on
 	{
-		using DigiMode = reSIDfp::DigiMode;
+		const auto	digi = sharedConfig->digiSelector.getDigi ( info->path (), info->dataFileName (), stiEZ.playroutineID );
 
-		struct DigiPlayer
-		{
-			std::string_view	id;
-			DigiMode			mode;
-		};
-
-		static constexpr DigiPlayer digiPlayers[] = {
-			{ "8bitDigi/Mahoney",   DigiMode::mahoney },
-			{ "OxyMod4Bit/THCM",    DigiMode::mahoney },
-			{ "AnnoyedArt1256_Digi", DigiMode::mahoney },
-			{ "OxyMod/THCM",        DigiMode::freq3 },
-			{ "Algorithm/8bitDigi", DigiMode::freq3 },
-			{ "Censor_8bit_Digi_1", DigiMode::freq3 },
-			{ "Abaddon_Digi",       DigiMode::freq3 },
-			{ "Groepaz_8bit_Digi",  DigiMode::freq2 },
-			{ "Censor_8bit_Digi_2", DigiMode::voice3Out },
-			{ "Censor_Digi_2",      DigiMode::voice1Pwm },
-			{ "Cyberbrain_Digi",    DigiMode::pwHi1 },
-			{ "Censor_Digi/16khz",  DigiMode::pwLo1 },
-			{ "Silas_Warner_Digi",  DigiMode::filt1 },
-			{ "StreetTuff_Digi",    DigiMode::pwFull1 },
-			{ "Voicemaster_Covox",  DigiMode::covox },
-		};
-
-		// One-off rips and per-tune overrides, keyed by tune md5; most
-		// specific, wins over any player signature
-		struct DigiTune
-		{
-			std::string_view	md5;
-			DigiMode			mode;
-		};
-
-		static constexpr DigiTune digiTunes[] = {
-			{ "40e7840d61e508d4c9be68a2b848b35b", DigiMode::freq1 },	// Vicious_SID_2-15638Hz
-			{ "c5e7d1a5ce3e8bd886fdb04801f96adc", DigiMode::carmina },	// Vicious_SID_2-Carmina_Burana
-			{ "48a3418ebaa3faf66e58dd9644503e4a", DigiMode::escos },	// Vicious_SID_2-Escos
-			{ "48bcfe1e849627dd680a7b8d69a9d432", DigiMode::escos },	// Vicious_SID_2-1st_loader, same impulse school
-			{ "36866f276dbfa35d3d407ba7ad3cd01e", DigiMode::output },	// FRODIGI
-			{ "1e662d0b7cb80ecb686877471a9a47cc", DigiMode::output },	// FRODIGI_2
-			{ "ccfa92d4441dcc6e84524a0826126844", DigiMode::output },	// FRODIGI_3
-			{ "c5183a95ffeffc5fbe30f190c685bd77", DigiMode::output },	// FRODIGI_4_tune_1
-			{ "ddf01a31a0bc52fe9d5300f9e7afeb67", DigiMode::output },	// FRODIGI_4_tune_2
-			{ "17b06cb2477d3d8b24e5b14a8709df29", DigiMode::covox },		// Out_on_a_Limb, speech in all subtunes but the first
-			{ "e771c1358d9143864e6fea46a1c9a8b8", DigiMode::voice1Pwm },	// Wonderland_IX_part_5, PWM samples on voices 1+2
-			{ "d29612059e480333104edf8315fef76f", DigiMode::voice1Pwm },	// Spasmolytic_part_2, PWM samples on voice 1
-			{ "74323308a10bbb02d713a23c6b5b16e7", DigiMode::covox },		// All_Risks, speech in subtune 4
-			{ "b8b3fe215c067d3e4bf0a4cee8eed753", DigiMode::pwLo1 },		// Wonderland_XI-End, 16 kHz Censor school without a signature
-			{ "bdf9ab7e56acb3d93053b3360eab58b7", DigiMode::output },	// Comaland_tune_3, hard-sync ctrl streams + PCM, the mix IS the digi
-		};
-
-		stiEZ.digiMode = DigiMode::nibble;
-		stiEZ.digiPlayer = false;
-
-		for ( const auto& digiTune : digiTunes )
-			if ( stiEZ.md5 == digiTune.md5 )
-			{
-				stiEZ.digiMode = digiTune.mode;
-				stiEZ.digiPlayer = true;
-				break;
-			}
-
-		if ( ! stiEZ.digiPlayer )
-			for ( const auto& player : digiPlayers )
-				if ( std::ranges::contains ( stiEZ.playroutineID, player.id ) )
-				{
-					stiEZ.digiMode = player.mode;
-					stiEZ.digiPlayer = true;
-					break;
-				}
+		stiEZ.digiMode = digi.mode;
+		stiEZ.digiPlayer = digi.digiPlayer;
+		stiEZ.digiCovered = digi.covered;
 
 		engine.setDigiCapture ( stiEZ.digiMode );
 	}
