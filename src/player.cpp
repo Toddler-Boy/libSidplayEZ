@@ -119,7 +119,7 @@ bool Player::initialise ()
 		}
 	};
 
-	constexpr auto	powerOnDelay = 5000;
+	constexpr auto	powerOnDelay = 5002;
 
 	// Run for calculated number of cycles
 	warmup ( powerOnDelay );
