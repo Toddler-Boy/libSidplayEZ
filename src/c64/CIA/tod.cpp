@@ -38,8 +38,9 @@ void Tod::reset () noexcept
 	std::memset ( clock, 0, sizeof ( clock ) );
 	clock[ HOURS ] = 1; // the most common value
 
-	// A non-zero seed emulates the arbitrary clock state a real machine powers up
-	// with, kept as valid BCD so tunes never read values real hardware can't show
+	// A non-zero seed emulates a warm machine: an arbitrary clock state, kept as
+	// valid BCD so tunes never read values real hardware can't show, and already
+	// ticking, as if a loader had started it (rips often lost their own TOD start)
 	if ( powerOnSeed != 0 )
 	{
 		auto	state = powerOnSeed;
@@ -63,7 +64,7 @@ void Tod::reset () noexcept
 	std::memset ( alarm, 0, sizeof ( alarm ) );
 
 	isLatched = false;
-	isStopped = true;
+	isStopped = powerOnSeed == 0;
 
 	eventScheduler.schedule ( *this, 0, EVENT_CLOCK_PHI1 );
 }

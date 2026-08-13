@@ -117,7 +117,8 @@ public:
 
 	/**
 	* Non-zero: reset () randomizes the power-on clock state from this seed
-	* (valid BCD). Zero keeps the fixed default, so renders stay deterministic.
+	* (valid BCD) and leaves the clock running, like a warm machine. Zero keeps
+	* the fixed stopped default, so renders stay deterministic.
 	*/
 	void setPowerOnSeed ( const uint32_t seed ) noexcept { powerOnSeed = seed; }
 };
