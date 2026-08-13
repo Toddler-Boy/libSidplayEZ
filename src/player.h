@@ -116,6 +116,10 @@ public:
 	void set6581SawPulseUltra ( const bool enable );
 	void set6581LeakageRate ( const double value );
 
+	// Seed for the CIAs' randomized power-on TOD state, applied on the next tune
+	// (re)init; zero (the default) keeps the fixed clock, so renders stay deterministic
+	void setTodPowerOnSeed ( const uint32_t seed ) { m_c64.setTodPowerOnSeed ( seed ); }
+
 	[[ nodiscard ]] uint32_t timeMs () const { return m_c64.getTimeMs () - m_startTime; }				// Time in milliseconds
 
 	[[ nodiscard ]] const char* error () const { return m_errorString.c_str (); }

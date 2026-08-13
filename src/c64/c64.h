@@ -203,6 +203,14 @@ public:
 	void setModel ( model_t model ) noexcept;
 	void setCiaModel ( cia_model_t model ) noexcept;
 
+	// Seed for the CIAs' randomized power-on TOD state (zero = fixed default);
+	// the second CIA gets a decorrelated derivative so the two clocks differ
+	void setTodPowerOnSeed ( const uint32_t seed ) noexcept
+	{
+		cia1.setTodPowerOnSeed ( seed );
+		cia2.setTodPowerOnSeed ( seed != 0 ? seed * 2654435761u : 0 );
+	}
+
 	/**
 	* Get the CPU clock speed.
 	*

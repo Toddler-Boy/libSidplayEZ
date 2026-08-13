@@ -67,6 +67,8 @@ private:
 	uint8_t latch[ 4 ];
 	uint8_t alarm[ 4 ];
 
+	uint32_t powerOnSeed = 0;
+
 	sidinline void checkAlarm () noexcept;
 	sidinline void updateCounters () noexcept;
 
@@ -112,6 +114,12 @@ public:
 	* @param clock
 	*/
 	void setPeriod ( event_clock_t _clock ) noexcept { period = _clock * ( 1 << 7 ); }
+
+	/**
+	* Non-zero: reset () randomizes the power-on clock state from this seed
+	* (valid BCD). Zero keeps the fixed default, so renders stay deterministic.
+	*/
+	void setPowerOnSeed ( const uint32_t seed ) noexcept { powerOnSeed = seed; }
 };
 
 }

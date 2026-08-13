@@ -57,6 +57,7 @@ public:
 	void setDacLeakage ( const double leakage )		{ engine.setDacLeakage ( leakage ); }
 	void set6581VoiceDrift ( const double drift )	{ engine.set6581VoiceDCDrift ( drift ); }
 	void set6581LeakageRate ( const double rate )	{ engine.set6581LeakageRate ( rate ); }
+	void setTodPowerOnSeed ( const uint32_t seed )	{ engine.setTodPowerOnSeed ( seed ); }
 
 	void set6581Filter_uCoxAndCap ( const double uCox, const bool oldCap )	{ engine.set6581Filter_uCoxAndCap ( uCox, oldCap ); }
 	void set6581FilterCurve ( const double value )							{ engine.set6581FilterCurve ( value ); }

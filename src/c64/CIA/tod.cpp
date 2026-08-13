@@ -37,6 +37,28 @@ void Tod::reset () noexcept
 
 	std::memset ( clock, 0, sizeof ( clock ) );
 	clock[ HOURS ] = 1; // the most common value
+
+	// A non-zero seed emulates the arbitrary clock state a real machine powers up
+	// with, kept as valid BCD so tunes never read values real hardware can't show
+	if ( powerOnSeed != 0 )
+	{
+		auto	state = powerOnSeed;
+		auto	next = [ &state ] ( const unsigned int range )
+		{
+			state = state * 1664525u + 1013904223u;
+			return ( state >> 16 ) % range;
+		};
+		auto	bcd = [] ( const unsigned int value )
+		{
+			return uint8_t ( ( ( value / 10 ) << 4 ) | ( value % 10 ) );
+		};
+
+		clock[ TENTHS ] = uint8_t ( next ( 10 ) );
+		clock[ SECONDS ] = bcd ( next ( 60 ) );
+		clock[ MINUTES ] = bcd ( next ( 60 ) );
+		clock[ HOURS ] = uint8_t ( bcd ( next ( 12 ) + 1 ) | ( next ( 2 ) << 7 ) );
+	}
+
 	std::memcpy ( latch, clock, sizeof ( latch ) );
 	std::memset ( alarm, 0, sizeof ( alarm ) );
 

@@ -296,6 +296,11 @@ public:
 	* @param clock
 	*/
 	void setDayOfTimeRate ( unsigned int clock ) noexcept { tod.setPeriod ( clock ); }
+
+	/**
+	* Seed the TOD's randomized power-on clock state (zero = fixed default).
+	*/
+	void setTodPowerOnSeed ( const uint32_t seed ) noexcept { tod.setPowerOnSeed ( seed ); }
 };
 
 }
