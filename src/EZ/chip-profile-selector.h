@@ -43,8 +43,10 @@ public:
 		int			cwsLevel = average;
 		bool		cwsSawPulseUltra = false;
 
-		// Exceptions (selects another authors chip, usually for collaborations)
+		// Exceptions (selects another authors chip, usually for collaborations);
+		// the map expands the csv cell's subtune ranges, the string is the cell verbatim
 		std::unordered_map<std::string, std::string>	exceptions;
+		std::string										exceptionsCsv;
 	};
 
 	using profileMap = std::unordered_map<std::string, settings>;

@@ -126,6 +126,8 @@ std::string ChipProfileSelector::setProfiles ( const std::string& csvStr, const 
 		// Exceptions
 		if ( const auto	exceptions = csv.get ( i, "exceptions" ); ! exceptions.empty () )
 		{
+			setting.exceptionsCsv = exceptions;
+
 			auto	exceptionList = stringutils::arrayFromTokens ( exceptions, ';' );
 			for ( const auto& exception : exceptionList )
 			{
