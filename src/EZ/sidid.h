@@ -41,12 +41,21 @@ private:
 		enum token : int16_t
 		{
 			ANY = -1,
-			AND = -2,
-			END = -3,
 		};
 
-		std::string							name;
-		std::vector<std::vector<int16_t>>	sigs;
+		// A signature is a list of AND-separated fragments that must appear
+		// in order; each fragment is a run of bytes and ?? wildcards
+		struct fragment
+		{
+			std::vector<int16_t>	bytes;			// 0..255 or token::ANY
+			int						anchorPos = -1;	// first non-wildcard byte, for memchr
+			uint8_t					anchorByte = 0;
+		};
+
+		using signature = std::vector<fragment>;
+
+		std::string				name;
+		std::vector<signature>	sigs;
 	};
 
 	std::vector<SIDID>	sidIDs;

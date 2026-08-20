@@ -21,6 +21,8 @@
 #include "sidid.h"
 #include "../stringutils.h"
 
+#include <cstring>
+
 namespace libsidplayEZ
 {
 
@@ -66,19 +68,46 @@ bool sidid::loadSidIDConfigText ( const std::string& str )
 		}
 		else
 		{
-			sidID.sigs.push_back ( {} );
-			auto& sig = sidID.sigs.back ();
+			SIDID::signature	sig;
+			SIDID::fragment		frag;
+
+			auto storeFrag = [ &sig, &frag ]
+			{
+				if ( frag.bytes.empty () )
+					return;
+
+				for ( size_t j = 0; j < frag.bytes.size (); j++ )
+					if ( frag.bytes[ j ] != SIDID::token::ANY )
+					{
+						frag.anchorPos = int ( j );
+						frag.anchorByte = uint8_t ( frag.bytes[ j ] );
+						break;
+					}
+
+				frag.bytes.shrink_to_fit ();
+				sig.emplace_back ( std::move ( frag ) );
+
+				frag = SIDID::fragment {};
+			};
 
 			for ( const auto& part : parts )
 			{
 				if ( part.size () == 3 && stringutils::equal ( part, "AND" ) )
-					sig.emplace_back ( SIDID::token::AND );
+					storeFrag ();
 				else if ( part.size () == 3 && stringutils::equal ( part, "END" ) )
-					sig.shrink_to_fit ();
+					continue;
 				else if ( part == "??" )
-					sig.emplace_back ( SIDID::token::ANY );
+					frag.bytes.emplace_back ( SIDID::token::ANY );
 				else
-					sig.emplace_back ( int16_t ( std::strtol ( part.data (), nullptr, 16 ) ) );
+					frag.bytes.emplace_back ( int16_t ( std::strtol ( part.data (), nullptr, 16 ) ) );
+			}
+			storeFrag ();
+
+			// A hand-edited config can produce an empty signature (an all-END line)
+			if ( ! sig.empty () )
+			{
+				sig.shrink_to_fit ();
+				sidID.sigs.emplace_back ( std::move ( sig ) );
 			}
 		}
 	}
@@ -100,70 +129,62 @@ std::vector<std::string> sidid::findPlayerRoutines ( const std::vector<uint8_t>&
 	if ( tuneData.empty () )
 		return {};
 
-	auto identifybytes = [ &tuneData ] ( const std::vector<int16_t>& bytes ) -> bool
-	{
-		const auto	buffer = static_cast<const uint8_t* const> ( tuneData.data () );
-		const auto	length = int ( tuneData.size () );
-		const auto	sigSize = int ( bytes.size () );
+	const auto	buffer = static_cast<const uint8_t* const> ( tuneData.data () );
+	const auto	length = tuneData.size ();
 
-		// A hand-edited config can produce an empty signature (an all-END line)
-		if ( ! sigSize )
+	// Find the first occurrence of a fragment at/after pos; on success pos
+	// advances to just past the match. memchr hunts for the fragment's anchor
+	// byte (SIMD in the CRT), then the candidate is verified wildcard-aware
+	auto findFragment = [ buffer, length ] ( size_t& pos, const SIDID::fragment& frag ) -> bool
+	{
+		const auto	fragSize = frag.bytes.size ();
+		if ( pos + fragSize > length )
 			return false;
 
-		int	c = 0;
-		int	d = 0;
-		int	rc = 0;
-		int	rd = 0;
-
-		while ( c < length )
+		// An all-wildcard fragment matches anywhere it fits
+		if ( frag.anchorPos < 0 )
 		{
-			if ( d == rd )
-			{
-				if ( buffer[ c ] == bytes[ d ] )
-				{
-					rc = c + 1;
-					d++;
-				}
-				c++;
-			}
-			else
-			{
-				if ( d == sigSize )
-					return true;
-
-				if ( bytes[ d ] == SIDID::token::AND )
-				{
-					// A trailing AND has nothing left to anchor on, the prefix already matched
-					if ( ++d == sigSize )
-						return true;
-
-					while ( c < length )
-					{
-						if ( buffer[ c ] == bytes[ d ] )
-						{
-							rc = c + 1;
-							rd = d;
-							break;
-						}
-						c++;
-					}
-					if ( c >= length )
-						return false;
-				}
-				if ( bytes[ d ] != SIDID::token::ANY && buffer[ c ] != bytes[ d ] )
-				{
-					c = rc;
-					d = rd;
-				}
-				else
-				{
-					c++;
-					d++;
-				}
-			}
+			pos += fragSize;
+			return true;
 		}
 
-		return d == sigSize;
+		const auto	limit = length - fragSize;
+
+		for ( auto c = pos; c <= limit; c++ )
+		{
+			const auto	hit = static_cast<const uint8_t*> ( std::memchr ( buffer + c + frag.anchorPos, frag.anchorByte, limit - c + 1 ) );
+			if ( ! hit )
+				return false;
+
+			c = size_t ( hit - buffer ) - frag.anchorPos;
+
+			auto	match = true;
+			for ( size_t j = 0; j < fragSize; j++ )
+				if ( frag.bytes[ j ] != SIDID::token::ANY && buffer[ c + j ] != frag.bytes[ j ] )
+				{
+					match = false;
+					break;
+				}
+
+			if ( match )
+			{
+				pos = c + fragSize;
+				return true;
+			}
+		}
+		return false;
+	};
+
+	// AND-separated fragments must appear in order, each after the previous one
+	auto identifybytes = [ &findFragment ] ( const SIDID::signature& sig ) -> bool
+	{
+		size_t	pos = 0;
+
+		for ( const auto& frag : sig )
+			if ( ! findFragment ( pos, frag ) )
+				return false;
+
+		return true;
 	};
 
 	// Identify playroutine
