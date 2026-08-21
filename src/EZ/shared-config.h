@@ -48,7 +48,7 @@ namespace libsidplayEZ
 */
 struct SharedPlayerConfig final
 {
-	sidid					sidID;
+	::sidid::database		sidID;
 	ChipProfileSelector		chipSelector;
 	AudioProfileSelector	audioSelector;
 	OverrideSelector		overrideSelector;
