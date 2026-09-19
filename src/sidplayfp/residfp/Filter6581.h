@@ -24,6 +24,8 @@
 #include "Filter.h"
 #include "Integrator6581.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -312,6 +314,8 @@ namespace reSIDfp
 template< bool useFilter = true >
 class Filter6581 final : public Filter<useFilter>
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	FilterModelConfig6581	fmc6581;
 

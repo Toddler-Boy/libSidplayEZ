@@ -77,6 +77,11 @@ public:
 
 	[[ nodiscard ]] unsigned int getEmulatedTimeMs () const { return engine.timeMs (); }
 
+	// The complete emulation state between two runEmulation () calls; restore
+	// needs a player that loaded and initialised the same tune with the same config
+	[[ nodiscard ]] bool saveState ( std::vector<uint8_t>& out )			{	return engine.saveState ( out );	}
+	[[ nodiscard ]] bool restoreState ( std::span<const uint8_t> in )	{	return engine.restoreState ( in );	}
+
 private:
 	// Everything after the tune bytes are in, shared by both loadSidFile flavours
 	bool finishLoad ();

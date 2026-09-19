@@ -39,6 +39,8 @@ namespace libsidplayfp
 */
 class MOS656X : private Event
 {
+	friend class SaveState;
+
 public:
 	enum class model_t
 	{

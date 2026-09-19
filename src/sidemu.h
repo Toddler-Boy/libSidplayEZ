@@ -40,6 +40,8 @@ namespace libsidplayfp
 
 class sidemu : public Bank
 {
+	friend class SaveState;
+
 public:
 	// Bank functions
 	sidinline void poke ( uint16_t address, uint8_t value ) noexcept override { write ( address & 0x1f, value ); }
@@ -172,6 +174,8 @@ public:
 template <typename FLT>
 class sidemuSpec final : public sidemu
 {
+	friend class SaveState;
+
 public:
 	sidemuSpec ( EventScheduler& _eventScheduler )
 		: sidemu ( _eventScheduler )

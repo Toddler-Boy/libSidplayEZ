@@ -140,6 +140,8 @@ namespace reSIDfp
 #include "ExternalFilter.h"
 #include "Voice.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -151,6 +153,8 @@ namespace reSIDfp
 template <typename FLT>
 class SID final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	static constexpr bool is6581 = std::is_same_v<FLT, Filter6581<true>> || std::is_same_v<FLT, Filter6581<false>>;
 

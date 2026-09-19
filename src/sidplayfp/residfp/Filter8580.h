@@ -24,6 +24,8 @@
 #include "Filter.h"
 #include "Integrator8580.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -270,6 +272,8 @@ namespace reSIDfp
 template< bool useFilter = true >
 class Filter8580 final : public Filter<useFilter>
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	FilterModelConfig8580	fmc8580;
 

@@ -39,6 +39,8 @@ class MOS652X;
 */
 class Timer : private Event
 {
+	friend class SaveState;
+
 protected:
 	static const int32_t CIAT_CR_START = 0x01;
 	static const int32_t CIAT_STEP = 0x04;

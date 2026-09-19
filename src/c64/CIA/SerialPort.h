@@ -33,6 +33,8 @@ class MOS652X;
 
 class SerialPort final : private Event
 {
+	friend class SaveState;
+
 private:
 	/// Pointer to the MOS6526 which this Serial Port belongs to.
 	MOS652X& parent;

@@ -36,6 +36,7 @@ namespace libsidplayfp
 class SystemRAMBank final : public Bank
 {
 	friend class MMU;
+	friend class SaveState;
 
 private:
 	/// C64 RAM area

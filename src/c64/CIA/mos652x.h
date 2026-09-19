@@ -147,6 +147,7 @@ class MOS652X
 	friend class TimerA;
 	friend class TimerB;
 	friend class Tod;
+	friend class SaveState;
 
 public:
 	using model_t = enum : uint8_t

@@ -39,6 +39,8 @@ namespace libsidplayfp
  */
 class ColorRAMBank final : public Bank
 {
+	friend class SaveState;
+
 private:
 	uint8_t	ram[ 0x0400 ];
 

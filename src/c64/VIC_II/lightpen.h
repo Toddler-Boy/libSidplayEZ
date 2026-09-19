@@ -33,6 +33,8 @@ namespace libsidplayfp
 */
 class Lightpen
 {
+	friend class SaveState;
+
 private:
 	/// Last VIC raster line
 	unsigned int lastLine;

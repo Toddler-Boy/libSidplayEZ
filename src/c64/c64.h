@@ -64,6 +64,8 @@ class sidmemory;
 	*/
 class c64 final : private c64env
 {
+	friend class SaveState;
+
 public:
 	using model_t = enum
 	{

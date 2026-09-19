@@ -50,6 +50,8 @@ namespace libsidplayfp
 template <int Bit>
 class dataBit
 {
+	friend class SaveState;
+
 private:
 	/**
 	* $01 bits 6 and 7 fall-off cycles (1->0), average is about 350 msec for a 6510
@@ -124,6 +126,8 @@ public:
 */
 class ZeroRAMBank final : public Bank
 {
+	friend class SaveState;
+
 private:
 	PLA& pla;
 

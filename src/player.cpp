@@ -30,6 +30,7 @@
 
 #include "psiddrv.h"
 #include "romCheck.h"
+#include "SaveState.h"
 #include "sidemu.h"
 
 namespace libsidplayfp
@@ -191,7 +192,21 @@ bool Player::initialise ()
 
 	m_startTime = m_c64.getTimeMs ();
 
+	SaveState::captureReference ( *this );
+
 	return true;
+}
+//-----------------------------------------------------------------------------
+
+bool Player::saveState ( std::vector<uint8_t>& out )
+{
+	return SaveState::save ( *this, out );
+}
+//-----------------------------------------------------------------------------
+
+bool Player::restoreState ( std::span<const uint8_t> in )
+{
+	return SaveState::restore ( *this, in );
 }
 //-----------------------------------------------------------------------------
 

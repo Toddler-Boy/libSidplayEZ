@@ -45,6 +45,8 @@ namespace libsidplayfp
 */
 class MOS6510
 {
+	friend class SaveState;
+
 public:
 	// Status register interrupt bit
 	static constexpr int SR_INTERRUPT = 2;

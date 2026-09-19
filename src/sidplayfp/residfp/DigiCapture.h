@@ -22,6 +22,8 @@
 #include <array>
 #include <cstdint>
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -36,6 +38,8 @@ template <bool> class Voice;
 */
 class DigiCapture final
 {
+	friend class libsidplayfp::SaveState;
+
 public:
 	DigiCapture ();
 

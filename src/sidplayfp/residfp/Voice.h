@@ -24,6 +24,8 @@
 #include "WaveformGenerator.h"
 #include "EnvelopeGenerator.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -33,6 +35,8 @@ namespace reSIDfp
 template < bool is6581 >
 class Voice final
 {
+	friend class libsidplayfp::SaveState;
+
 public:
 	WaveformGenerator<is6581>	waveformGenerator;
 	EnvelopeGenerator			envelopeGenerator;

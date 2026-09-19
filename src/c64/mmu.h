@@ -42,6 +42,8 @@ class IOBank;
 	*/
 class MMU final : public PLA, public sidmemory
 {
+	friend class SaveState;
+
 private:
 	EventScheduler& eventScheduler;
 

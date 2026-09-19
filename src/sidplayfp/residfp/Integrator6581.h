@@ -35,6 +35,8 @@
 	#include <cmath>
 #endif
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -162,6 +164,8 @@ namespace reSIDfp
 */
 class Integrator6581 final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	int vx = 0;
 	int vc = 0;

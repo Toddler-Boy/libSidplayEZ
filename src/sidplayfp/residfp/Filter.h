@@ -23,6 +23,8 @@
 
 #include "FilterModelConfig.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 /**
@@ -31,6 +33,8 @@ namespace reSIDfp
 template<bool useFilter>
 class Filter
 {
+	friend class libsidplayfp::SaveState;
+
 protected:
 	FilterModelConfig& fmc;
 

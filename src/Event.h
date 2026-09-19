@@ -36,6 +36,7 @@ using event_clock_t = int_fast64_t;
 class Event
 {
 	friend class EventScheduler;
+	friend class SaveState;
 
 	// The next event in sequence.
 	Event* next;

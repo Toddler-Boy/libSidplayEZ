@@ -21,6 +21,8 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -60,6 +62,8 @@ namespace reSIDfp
 */
 class ExternalFilter final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	// Lowpass filter voltage
 	int Vlp = 0;

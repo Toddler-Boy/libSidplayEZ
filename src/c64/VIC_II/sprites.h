@@ -39,6 +39,8 @@ namespace libsidplayfp
  */
 class Sprites
 {
+	friend class SaveState;
+
 private:
 	const uint8_t&	enable;
 	const uint8_t&	y_expansion;

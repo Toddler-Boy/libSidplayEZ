@@ -26,6 +26,8 @@
 
 #include "../../EZ/config.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 /**
@@ -41,6 +43,8 @@ namespace reSIDfp
 */
 class EnvelopeGenerator final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	/**
 	* The envelope state machine's distinct states. In addition to this,

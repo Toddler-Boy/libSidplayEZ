@@ -37,6 +37,8 @@ class MOS652X;
 */
 class Tod final : private Event
 {
+	friend class SaveState;
+
 private:
 	enum
 	{

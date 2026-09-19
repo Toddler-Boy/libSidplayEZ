@@ -25,6 +25,8 @@
 
 #include "SincResampler.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 /**
@@ -33,6 +35,8 @@ namespace reSIDfp
 template <int scaleFactor>
 class TwoPassSincResampler final
 {
+	friend class libsidplayfp::SaveState;
+
 public:
 	void setup ( double clockFrequency, double samplingFrequency ) noexcept
 	{

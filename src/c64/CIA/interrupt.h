@@ -40,6 +40,8 @@ class MOS652X;
 */
 class InterruptSource
 {
+	friend class SaveState;
+
 public:
 	enum
 	{

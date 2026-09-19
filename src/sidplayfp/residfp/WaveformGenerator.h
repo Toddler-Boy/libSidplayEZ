@@ -26,6 +26,8 @@
 
 #include "../../EZ/config.h"
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -192,6 +194,8 @@ sidinline unsigned int get_noise_writeback ( unsigned int waveform_output ) noex
 template <bool is6581>
 class WaveformGenerator final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	std::vector<int16_t>*	model_wave = nullptr;
 	std::vector<int16_t>*	model_pulldown = nullptr;

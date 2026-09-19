@@ -39,6 +39,8 @@ namespace libsidplayfp
 
 class Player final
 {
+	friend class SaveState;
+
 private:
 	c64			m_c64;				// Commodore 64 emulator
 	Mixer		m_mixer;			// Mixer
@@ -52,6 +54,10 @@ private:
 
 	uint32_t	m_startTime = 0;
 	uint8_t		videoSwitch;					// PAL/NTSC switch value
+
+	// RAM and color RAM as initialise () left them, the baseline a save-state
+	// stores its RAM changes against
+	std::vector<uint8_t>	m_stateReference;
 
 	/**
 	* Get the C64 model for the current loaded tune.
@@ -138,6 +144,11 @@ public:
 	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates );
 
 	[[ nodiscard ]] uint16_t getInterruptCycles () const { return m_c64.getInterruptCycles (); }
+
+	// The complete emulation state at a play () boundary, restorable into a
+	// player that loaded and initialised the same tune with the same config
+	[[ nodiscard ]] bool saveState ( std::vector<uint8_t>& out );
+	[[ nodiscard ]] bool restoreState ( std::span<const uint8_t> in );
 };
 
 }

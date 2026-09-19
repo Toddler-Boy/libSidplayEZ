@@ -41,6 +41,8 @@ namespace libsidplayfp
 */
 class c64cia1 final : public MOS652X, public Bank
 {
+	friend class SaveState;
+
 private:
 	c64env&		m_env;
 	uint16_t	last_ta;

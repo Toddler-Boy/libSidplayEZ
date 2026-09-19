@@ -40,6 +40,8 @@
 	#include <arm_neon.h>
 #endif
 
+namespace libsidplayfp { class SaveState; }
+
 namespace reSIDfp
 {
 
@@ -60,6 +62,8 @@ namespace reSIDfp
 */
 class SincResampler final
 {
+	friend class libsidplayfp::SaveState;
+
 private:
 	// Size of the ring buffer, must be a power of 2
 	static const int RINGSIZE = 2048;

@@ -57,6 +57,8 @@ using event_phase_t = enum : uint8_t
 */
 class EventScheduler final
 {
+	friend class SaveState;
+
 private:
 	// The first event of the chain.
 	Event*	firstEvent = nullptr;
