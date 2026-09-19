@@ -175,6 +175,7 @@ public:
 
 		icr = 0;
 		idr = 0;
+		idrTemp = 0;
 
 		eventScheduler.cancel ( updateIdrEvent );
 		eventScheduler.cancel ( setIrqEvent );
