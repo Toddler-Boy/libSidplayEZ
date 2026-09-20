@@ -550,7 +550,7 @@ public:
 		if constexpr ( is6581 )
 		{
 			for ( auto& vce : voice )
-				vce.waveformGenerator.setSawPulseMask ( enabled ? 0xffffff : 0x7fffff );
+				vce.waveformGenerator.setSawPulseUltra ( enabled );
 		}
 	}
 

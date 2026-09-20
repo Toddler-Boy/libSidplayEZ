@@ -512,6 +512,8 @@ void SaveState::io ( A& a, reSIDfp::WaveformGenerator<F>& w )
 				default:																				break;
 			}
 		}
+
+		w.updateMsbPulldown ();
 	}
 }
 //-----------------------------------------------------------------------------

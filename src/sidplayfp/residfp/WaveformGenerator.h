@@ -228,7 +228,8 @@ private:
 
 	/// Current accumulator value.
 	unsigned int accumulator = 0x555555;		// Accumulator's even bits are high on powerup
-	unsigned int accumulatorMask = 0x7fffff;	// Mask to be used for 6581 with saw+pulse
+	bool sawPulseUltra = false;					// 6581 chips whose saw+pulse skips the top-bit pulldown
+	bool msb_pulldown = false;					// Current waveform drives the accumulator top bit low
 
 	// Fout = (Fn*Fclk/16777216)Hz
 	unsigned int freq = 0;
@@ -444,10 +445,15 @@ private:
 			shift_register_reset = is6581 ? leakage_sr_fade : SHIFT_REGISTER_FADE_8580R5;
 	}
 
+	void updateMsbPulldown () noexcept
+	{
+		msb_pulldown = ( waveform & 0x2 ) && ! ( sawPulseUltra && ( waveform & 0x4 ) );
+	}
+
 public:
 	void setWaveformModels ( std::vector<int16_t>& models )	noexcept	{	model_wave = &models;		}
 	void setPulldownModels ( std::vector<int16_t>& models )	noexcept	{	model_pulldown = &models;	}
-	void setSawPulseMask ( unsigned int mask ) noexcept					{	accumulatorMask = mask;		}
+	void setSawPulseUltra ( bool enabled ) noexcept						{	sawPulseUltra = enabled;	updateMsbPulldown ();	}
 
 	/**
 	* Set the 6581 charge-leakage rate.
@@ -619,6 +625,8 @@ public:
 				default:    pulldown = nullptr;													break;
 			}
 
+			updateMsbPulldown ();
+
 			// no_noise and no_pulse are used in set_waveform_output() as bitmasks to
 			// only let the noise or pulse influence the output when the noise or pulse
 			// waveforms are selected.
@@ -702,6 +710,7 @@ public:
 		pw = 0;
 
 		msb_rising = false;
+		msb_pulldown = false;
 
 		waveform = 0;
 		osc3 = 0;
@@ -757,13 +766,10 @@ public:
 
 				// In the 6581 the top bit of the accumulator may be driven low by combined waveforms
 				// when the sawtooth is selected
-				if ( ( waveform & 0x2 ) && ( ( waveform_output & 0x800 ) == 0 ) )
+				if ( msb_pulldown && ( ( waveform_output & 0x800 ) == 0 ) )
 				{
 					msb_rising = false;
-					if ( waveform == 0x6 ) [[ unlikely ]]
-						accumulator &= accumulatorMask;
-					else
-						accumulator &= 0x7fffff;
+					accumulator &= 0x7fffff;
 				}
 			}
 			else
