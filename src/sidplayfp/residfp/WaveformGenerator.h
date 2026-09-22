@@ -447,7 +447,7 @@ private:
 
 	void updateMsbPulldown () noexcept
 	{
-		msb_pulldown = ( waveform & 0x2 ) && ! ( sawPulseUltra && ( waveform & 0x4 ) );
+		msb_pulldown = ( waveform & 0x2 ) && ! ( sawPulseUltra && waveform == 0x6 );
 	}
 
 public:
