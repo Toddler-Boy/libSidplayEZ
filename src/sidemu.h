@@ -35,8 +35,27 @@
 
 #include "EZ/config.h"
 
+// Build option: 1 (default) compiles in the register write sink, 0 removes it entirely
+#ifndef SIDPLAYEZ_WRITE_SINK
+	#define SIDPLAYEZ_WRITE_SINK 1
+#endif
+
 namespace libsidplayfp
 {
+
+#if SIDPLAYEZ_WRITE_SINK
+/**
+* Register write observer. Called from sidemu::write () after the chip is clocked to
+* the write, with the emulated PHI1 cycle of the write. Runs on the emulation thread.
+*/
+struct WriteSink
+{
+	using Fn = void ( * ) ( void* user, uint8_t chip, uint8_t reg, uint8_t val, int64_t cycle ) noexcept;
+
+	Fn		fn = nullptr;
+	void*	user = nullptr;
+};
+#endif
 
 class sidemu : public Bank
 {
@@ -62,6 +81,12 @@ protected:
 
 	event_clock_t	m_accessClk = 0;
 
+#if SIDPLAYEZ_WRITE_SINK
+	// Optional register write observer, unset by default
+	WriteSink	m_sink;
+	uint8_t		m_chipIndex = 0;
+#endif
+
 	// The sample buffer
 	int16_t		m_buffer[ OUTPUTBUFFERSIZE ];
 
@@ -80,6 +105,14 @@ public:
 	}
 
 	virtual ~sidemu () = default;
+
+#if SIDPLAYEZ_WRITE_SINK
+	void setWriteSink ( const WriteSink& sink, const uint8_t chipIndex ) noexcept
+	{
+		m_sink = sink;
+		m_chipIndex = chipIndex;
+	}
+#endif
 
 	virtual void reset ( uint8_t /*volume*/ ) noexcept
 	{
@@ -214,6 +247,12 @@ public:
 	sidinline void write ( uint8_t addr, uint8_t data ) noexcept override
 	{
 		clock ();
+
+#if SIDPLAYEZ_WRITE_SINK
+		if ( m_sink.fn ) [[ unlikely ]]
+			m_sink.fn ( m_sink.user, m_chipIndex, addr, data, m_accessClk );
+#endif
+
 		m_sid.write ( addr, data );
 	}
 

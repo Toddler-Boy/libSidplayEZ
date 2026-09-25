@@ -50,6 +50,10 @@ private:
 
 	std::vector<sidemu*>	m_sidEmu;	// emulation of the actual SID chips, as many as the tune asks for
 
+#if SIDPLAYEZ_WRITE_SINK
+	WriteSink	m_writeSink;			// Register write observer, re-applied to every chip sidCreate () makes
+#endif
+
 	std::string	m_errorString = "N/A";
 
 	uint32_t	m_startTime = 0;
@@ -144,6 +148,21 @@ public:
 	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates );
 
 	[[ nodiscard ]] uint16_t getInterruptCycles () const { return m_c64.getInterruptCycles (); }
+
+#if SIDPLAYEZ_WRITE_SINK
+	/**
+	* Observe every SID register write as (chip, reg, val, cycle). Applies to the current chips
+	* and survives their recreation. Pass a default WriteSink to detach. The callback runs on
+	* the emulation thread inside play (), and must be cheap and non-blocking.
+	*/
+	void setWriteSink ( const WriteSink& sink );
+
+	// Emulated PHI1 cycles since reset, the time base of the write sink's cycle argument
+	[[ nodiscard ]] int64_t getCycleTime () { return m_c64.getEventScheduler ().getTime ( EVENT_CLOCK_PHI1 ); }
+
+	// CPU clock of the loaded tune's C64 model in Hz
+	[[ nodiscard ]] double getCpuFrequency () const { return m_c64.getMainCpuSpeed (); }
+#endif
 
 	// The complete emulation state at a play () boundary, restorable into a
 	// player that loaded and initialised the same tune with the same config

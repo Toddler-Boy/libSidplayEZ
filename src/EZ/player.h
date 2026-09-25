@@ -43,6 +43,15 @@ public:
 	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates )	{	return engine.getDigiWriteRates ( sidNum, rates );	}
 	uint16_t getInterruptCycles () const							{	return engine.getInterruptCycles ();			}
 
+#if SIDPLAYEZ_WRITE_SINK
+	// Observe every SID register write as (chip, reg, val, cycle); see libsidplayfp::Player::setWriteSink ()
+	void setWriteSink ( const libsidplayfp::WriteSink& sink )		{	engine.setWriteSink ( sink );					}
+	// Emulated PHI1 cycles since reset, the time base of the write sink's cycle argument
+	int64_t getCycleTime ()											{	return engine.getCycleTime ();					}
+	// CPU clock of the loaded tune's C64 model in Hz
+	double getCpuFrequency () const									{	return engine.getCpuFrequency ();				}
+#endif
+
 	[[ nodiscard ]] int getNumChips () const { return engine.getNumChips (); }
 
 	/**

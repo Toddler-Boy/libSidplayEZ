@@ -483,6 +483,9 @@ void Player::sidCreate ( SidConfig::sid_model_t defaultModel, bool forced, const
 				s = new libsidplayfp::sidemuSpec<reSIDfp::Filter6581<false>> ( m_c64.getEventScheduler () );
 
 		m_sidEmu.push_back ( s );
+#if SIDPLAYEZ_WRITE_SINK
+		s->setWriteSink ( m_writeSink, uint8_t ( m_sidEmu.size () - 1 ) );
+#endif
 
 		if ( i++ == 0 )
 		{
@@ -662,6 +665,19 @@ bool Player::getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& r
 	return false;
 }
 //-----------------------------------------------------------------------------
+
+#if SIDPLAYEZ_WRITE_SINK
+void Player::setWriteSink ( const WriteSink& sink )
+{
+	m_writeSink = sink;
+
+	for ( auto i = 0u; i < m_sidEmu.size (); ++i )
+		if ( m_sidEmu[ i ] )
+			m_sidEmu[ i ]->setWriteSink ( m_writeSink, uint8_t ( i ) );
+}
+//-----------------------------------------------------------------------------
+
+#endif
 
 bool Player::getSidStatus ( int sidNum, uint8_t regs[ 32 ] )
 {
