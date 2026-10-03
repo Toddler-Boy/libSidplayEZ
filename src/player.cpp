@@ -36,6 +36,12 @@
 namespace libsidplayfp
 {
 
+// What the PSID driver adds inside the measured IRQ beyond a plain jsr/rts: interrupt
+// entry, register save, bank switch and the acknowledge after the play call
+constexpr uint16_t	irqOverheadVic = 60;
+constexpr uint16_t	irqOverheadCia = 65;
+constexpr uint16_t	irqOverheadKernal = 11;	// the real KERNAL's BRK check at $ff48, absent from the built-in stub
+
 Player::Player ()
 {
 	// Warm-up the tables
@@ -80,6 +86,7 @@ void Player::setKernal ( const uint8_t* rom )
 {
 	checkRom<kernalCheck> ( rom, m_info.m_kernalDesc );
 	m_c64.getMemInterface ().setKernal ( rom );
+	m_kernalRom = rom != nullptr;
 }
 //-----------------------------------------------------------------------------
 
@@ -140,6 +147,14 @@ bool Player::initialise ()
 
 	auto&	mem = m_c64.getMemInterface ();
 	driver.install ( mem, videoSwitch );
+
+	m_irqOverhead = 0;
+	if ( tuneInfo->compatibility () < SidTuneInfo::COMPATIBILITY_R64 && tuneInfo->playAddr () != 0 )
+	{
+		m_irqOverhead = tuneInfo->songSpeed () == SidTuneInfo::SPEED_CIA_1A ? irqOverheadCia : irqOverheadVic;
+		if ( m_kernalRom )
+			m_irqOverhead += irqOverheadKernal;
+	}
 
 	if ( ! m_tune->placeSidTuneInC64mem ( mem ) )
 	{

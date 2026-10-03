@@ -54,6 +54,8 @@ private:
 
 	uint32_t	m_startTime = 0;
 	uint8_t		videoSwitch;					// PAL/NTSC switch value
+	uint16_t	m_irqOverhead = 0;				// PSID driver cycles inside the measured IRQ
+	bool		m_kernalRom = false;
 
 	// RAM and color RAM as initialise () left them, the baseline a save-state
 	// stores its RAM changes against
@@ -143,7 +145,12 @@ public:
 	bool getSidStatus ( int sidNum, uint8_t regs[ 32 ] );
 	bool getDigiWriteRates ( int sidNum, reSIDfp::DigiCapture::WriteRates& rates );
 
-	[[ nodiscard ]] uint16_t getInterruptCycles () const { return m_c64.getInterruptCycles (); }
+	// Cycles of the last IRQ as a game would pay them: one jsr/rts plus the play routine
+	[[ nodiscard ]] uint16_t getInterruptCycles () const
+	{
+		const auto	cycles = m_c64.getInterruptCycles ();
+		return cycles > m_irqOverhead ? uint16_t ( cycles - m_irqOverhead ) : uint16_t ( 0 );
+	}
 
 	// The complete emulation state at a play () boundary, restorable into a
 	// player that loaded and initialised the same tune with the same config
